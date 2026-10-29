@@ -8,6 +8,28 @@ export default function Footer() {
   const [footerData, setFooterData] = useState<any>(footerJSON);
   const router = useRouter();
   const [whatsappLink, setWhatsappLink] = useState("");
+  const [copiedEmail, setCopiedEmail] = useState(false);
+
+  const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const email = footerData?.contact?.email || 'kanhafoundation223@gmail.com';
+    // On desktop browser, open Gmail web composer in new tab directly so Windows/Chrome users never get a dead link
+    if (typeof window !== 'undefined' && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      e.preventDefault();
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`;
+      window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const copyToClipboard = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const email = footerData?.contact?.email || 'kanhafoundation223@gmail.com';
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(email);
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2500);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/footer', { cache: 'no-store' })
@@ -85,14 +107,38 @@ export default function Footer() {
                 
                 <div className="leading-relaxed text-center md:text-right">
                   <p className="text-zinc-150 font-medium text-[8px] sm:text-xs">
-                    {footerData?.contact?.ctaText || "Need help fast? Fill out our form or email"}
+                    Need help fast?{" "}
+                    <a href="/contact" className="underline hover:text-emerald-350 transition-colors">
+                      Fill out our form
+                    </a>{" "}
+                    or email
                   </p>
-                  <a 
-                    href={`mailto:${footerData?.contact?.email || 'kanhafoundation223@gmail.com'}`} 
-                    className="text-white hover:underline block font-black mt-0.5 break-all text-[8px] sm:text-xs"
-                  >
-                    {footerData?.contact?.email || "kanhafoundation223@gmail.com"}
-                  </a>
+                  <div className="flex items-center justify-center md:justify-end gap-1.5 mt-1 flex-wrap">
+                    <a 
+                      href={`mailto:${footerData?.contact?.email || 'kanhafoundation223@gmail.com'}`}
+                      onClick={handleEmailClick}
+                      className="text-white hover:text-emerald-350 hover:underline inline-block font-black break-all text-[8px] sm:text-xs cursor-pointer transition-colors"
+                      title="Click to send email (opens Gmail / default mail app)"
+                    >
+                      {footerData?.contact?.email || "kanhafoundation223@gmail.com"}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={copyToClipboard}
+                      className="text-white/60 hover:text-white transition-colors p-0.5 rounded cursor-pointer shrink-0 inline-flex items-center"
+                      title={copiedEmail ? "Copied!" : "Copy email address"}
+                      aria-label="Copy email address"
+                    >
+                      {copiedEmail ? (
+                        <span className="text-[7px] sm:text-[9px] text-emerald-400 font-bold bg-emerald-950/80 px-1 py-0.5 rounded border border-emerald-800/60">✓ Copied</span>
+                      ) : (
+                        <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-none stroke-current" strokeWidth="2" viewBox="0 0 24 24">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
