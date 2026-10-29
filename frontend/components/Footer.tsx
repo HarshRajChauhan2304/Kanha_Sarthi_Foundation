@@ -131,14 +131,49 @@ export default function Footer() {
                   }
                   if (platform === 'linkedin') {
                     return (
-                      <a key={`social-${s.platform}-${idx}`} href={s.href} target="_blank" rel="noopener noreferrer" className="text-white hover:text-emerald-350 transition-colors" aria-label="LinkedIn">
+                      <a key={`social-${s.platform}-${idx}`} href={s.href} target="_blank" rel="noopener noreferrer" className="text-white hover:text-emerald-350 transition-colors" aria-label="LinkedIn" title="LinkedIn">
                         <svg className="h-3.5 w-3.5 sm:h-5 sm:w-5 fill-current" viewBox="0 0 24 24">
                           <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                         </svg>
                       </a>
                     );
                   }
-                  return null;
+                  if (platform.includes('telegram') || platform === 'tg') {
+                    return (
+                      <a key={`social-${s.platform}-${idx}`} href={s.href} target="_blank" rel="noopener noreferrer" className="text-white hover:text-emerald-350 transition-colors" aria-label="Telegram" title="Telegram">
+                        <svg className="h-3.5 w-3.5 sm:h-5 sm:w-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.458c.538-.196 1.006.128.832.939z"/>
+                        </svg>
+                      </a>
+                    );
+                  }
+                  if (platform.includes('whatsapp') || platform.includes('wa')) {
+                    return (
+                      <a key={`social-${s.platform}-${idx}`} href={s.href} target="_blank" rel="noopener noreferrer" className="text-white hover:text-emerald-350 transition-colors" aria-label="WhatsApp Channel" title="WhatsApp Channel">
+                        <svg className="h-3.5 w-3.5 sm:h-5 sm:w-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.458L0 24zm6.208-3.79c1.666.988 3.32 1.48 4.95 1.483 5.405 0 9.802-4.398 9.805-9.805.002-2.618-1.015-5.082-2.87-6.937C16.29 3.097 13.824 2.08 11.205 2.08c-5.412 0-9.803 4.398-9.806 9.806-.001 1.77.478 3.5 1.388 5.008L1.75 22.25l5.515-1.44z"/>
+                        </svg>
+                      </a>
+                    );
+                  }
+                  if (platform.includes('twitter') || platform === 'x') {
+                    return (
+                      <a key={`social-${s.platform}-${idx}`} href={s.href} target="_blank" rel="noopener noreferrer" className="text-white hover:text-emerald-350 transition-colors" aria-label="X (Twitter)" title="X (Twitter)">
+                        <svg className="h-3.5 w-3.5 sm:h-5 sm:w-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                      </a>
+                    );
+                  }
+                  return (
+                    <a key={`social-${s.platform}-${idx}`} href={s.href} target="_blank" rel="noopener noreferrer" className="text-white hover:text-emerald-350 transition-colors" aria-label={s.platform || "Link"} title={s.platform}>
+                      <svg className="h-3.5 w-3.5 sm:h-5 sm:w-5 fill-none stroke-current" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                      </svg>
+                    </a>
+                  );
                 })}
               </div>
 

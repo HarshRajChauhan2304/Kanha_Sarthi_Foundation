@@ -3149,17 +3149,45 @@ export default function AdminPanelPage() {
                       {/* Social Integrations Section */}
                       <div className="border border-zinc-800/50 p-4 rounded-xl space-y-4 bg-zinc-950/20">
                         <div className="flex justify-between items-center flex-wrap gap-2">
-                          <h4 className="text-xs font-black text-[#F3A61E] uppercase tracking-wider">Social Integrations</h4>
-                          <div className="flex gap-2">
+                          <div>
+                            <h4 className="text-xs font-black text-[#F3A61E] uppercase tracking-wider">Social Integrations</h4>
+                            <p className="text-[10px] text-zinc-400 mt-0.5">Supports Telegram, WhatsApp Channel, Instagram, Facebook, YouTube, LinkedIn, X, and more.</p>
+                          </div>
+                          <div className="flex gap-1.5 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSocial = [...(footerConfig.social || []), { platform: "Telegram", href: "https://t.me/" }];
+                                setFooterConfig({ ...footerConfig, social: newSocial });
+                                handleSaveFooter(undefined, { social: newSocial }, "Telegram link added successfully!");
+                              }}
+                              className="px-2.5 py-1 bg-sky-950/40 hover:bg-sky-900/60 text-sky-400 border border-sky-800/50 rounded text-[10px] font-black uppercase cursor-pointer"
+                              title="Add Telegram channel/group link"
+                            >
+                              + Telegram
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSocial = [...(footerConfig.social || []), { platform: "WhatsApp Channel", href: "https://whatsapp.com/channel/" }];
+                                setFooterConfig({ ...footerConfig, social: newSocial });
+                                handleSaveFooter(undefined, { social: newSocial }, "WhatsApp Channel link added successfully!");
+                              }}
+                              className="px-2.5 py-1 bg-emerald-950/40 hover:bg-emerald-900/60 text-[#25D366] border border-emerald-800/50 rounded text-[10px] font-black uppercase cursor-pointer"
+                              title="Add WhatsApp channel/community link"
+                            >
+                              + WhatsApp
+                            </button>
                             <button
                               type="button"
                               onClick={() => {
                                 const newSocial = [...(footerConfig.social || []), { platform: "New Social", href: "https://" }];
                                 setFooterConfig({ ...footerConfig, social: newSocial });
+                                handleSaveFooter(undefined, { social: newSocial }, "Social link row added!");
                               }}
-                              className="px-2.5 py-1 bg-emerald-950/30 hover:bg-emerald-900/50 text-[#52c47c] border border-emerald-900/30 rounded text-[10px] font-black uppercase cursor-pointer"
+                              className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700/60 rounded text-[10px] font-black uppercase cursor-pointer"
                             >
-                              + Add Social
+                              + Other
                             </button>
                             <button
                               type="button"
@@ -3170,11 +3198,23 @@ export default function AdminPanelPage() {
                             </button>
                           </div>
                         </div>
+
+                        <datalist id="social-platforms-list">
+                          <option value="Telegram" />
+                          <option value="WhatsApp Channel" />
+                          <option value="Instagram" />
+                          <option value="Facebook" />
+                          <option value="YouTube" />
+                          <option value="LinkedIn" />
+                          <option value="Twitter / X" />
+                        </datalist>
+
                         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                           {(footerConfig.social || []).map((s: any, idx: number) => (
                             <div key={idx} className="flex gap-2 items-center">
                               <input
                                 type="text"
+                                list="social-platforms-list"
                                 value={s.platform}
                                 onChange={(e) => {
                                   const newSocial = [...footerConfig.social];
@@ -3182,7 +3222,7 @@ export default function AdminPanelPage() {
                                   setFooterConfig({ ...footerConfig, social: newSocial });
                                 }}
                                 placeholder="Platform"
-                                className="w-24 px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white font-bold"
+                                className="w-32 px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white font-bold"
                               />
                               <input
                                 type="text"
