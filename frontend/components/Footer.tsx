@@ -203,7 +203,11 @@ export default function Footer() {
         {/* Bottom Row */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-[8px] sm:text-[10px] font-black text-white/50 tracking-wider md:pl-8 text-center sm:text-left">
           <p className="uppercase">
-            Copyright &copy; {new Date().getFullYear()} Kanha Foundation
+            {footerData?.copyrightText
+              ? (footerData.copyrightText.toLowerCase().includes("copyright")
+                  ? footerData.copyrightText
+                  : `Copyright \u00a9 ${new Date().getFullYear()} ${footerData.copyrightText}`)
+              : `Copyright \u00a9 ${new Date().getFullYear()} Kanha Foundation`}
           </p>
         </div>
 

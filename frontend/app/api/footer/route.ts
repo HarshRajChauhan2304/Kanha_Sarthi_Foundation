@@ -6,6 +6,7 @@ export const revalidate = 0;
 
 const defaultFooter = {
   logo: "/logo.png",
+  copyrightText: "Kanha Foundation",
   companyOverview: [
     { label: "About Us", href: "/about" },
     { label: "Our Values", href: "/values" },
