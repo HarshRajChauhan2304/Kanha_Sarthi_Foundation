@@ -32,14 +32,19 @@ export default function Footer() {
   };
 
   useEffect(() => {
-    fetch('/api/footer', { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => {
-        if (data && !data.error && data.companyOverview && data.quickLinks) {
-          setFooterData(data);
-        }
-      })
-      .catch(err => console.error('Footer fetch error', err));
+    const fetchFooter = () => {
+      fetch('/api/footer', { cache: 'no-store' })
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.error && data.companyOverview && data.quickLinks) {
+            setFooterData(data);
+          }
+        })
+        .catch(err => console.error('Footer fetch error', err));
+    };
+
+    fetchFooter();
+    window.addEventListener("footer_update", fetchFooter);
 
     fetch('/api/page-texts', { cache: 'no-store' })
       .then(res => res.json())
@@ -52,6 +57,8 @@ export default function Footer() {
         }
       })
       .catch(err => console.error('Footer page texts fetch error', err));
+
+    return () => window.removeEventListener("footer_update", fetchFooter);
   }, []);
 
   return (

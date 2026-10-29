@@ -803,6 +803,7 @@ export default function AdminPanelPage() {
       if (data && !data.error) {
         triggerAlert(successMsg);
         setFooterConfig(data);
+        window.dispatchEvent(new Event("footer_update"));
         fetchData();
       } else {
         triggerAlert(data.error || "Failed to update Footer.");
@@ -3141,7 +3142,12 @@ export default function AdminPanelPage() {
                             />
                             <button
                               type="button"
-                              onClick={() => handleSaveFooter(undefined, { contact: { ...footerConfig.contact, email: footerConfig.contact?.email } }, "Contact Email updated successfully!")}
+                              onClick={() => {
+                                const emailVal = (footerConfig.contact?.email || "").trim();
+                                const updatedContact = { ...(footerConfig.contact || {}), email: emailVal };
+                                setFooterConfig({ ...footerConfig, contact: updatedContact });
+                                handleSaveFooter(undefined, { contact: updatedContact }, "Contact Email updated successfully!");
+                              }}
                               className="px-3 py-2 bg-emerald-950/40 hover:bg-emerald-900/60 text-[#52c47c] border border-emerald-800/50 rounded-xl text-xs font-bold uppercase transition-all cursor-pointer shrink-0"
                             >
                               Update Email
