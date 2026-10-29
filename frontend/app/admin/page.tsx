@@ -763,17 +763,20 @@ export default function AdminPanelPage() {
     window.location.href = "/signin";
   };
 
-  const handleSaveNavbar = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveNavbar = async (e?: React.FormEvent, customPayload?: any, successMsg: string = "Navbar configuration updated successfully!") => {
+    if (e) e.preventDefault();
+    const dataToSend = customPayload || navbarConfig;
     try {
       const res = await fetch('/api/navbar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(navbarConfig)
+        body: JSON.stringify(dataToSend),
+        cache: 'no-store'
       });
       const data = await res.json();
       if (data && !data.error) {
-        triggerAlert("Navbar configuration updated successfully!");
+        triggerAlert(successMsg);
+        setNavbarConfig(data);
         window.dispatchEvent(new Event("navbar_update"));
         fetchData();
       } else {
@@ -2759,103 +2762,273 @@ export default function AdminPanelPage() {
 
             {activeTab === "Navbar" && (
               <div className="space-y-6 p-6 text-left">
-                <form onSubmit={handleSaveNavbar} className="bg-zinc-900/40 border border-zinc-800/85 rounded-2xl p-6 space-y-6 max-w-xl">
-                  <div>
-                    <h3 className="text-lg font-bold text-white">Navbar Settings</h3>
-                    <p className="text-xs text-zinc-400 mt-1">Configure layout, typography, and logo assets for the navigation bar.</p>
+                <form onSubmit={(e) => handleSaveNavbar(e)} className="bg-zinc-900/40 border border-zinc-800/85 rounded-2xl p-6 space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-800/60">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Navbar Settings</h3>
+                      <p className="text-xs text-zinc-400 mt-1">Configure layout, typography, logo assets, and menu navigation links for the navigation bar.</p>
+                    </div>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-emerald-800/40 shrink-0 self-start md:self-auto"
+                    >
+                      Save All Navbar Settings
+                    </button>
                   </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 font-black">Navbar Logo Image</label>
-                      <div className="flex items-center gap-4 bg-zinc-950/40 border border-zinc-800/80 p-3 rounded-xl">
-                        {navbarConfig.logo && (
-                          <div className="h-12 w-12 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center p-1 overflow-hidden shrink-0">
-                            <img
-                              src={navbarConfig.logo}
-                              alt="Navbar Logo Preview"
-                              className="h-full w-full object-contain"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Left Column: Logo & Branding */}
+                    <div className="space-y-6">
+                      {/* Navbar Logo Image */}
+                      <div className="border border-zinc-800/50 p-4 rounded-xl space-y-3 bg-zinc-950/20">
+                        <div className="flex justify-between items-center">
+                          <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider font-black">Navbar Logo Image</label>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveNavbar(undefined, { logo: navbarConfig.logo }, "Navbar Logo updated successfully!")}
+                            className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-[#52c47c] border border-emerald-800/50 rounded-xl text-xs font-bold uppercase transition-all cursor-pointer shrink-0"
+                          >
+                            Update Logo
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-4 bg-zinc-950/40 border border-zinc-800/80 p-3 rounded-xl">
+                          {navbarConfig.logo && (
+                            <div className="h-12 w-12 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                              <img
+                                src={navbarConfig.logo}
+                                alt="Navbar Logo Preview"
+                                className="h-full w-full object-contain"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleFileUpload(e, (url) => setNavbarConfig({ ...navbarConfig, logo: url }))}
+                              className="block w-full text-xs text-zinc-400
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-xs file:font-black file:uppercase file:tracking-wider
+                                file:bg-emerald-950 file:text-emerald-300
+                                hover:file:bg-emerald-900 cursor-pointer"
                             />
                           </div>
-                        )}
-                        <div className="flex-1">
+                        </div>
+                      </div>
+
+                      {/* Foundation Name */}
+                      <div className="border border-zinc-800/50 p-4 rounded-xl space-y-3 bg-zinc-950/20">
+                        <div className="flex justify-between items-center">
+                          <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider font-black">Foundation Name</label>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveNavbar(undefined, { name: navbarConfig.name }, "Foundation Name updated successfully!")}
+                            className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-[#52c47c] border border-emerald-800/50 rounded-xl text-xs font-bold uppercase transition-all cursor-pointer shrink-0"
+                          >
+                            Update Name
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={navbarConfig.name ?? ""}
+                          onChange={(e) => setNavbarConfig({ ...navbarConfig, name: e.target.value })}
+                          placeholder="Leave blank for Logo only or enter Foundation Name"
+                          className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                        />
+                      </div>
+
+                      {/* Typography and Size */}
+                      <div className="border border-zinc-800/50 p-4 rounded-xl space-y-4 bg-zinc-950/20">
+                        <div className="flex justify-between items-center">
+                          <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider font-black">Typography & Sizing</label>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveNavbar(undefined, { fontFamily: navbarConfig.fontFamily, fontSize: navbarConfig.fontSize, logoSize: navbarConfig.logoSize }, "Typography & Size updated successfully!")}
+                            className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-[#52c47c] border border-emerald-800/50 rounded-xl text-xs font-bold uppercase transition-all cursor-pointer shrink-0"
+                          >
+                            Update Styling
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Font Family</label>
+                            <select
+                              value={navbarConfig.fontFamily || "Inter"}
+                              onChange={(e) => setNavbarConfig({ ...navbarConfig, fontFamily: e.target.value })}
+                              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none"
+                            >
+                              <option value="Inter">Inter (Sans-serif)</option>
+                              <option value="Outfit">Outfit (Modern)</option>
+                              <option value="Playfair Display">Playfair Display (Serif)</option>
+                              <option value="Montserrat">Montserrat (Geometric)</option>
+                              <option value="Roboto">Roboto (Clean)</option>
+                              <option value="Poppins">Poppins (Friendly)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Font Size (px)</label>
+                            <input
+                              type="number"
+                              value={navbarConfig.fontSize || 20}
+                              onChange={(e) => setNavbarConfig({ ...navbarConfig, fontSize: parseInt(e.target.value) || 20 })}
+                              placeholder="20"
+                              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Logo Height (px)</label>
                           <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileUpload(e, (url) => setNavbarConfig({ ...navbarConfig, logo: url }))}
-                            className="block w-full text-xs text-zinc-400
-                              file:mr-4 file:py-2 file:px-4
-                              file:rounded-full file:border-0
-                              file:text-xs file:font-black file:uppercase file:tracking-wider
-                              file:bg-emerald-950 file:text-emerald-300
-                              hover:file:bg-emerald-900 cursor-pointer"
+                            type="number"
+                            min={40}
+                            max={200}
+                            value={navbarConfig.logoSize || 104}
+                            onChange={(e) => setNavbarConfig({ ...navbarConfig, logoSize: parseInt(e.target.value) || 104 })}
+                            placeholder="104"
+                            className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white"
                           />
+                          <p className="text-[10px] text-zinc-500 mt-1">Configure height of the logo on desktop (in pixels). Mobile scales automatically.</p>
                         </div>
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Foundation Name</label>
-                      <input
-                        type="text"
-                        value={navbarConfig.name ?? ""}
-                        onChange={(e) => setNavbarConfig({ ...navbarConfig, name: e.target.value })}
-                        placeholder="Kanha Foundation"
-                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                      />
-                    </div>
+                    {/* Right Column: Navbar Navigation Links */}
+                    <div className="space-y-6">
+                      <div className="border border-zinc-800/50 p-4 rounded-xl bg-zinc-950/20">
+                        <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+                          <div>
+                            <h4 className="text-xs font-black text-[#F3A61E] uppercase tracking-wider">Navigation Menu Links</h4>
+                            <p className="text-[10px] text-zinc-400 mt-0.5">Manage the links shown in the top header and mobile navigation drawer.</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
+                                  ? navbarConfig.navItems
+                                  : [
+                                      { label: "Home", href: "/" },
+                                      { label: "Causes", href: "/causes" },
+                                      { label: "Our Impact", href: "/impacts" },
+                                      { label: "About Us", href: "/about" },
+                                      { label: "Contact", href: "/contact" }
+                                    ];
+                                const newLinks = [...currentLinks, { label: "New Page", href: "/" }];
+                                setNavbarConfig({ ...navbarConfig, navItems: newLinks });
+                              }}
+                              className="px-2.5 py-1 bg-emerald-950/30 hover:bg-emerald-900/50 text-[#52c47c] border border-emerald-900/30 rounded text-[10px] font-black uppercase cursor-pointer"
+                            >
+                              + Add Link
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveNavbar(undefined, { navItems: navbarConfig.navItems }, "Navbar Navigation Links updated successfully!")}
+                              className="px-2.5 py-1 bg-emerald-950/40 hover:bg-emerald-900/60 text-[#52c47c] border border-emerald-800/50 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                            >
+                              Update Section
+                            </button>
+                          </div>
+                        </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Font Family</label>
-                        <select
-                          value={navbarConfig.fontFamily || "Inter"}
-                          onChange={(e) => setNavbarConfig({ ...navbarConfig, fontFamily: e.target.value })}
-                          className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
-                        >
-                          <option value="Inter">Inter (Sans-serif)</option>
-                          <option value="Outfit">Outfit (Modern)</option>
-                          <option value="Playfair Display">Playfair Display (Serif)</option>
-                          <option value="Montserrat">Montserrat (Geometric)</option>
-                          <option value="Roboto">Roboto (Clean)</option>
-                          <option value="Poppins">Poppins (Friendly)</option>
-                        </select>
+                        <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                          {(navbarConfig.navItems && navbarConfig.navItems.length > 0
+                            ? navbarConfig.navItems
+                            : [
+                                { label: "Home", href: "/" },
+                                { label: "Causes", href: "/causes" },
+                                { label: "Our Impact", href: "/impacts" },
+                                { label: "About Us", href: "/about" },
+                                { label: "Contact", href: "/contact" }
+                              ]
+                          ).map((link: any, idx: number) => (
+                            <div key={idx} className="flex gap-2 items-center">
+                              <input
+                                type="text"
+                                value={link.label}
+                                onChange={(e) => {
+                                  const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
+                                    ? [...navbarConfig.navItems]
+                                    : [
+                                        { label: "Home", href: "/" },
+                                        { label: "Causes", href: "/causes" },
+                                        { label: "Our Impact", href: "/impacts" },
+                                        { label: "About Us", href: "/about" },
+                                        { label: "Contact", href: "/contact" }
+                                      ];
+                                  currentLinks[idx] = { ...link, label: e.target.value };
+                                  setNavbarConfig({ ...navbarConfig, navItems: currentLinks });
+                                }}
+                                placeholder="Link Label (e.g. Home)"
+                                className="w-1/3 px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white"
+                              />
+                              <input
+                                type="text"
+                                value={link.href}
+                                onChange={(e) => {
+                                  const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
+                                    ? [...navbarConfig.navItems]
+                                    : [
+                                        { label: "Home", href: "/" },
+                                        { label: "Causes", href: "/causes" },
+                                        { label: "Our Impact", href: "/impacts" },
+                                        { label: "About Us", href: "/about" },
+                                        { label: "Contact", href: "/contact" }
+                                      ];
+                                  currentLinks[idx] = { ...link, href: e.target.value };
+                                  setNavbarConfig({ ...navbarConfig, navItems: currentLinks });
+                                }}
+                                placeholder="URL (e.g. /causes)"
+                                className="flex-1 px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
+                                    ? navbarConfig.navItems
+                                    : [
+                                        { label: "Home", href: "/" },
+                                        { label: "Causes", href: "/causes" },
+                                        { label: "Our Impact", href: "/impacts" },
+                                        { label: "About Us", href: "/about" },
+                                        { label: "Contact", href: "/contact" }
+                                      ];
+                                  handleSaveNavbar(undefined, { navItems: currentLinks }, `"${link.label || 'Link'}" updated successfully!`);
+                                }}
+                                className="px-2.5 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-[#52c47c] border border-emerald-800/50 rounded-xl text-xs font-bold uppercase cursor-pointer shrink-0"
+                                title="Update this link"
+                              >
+                                Update
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
+                                    ? navbarConfig.navItems
+                                    : [
+                                        { label: "Home", href: "/" },
+                                        { label: "Causes", href: "/causes" },
+                                        { label: "Our Impact", href: "/impacts" },
+                                        { label: "About Us", href: "/about" },
+                                        { label: "Contact", href: "/contact" }
+                                      ];
+                                  const newLinks = currentLinks.filter((_: any, i: number) => i !== idx);
+                                  const updated = { ...navbarConfig, navItems: newLinks };
+                                  setNavbarConfig(updated);
+                                  handleSaveNavbar(undefined, { navItems: newLinks }, `"${link.label || 'Link'}" removed successfully!`);
+                                }}
+                                className="px-2 py-1.5 bg-red-950/30 hover:bg-red-900/50 text-red-400 border border-red-900/35 rounded-xl text-xs cursor-pointer shrink-0"
+                                title="Delete link"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Font Size (px)</label>
-                        <input
-                          type="number"
-                          required
-                          value={navbarConfig.fontSize || 20}
-                          onChange={(e) => setNavbarConfig({ ...navbarConfig, fontSize: parseInt(e.target.value) || 20 })}
-                          placeholder="20"
-                          className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Logo Height (px)</label>
-                      <input
-                        type="number"
-                        required
-                        min={40}
-                        max={200}
-                        value={navbarConfig.logoSize || 104}
-                        onChange={(e) => setNavbarConfig({ ...navbarConfig, logoSize: parseInt(e.target.value) || 104 })}
-                        placeholder="104"
-                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                      />
-                      <p className="text-[10px] text-zinc-500 mt-1">Configure height of the logo on desktop (in pixels). Mobile scales automatically. Default is 104.</p>
                     </div>
                   </div>
-
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-emerald-800/40"
-                  >
-                    Save Navbar Settings
-                  </button>
                 </form>
               </div>
             )}

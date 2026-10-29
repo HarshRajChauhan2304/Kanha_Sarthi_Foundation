@@ -41,6 +41,16 @@ export default function Footer() {
           
           {/* Column 1: Company Overview */}
           <div className="space-y-3 md:pl-8 text-center md:text-left">
+            {footerData?.logo && (
+              <div className="flex justify-center md:justify-start pb-1">
+                <img
+                  src={footerData.logo}
+                  alt="Footer Logo"
+                  className="h-10 w-auto object-contain brightness-95"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
+              </div>
+            )}
             <h3 className="text-[8px] sm:text-[10px] font-black text-[#52c47c] uppercase tracking-widest">
               Company Overview
             </h3>

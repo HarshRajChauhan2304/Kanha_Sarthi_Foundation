@@ -195,7 +195,7 @@ export default function Navbar() {
   };
 
   const activeNavItems = [
-    ...navItems,
+    ...((Array.isArray(navbarData?.navItems) && navbarData.navItems.length > 0) ? navbarData.navItems : navItems),
     ...(isVolunteerLoggedIn ? [{ label: "Beneficiaries", href: "/admin/beneficiaries" }] : [])
   ];
 

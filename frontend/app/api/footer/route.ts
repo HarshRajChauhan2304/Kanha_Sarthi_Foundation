@@ -1,6 +1,5 @@
-import { promises as fs } from 'fs';
 import { NextResponse } from 'next/server';
-import { getFallbackPath } from '@/lib/db-fallback';
+import { getConfig, saveConfig } from '@/lib/config-storage';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -32,22 +31,19 @@ const defaultFooter = {
 
 export async function GET() {
   try {
-    const footerPath = getFallbackPath('footer.json');
-    let json = defaultFooter;
-    try {
-      const data = await fs.readFile(footerPath, 'utf-8');
-      json = JSON.parse(data);
-    } catch {
-      await fs.writeFile(footerPath, JSON.stringify(defaultFooter, null, 2), 'utf-8');
-    }
-    return NextResponse.json(json, {
+    const data = await getConfig('footer', defaultFooter, 'footer.json');
+    return NextResponse.json(data, {
       headers: {
         'Cache-Control': 'no-store, max-age=0'
       }
     });
   } catch (error) {
     console.error('Error reading footer config:', error);
-    return NextResponse.json({ error: 'Failed to read footer config' }, { status: 500 });
+    return NextResponse.json(defaultFooter, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0'
+      }
+    });
   }
 }
 
@@ -57,14 +53,8 @@ export async function POST(req: Request) {
     if (typeof payload !== 'object' || payload === null) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
-    const footerPath = getFallbackPath('footer.json');
-    let existingData = defaultFooter;
-    try {
-      const data = await fs.readFile(footerPath, 'utf-8');
-      existingData = JSON.parse(data);
-    } catch {
-      // ignore, use defaultFooter
-    }
+
+    const existingData = await getConfig('footer', defaultFooter, 'footer.json');
 
     const updatedData = {
       ...existingData,
@@ -74,15 +64,14 @@ export async function POST(req: Request) {
         : existingData.contact
     };
 
-    await fs.writeFile(footerPath, JSON.stringify(updatedData, null, 2), 'utf-8');
-    return NextResponse.json(updatedData, {
+    const saved = await saveConfig('footer', updatedData, 'footer.json');
+    return NextResponse.json(saved, {
       headers: {
         'Cache-Control': 'no-store, max-age=0'
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error writing footer config:', error);
-    return NextResponse.json({ error: 'Failed to write footer config' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to write footer config' }, { status: 500 });
   }
 }
-
