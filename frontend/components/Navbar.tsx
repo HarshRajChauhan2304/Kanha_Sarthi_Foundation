@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { isSessionExpired, clearAllSessions } from "@/lib/session";
 import navbarJSON from '@/data/navbar.json';
 
 const navItems = [
@@ -90,6 +91,14 @@ export default function Navbar() {
   const [profilePhoto, setProfilePhoto] = useState("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80");
 
   const checkSessions = () => {
+    if (isSessionExpired()) {
+      clearAllSessions();
+      setIsUserLoggedIn(false);
+      setIsAdminLoggedIn(false);
+      setIsVolunteerLoggedIn(false);
+      return;
+    }
+
     const userAuth = localStorage.getItem("auth");
     const adminAuth = localStorage.getItem("admin_auth");
     const volunteerSession = localStorage.getItem("volunteer_session");
@@ -138,10 +147,14 @@ export default function Navbar() {
     const handleUpdate = () => checkSessions();
     window.addEventListener("storage", handleUpdate);
     window.addEventListener("user_avatar_update", handleUpdate);
+    window.addEventListener("session_update", handleUpdate);
+    window.addEventListener("session_expired", handleUpdate);
 
     return () => {
       window.removeEventListener("storage", handleUpdate);
       window.removeEventListener("user_avatar_update", handleUpdate);
+      window.removeEventListener("session_update", handleUpdate);
+      window.removeEventListener("session_expired", handleUpdate);
     };
   }, [pathname]);
 
@@ -184,9 +197,7 @@ export default function Navbar() {
 
 
   const handleSignOut = () => {
-    localStorage.removeItem("auth");
-    localStorage.removeItem("admin_auth");
-    localStorage.removeItem("volunteer_session");
+    clearAllSessions();
     setIsUserLoggedIn(false);
     setIsAdminLoggedIn(false);
     setIsVolunteerLoggedIn(false);

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isSessionExpired, clearAllSessions } from "@/lib/session";
 
 import DonorDeliveryPopup from "@/components/DonorDeliveryPopup";
 import BirthdayWishModal from "@/components/BirthdayWishModal";
@@ -49,7 +50,11 @@ export default function UserProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Check authentication
+    // Check authentication & session validity
+    if (isSessionExpired()) {
+      router.push("/signin?expired=1");
+      return;
+    }
     const authState = localStorage.getItem("auth");
     if (authState !== "true") {
       router.push("/signin");
@@ -186,8 +191,7 @@ export default function UserProfilePage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("auth");
-    localStorage.removeItem("user_email");
+    clearAllSessions();
     router.push("/signin");
   };
 

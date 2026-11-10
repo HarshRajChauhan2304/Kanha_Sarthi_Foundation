@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createSession, clearAllSessions, isSessionExpired } from '@/lib/session';
 import causesDataFallback from '@/data/causes.json';
 
 // Models
@@ -483,6 +484,11 @@ export default function AdminPanelPage() {
 
   // Check login state on mount
   useEffect(() => {
+    if (isSessionExpired()) {
+      clearAllSessions();
+      window.location.href = "/signin?expired=1";
+      return;
+    }
     const authState = localStorage.getItem("admin_auth");
     if (authState === "true") {
       setIsLoggedIn(true);
@@ -692,14 +698,15 @@ export default function AdminPanelPage() {
         });
         const data = await res.json();
         if (data.success) {
-          localStorage.setItem("admin_auth", "true");
           const finalUsername = data.username || authUsername;
           const finalEmail = data.email || "";
           const finalAvatar = data.avatar || "";
 
-          localStorage.setItem("admin_username", finalUsername);
-          localStorage.setItem("admin_email", finalEmail);
-          localStorage.setItem("admin_avatar", finalAvatar);
+          createSession("admin", {
+            username: finalUsername,
+            email: finalEmail,
+            avatar: finalAvatar
+          });
 
           setAdminUsername(finalUsername);
           setAdminEmail(finalEmail);
@@ -761,7 +768,7 @@ export default function AdminPanelPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_auth");
+    clearAllSessions();
     window.location.href = "/signin";
   };
 

@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from 'framer-motion';
+import { createSession, clearAllSessions } from "@/lib/session";
 
 export default function SignIn() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -21,6 +23,10 @@ export default function SignIn() {
       const redirect = params.get("redirect");
       if (redirect) {
         setRedirectPath(redirect);
+      }
+      const expired = params.get("expired");
+      if (expired === "1" || expired === "true") {
+        setSessionExpiredNotice(true);
       }
     }
   }, []);
@@ -37,27 +43,16 @@ export default function SignIn() {
         });
         const data = await res.json();
         if (data.success && data.user) {
-          // Clear any conflicting session states first
-          localStorage.removeItem("auth");
-          localStorage.removeItem("admin_auth");
-          localStorage.removeItem("volunteer_session");
+          clearAllSessions();
 
           if (data.role === "admin") {
-            localStorage.setItem("admin_auth", "true");
-            localStorage.setItem("admin_username", data.user.username);
-            localStorage.setItem("admin_email", data.user.email);
+            createSession("admin", data.user);
             router.push('/admin');
           } else if (data.role === "volunteer") {
-            localStorage.setItem("volunteer_session", JSON.stringify(data.user));
+            createSession("volunteer", data.user);
             router.push('/volunteer/profile');
           } else {
-            localStorage.setItem("auth", "true");
-            localStorage.setItem("user_name", data.user.username);
-            localStorage.setItem("user_email", data.user.email);
-            localStorage.setItem("user_phone", data.user.phone || "");
-            localStorage.setItem("user_gender", data.user.gender || "");
-            localStorage.setItem("user_avatar", data.user.avatar || "");
-            localStorage.setItem("user_bio", data.user.bio || "");
+            createSession("user", data.user);
             
             // Respect previous redirect path if checking out or sponsoring causes
             if (redirectPath && (redirectPath.startsWith('/donate') || redirectPath.startsWith('/causes'))) {
@@ -118,6 +113,11 @@ export default function SignIn() {
               exit={{ opacity: 0, x: 10 }}
             >
               <h2 className="mb-6 text-center text-3xl font-black text-[#1E4D2B] dark:text-[#52c47c]">Sign In</h2>
+              {sessionExpiredNotice && (
+                <div className="mb-4 text-xs font-bold text-amber-500 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-300 dark:border-amber-700/50 flex items-center gap-2">
+                  <span>Your session has expired due to inactivity. Please sign in again.</span>
+                </div>
+              )}
               {error && <p className="mb-4 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-950/20 p-2.5 rounded-lg border border-red-200 dark:border-red-900/30">{error}</p>}
               
               <form onSubmit={handleSubmit} className="space-y-4">

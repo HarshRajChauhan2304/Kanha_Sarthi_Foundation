@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { createSession } from "@/lib/session";
 
 export default function SignUp() {
   const router = useRouter();
@@ -54,12 +55,12 @@ export default function SignUp() {
       setIsSubmitting(false);
 
       if (data.success && data.user) {
-        localStorage.setItem("auth", "true");
-        localStorage.setItem("user_name", data.user.username);
-        localStorage.setItem("user_email", data.user.email);
-        localStorage.setItem("user_phone", data.user.phone || "");
-        localStorage.setItem("user_gender", data.user.gender || "");
-        localStorage.setItem("user_dob", data.user.dob || dob || "");
+        createSession("user", {
+          ...data.user,
+          phone,
+          gender,
+          dob: data.user.dob || dob || ""
+        });
         router.push("/causes");
       } else {
         setError(data.error || "Failed to register.");

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
+import { isSessionExpired, clearAllSessions } from '@/lib/session';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 type PaymentMethod = "Cashfree";
@@ -20,6 +21,11 @@ function DonateCheckoutPageContent() {
   const [address, setAddress] = useState("");
 
   useEffect(() => {
+    if (isSessionExpired()) {
+      clearAllSessions();
+      router.push('/signin?redirect=/donate&expired=1');
+      return;
+    }
     const auth = localStorage.getItem('auth');
     const adminAuth = localStorage.getItem('admin_auth');
     const volunteerSession = localStorage.getItem('volunteer_session');
@@ -428,12 +434,7 @@ function DonateCheckoutPageContent() {
               <button
                 type="button"
                 onClick={() => {
-                  localStorage.removeItem("auth");
-                  localStorage.removeItem("admin_auth");
-                  localStorage.removeItem("volunteer_session");
-                  localStorage.removeItem("user_name");
-                  localStorage.removeItem("user_email");
-                  localStorage.removeItem("user_phone");
+                  clearAllSessions();
                   router.push("/signin?redirect=/donate");
                 }}
                 className="px-4 py-1.5 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 text-xs font-bold rounded-full transition-colors cursor-pointer"

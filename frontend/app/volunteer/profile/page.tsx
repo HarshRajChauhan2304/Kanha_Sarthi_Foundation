@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isSessionExpired, clearAllSessions } from "@/lib/session";
 import { compressImage } from '@/lib/compress-image';
 import BirthdayWishModal from "@/components/BirthdayWishModal";
 
@@ -245,6 +246,10 @@ export default function VolunteerProfilePage() {
 
   // Check login session on mount
   useEffect(() => {
+    if (isSessionExpired()) {
+      window.location.href = "/signin?expired=1";
+      return;
+    }
     const savedSession = localStorage.getItem("volunteer_session");
     if (savedSession) {
       try {
@@ -362,7 +367,7 @@ export default function VolunteerProfilePage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("volunteer_session");
+    clearAllSessions();
     window.location.href = "/signin";
   };
 

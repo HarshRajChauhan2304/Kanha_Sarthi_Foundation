@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 import DonorDeliveryPopup from "@/components/DonorDeliveryPopup";
+import SessionManager from "@/components/SessionManager";
 
 export const metadata: Metadata = {
   title: "Kanha Foundation",
@@ -34,6 +35,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col overflow-y-auto overflow-x-hidden bg-zinc-50 dark:bg-black text-black dark:text-zinc-50">
         <CartProvider>
+          <SessionManager />
           <Navbar />
 
           <main className="flex-grow">{children}</main>
