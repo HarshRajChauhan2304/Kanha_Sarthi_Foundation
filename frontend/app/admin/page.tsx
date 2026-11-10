@@ -893,6 +893,11 @@ export default function AdminPanelPage() {
       setFormImage("rupee");
       setFormStatus("none");
     }
+
+    if (activeTab === "ContactInfo") {
+      setFormStatus("address");
+      setFormImage("map-pin");
+    }
     
     if (activeTab === "Donations") {
       setFormExcerpt("General Support");
@@ -1078,6 +1083,10 @@ export default function AdminPanelPage() {
       ? "/api/success-stories"
       : activeTab === "RoleManagement"
       ? "/api/admin/users"
+      : activeTab === "ContactInfo"
+      ? "/api/contact-info"
+      : activeTab === "ContactSubmissions"
+      ? "/api/contact"
       : `/api/${activeTab.toLowerCase()}`;
     
     // Build payload based on Tab
