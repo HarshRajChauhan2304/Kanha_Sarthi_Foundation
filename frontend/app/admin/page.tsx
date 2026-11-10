@@ -231,19 +231,11 @@ export default function AdminPanelPage() {
   });
 
   // Spotlight & Festival Campaign states
-  const [spotlightCampaign, setSpotlightCampaign] = useState<any>({
-    enabled: true,
-    badge: "🌟 Spotlight Fundraising Campaign",
-    title: "Mission Shiksha: Educate 500 Underprivileged Children",
-    tagline: "Join our mission to provide quality education, school uniforms, books, and mid-day nutrition to children from vulnerable slum communities.",
-    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=80",
-    target_amount: 500000,
-    raised_amount: 284500,
-    donors_count: 142,
-    donate_url: "/causes",
-    days_left: 18
-  });
+  const [spotlightCampaigns, setSpotlightCampaigns] = useState<any[]>([]);
   const [isSpotlightSaving, setIsSpotlightSaving] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<any | null>(null);
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
+  const [isCampaignModalSaving, setIsCampaignModalSaving] = useState(false);
 
   const [festivalPopup, setFestivalPopup] = useState<any>({
     enabled: true,
@@ -701,7 +693,7 @@ export default function AdminPanelPage() {
           const res = await fetch('/api/spotlight-campaign', { cache: 'no-store' });
           const data = await res.json();
           if (data && !data.error) {
-            setSpotlightCampaign(data);
+            setSpotlightCampaigns(Array.isArray(data) ? data : (data ? [data] : []));
           }
         } catch (err) {
           console.error("Error loading spotlight campaign:", err);
@@ -868,28 +860,119 @@ export default function AdminPanelPage() {
     }
   };
 
-  const handleSaveSpotlightCampaign = async (e?: React.FormEvent, customPayload?: any, successMsg: string = "Spotlight Campaign settings updated successfully!") => {
-    if (e) e.preventDefault();
-    setIsSpotlightSaving(true);
-    const dataToSend = customPayload || spotlightCampaign;
+  const openAddCampaignModal = () => {
+    setEditingCampaign({
+      id: Date.now(),
+      enabled: true,
+      badge: "🌟 Spotlight Fundraising Campaign",
+      title: "",
+      tagline: "",
+      image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=80",
+      target_amount: 500000,
+      raised_amount: 0,
+      donors_count: 0,
+      donate_url: "/causes",
+      days_left: 30
+    });
+    setIsCampaignModalOpen(true);
+  };
+
+  const openEditCampaignModal = (campaign: any) => {
+    setEditingCampaign({ ...campaign });
+    setIsCampaignModalOpen(true);
+  };
+
+  const handleSaveCampaignModal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCampaign) return;
+    setIsCampaignModalSaving(true);
+    try {
+      const isExisting = spotlightCampaigns.some((c: any) => String(c.id) === String(editingCampaign.id));
+      const method = isExisting ? 'PUT' : 'POST';
+      const res = await fetch('/api/spotlight-campaign', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingCampaign)
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setSpotlightCampaigns(data.campaigns || []);
+        setIsCampaignModalOpen(false);
+        setEditingCampaign(null);
+        triggerAlert(isExisting ? "Campaign updated successfully!" : "New campaign added successfully!");
+      } else {
+        triggerAlert(data.error || "Failed to save campaign.");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert("Error saving campaign.");
+    } finally {
+      setIsCampaignModalSaving(false);
+    }
+  };
+
+  const handleToggleCampaignActive = async (campaign: any) => {
+    try {
+      const updated = { ...campaign, enabled: !campaign.enabled };
+      const res = await fetch('/api/spotlight-campaign', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setSpotlightCampaigns(data.campaigns || []);
+        triggerAlert(`Campaign "${campaign.title}" is now ${updated.enabled ? 'ACTIVE' : 'DISABLED'} on live website.`);
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert("Failed to update status.");
+    }
+  };
+
+  const handleDeleteCampaign = async (id: any) => {
+    if (!window.confirm("Are you sure you want to delete this spotlight campaign?")) return;
+    try {
+      const res = await fetch(`/api/spotlight-campaign?id=${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setSpotlightCampaigns(data.campaigns || []);
+        triggerAlert("Campaign deleted successfully!");
+      } else {
+        triggerAlert(data.error || "Failed to delete campaign.");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerAlert("Error deleting campaign.");
+    }
+  };
+
+  const handleReorderCampaign = async (direction: 'up' | 'down', index: number) => {
+    const list = [...spotlightCampaigns];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+
+    const temp = list[index];
+    list[index] = list[targetIndex];
+    list[targetIndex] = temp;
+
+    setSpotlightCampaigns(list);
+
     try {
       const res = await fetch('/api/spotlight-campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSend)
+        body: JSON.stringify({ action: "reorder", items: list })
       });
       const data = await res.json();
       if (data && data.success) {
-        triggerAlert(successMsg);
-        setSpotlightCampaign(data.campaign);
-      } else {
-        triggerAlert(data.error || "Failed to update Spotlight Campaign.");
+        triggerAlert("Campaign order rearranged successfully!");
       }
     } catch (err) {
       console.error(err);
-      triggerAlert("Error saving Spotlight Campaign.");
-    } finally {
-      setIsSpotlightSaving(false);
+      triggerAlert("Failed to reorder campaigns.");
     }
   };
 
@@ -3916,195 +3999,166 @@ export default function AdminPanelPage() {
               </div>
             )}
 
-            {/* Spotlight Campaign Tab */}
+            {/* Spotlight Campaigns Management Tab */}
             {activeTab === "SpotlightCampaign" && (
-              <div className="bg-[#101412] p-8 sm:p-10 rounded-[2.5rem] border border-zinc-800/80 shadow-lg text-left max-w-4xl mx-auto space-y-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800/60">
+              <div className="space-y-6 text-left">
+                {/* Header Action Row */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-900/40 p-6 rounded-2xl border border-zinc-800/80">
                   <div>
                     <h2 className="text-xl font-black text-white flex items-center gap-2">
-                      <span>⭐</span> Spotlight Fundraising Campaign Settings
+                      <span>⭐</span> Spotlight Fundraising Campaigns
                     </h2>
                     <p className="text-xs text-zinc-400 mt-1">
-                      Configure the hero fundraising campaign positioned directly above "Featured Causes" on the homepage.
+                      Manage multiple spotlight campaigns displayed above "Featured Causes" on the homepage. Active campaigns cycle dynamically in an interactive carousel slider.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    disabled={isSpotlightSaving}
-                    onClick={() => handleSaveSpotlightCampaign()}
-                    className="px-6 py-2.5 bg-[#F3A61E] hover:bg-[#d68f12] text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 shrink-0"
-                  >
-                    {isSpotlightSaving ? "Saving..." : "Save Campaign"}
-                  </button>
-                </div>
-
-                {/* Status Toggle Card */}
-                <div className="p-5 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-bold text-white block">Active on Homepage</span>
-                    <span className="text-xs text-zinc-400">
-                      When turned on, this campaign will be prominently featured above Featured Causes.
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-zinc-400 bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
+                      Active: <strong className="text-emerald-400">{spotlightCampaigns.filter((c: any) => c.enabled !== false).length}</strong> / {spotlightCampaigns.length}
                     </span>
+                    <button
+                      type="button"
+                      onClick={openAddCampaignModal}
+                      className="px-5 py-2.5 bg-[#F3A61E] hover:bg-[#d68f12] text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5 shrink-0"
+                    >
+                      <span>+</span> Add Spotlight Campaign
+                    </button>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(spotlightCampaign?.enabled)}
-                      onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, enabled: e.target.checked })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-12 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                  </label>
                 </div>
 
-                {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Campaign Title</label>
-                    <input
-                      type="text"
-                      value={spotlightCampaign?.title || ""}
-                      onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, title: e.target.value })}
-                      placeholder="e.g., Mission Shiksha: Educate 500 Underprivileged Children"
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Badge / Header Label</label>
-                    <input
-                      type="text"
-                      value={spotlightCampaign?.badge || ""}
-                      onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, badge: e.target.value })}
-                      placeholder="e.g., 🌟 Spotlight Fundraising Campaign"
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Campaign Description / Tagline</label>
-                    <textarea
-                      rows={3}
-                      value={spotlightCampaign?.tagline || ""}
-                      onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, tagline: e.target.value })}
-                      placeholder="Provide details about the campaign's goals and direct grassroots impact..."
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Target Goal Amount (₹)</label>
-                    <input
-                      type="number"
-                      value={spotlightCampaign?.target_amount || ""}
-                      onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, target_amount: Number(e.target.value) })}
-                      placeholder="500000"
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Raised Amount So Far (₹)</label>
-                    <input
-                      type="number"
-                      value={spotlightCampaign?.raised_amount || ""}
-                      onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, raised_amount: Number(e.target.value) })}
-                      placeholder="284500"
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Number of Donors</label>
-                    <input
-                      type="number"
-                      value={spotlightCampaign?.donors_count || ""}
-                      onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, donors_count: Number(e.target.value) })}
-                      placeholder="142"
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Donate Button Redirect URL</label>
-                    <input
-                      type="text"
-                      value={spotlightCampaign?.donate_url || ""}
-                      onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, donate_url: e.target.value })}
-                      placeholder="/causes or /donate"
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
-                    />
-                  </div>
-
-                  {/* Campaign Image Upload & URL */}
-                  <div className="md:col-span-2 border border-zinc-800/60 p-5 rounded-2xl bg-zinc-950/40 space-y-4">
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider">Campaign Photo / Banner</label>
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                      {spotlightCampaign?.image && (
-                        <div className="h-20 w-32 rounded-xl bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0">
-                          <img
-                            src={spotlightCampaign.image}
-                            alt="Campaign Preview"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 w-full space-y-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(e, (url) => setSpotlightCampaign({ ...spotlightCampaign, image: url }))}
-                          className="block w-full text-xs text-zinc-400
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded-full file:border-0
-                            file:text-xs file:font-black file:uppercase file:tracking-wider
-                            file:bg-emerald-950 file:text-emerald-300
-                            hover:file:bg-emerald-900 cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={spotlightCampaign?.image || ""}
-                          onChange={(e) => setSpotlightCampaign({ ...spotlightCampaign, image: e.target.value })}
-                          placeholder="Or paste image URL"
-                          className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none"
-                        />
-                      </div>
+                {/* Campaigns Listing Table */}
+                <div className="overflow-x-auto bg-zinc-900/30 border border-zinc-800/50 rounded-2xl">
+                  {spotlightCampaigns.length === 0 ? (
+                    <div className="text-center py-16 space-y-3">
+                      <p className="text-sm font-bold text-zinc-400">No spotlight campaigns found.</p>
+                      <button
+                        onClick={openAddCampaignModal}
+                        className="px-4 py-2 bg-[#1E4D2B] text-white text-xs font-bold rounded-xl cursor-pointer"
+                      >
+                        Create First Campaign
+                      </button>
                     </div>
-                  </div>
-                </div>
+                  ) : (
+                    <table className="min-w-full divide-y divide-zinc-800 text-left">
+                      <thead>
+                        <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider">
+                          <th className="px-4 py-4 w-28">Rearrange</th>
+                          <th className="px-6 py-4">Preview</th>
+                          <th className="px-6 py-4">Campaign Title & Badge</th>
+                          <th className="px-6 py-4">Fundraising Progress</th>
+                          <th className="px-6 py-4">Live Status</th>
+                          <th className="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-900">
+                        {spotlightCampaigns.map((camp: any, index: number) => {
+                          const target = Number(camp.target_amount) || 1;
+                          const raised = Number(camp.raised_amount) || 0;
+                          const percent = Math.min(Math.round((raised / target) * 100), 100);
+                          const isActive = camp.enabled !== false;
 
-                {/* Live Preview Card */}
-                <div className="border-t border-zinc-800/80 pt-6">
-                  <span className="text-xs font-black uppercase tracking-wider text-zinc-400 block mb-4">Live Preview (How it looks on Homepage)</span>
-                  <div className="p-6 rounded-3xl bg-gradient-to-br from-[#0c2a13] to-[#103E1C] border border-emerald-500/30 text-white flex flex-col md:flex-row gap-6 items-center">
-                    {spotlightCampaign?.image && (
-                      <div className="h-32 w-48 rounded-2xl overflow-hidden shrink-0 border border-amber-500/30">
-                        <img src={spotlightCampaign.image} alt="preview" className="h-full w-full object-cover" />
-                      </div>
-                    )}
-                    <div className="flex-1 space-y-2">
-                      <span className="text-[10px] font-black uppercase text-amber-400 bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-500/30">
-                        {spotlightCampaign?.badge || "Spotlight Campaign"}
-                      </span>
-                      <h3 className="text-lg font-black text-white">{spotlightCampaign?.title || "Campaign Title"}</h3>
-                      <p className="text-xs text-emerald-100/80 line-clamp-2">{spotlightCampaign?.tagline || "Campaign description..."}</p>
-                      <div className="pt-2 flex items-center justify-between text-xs">
-                        <span className="font-bold text-[#F3A61E]">Raised: ₹{Number(spotlightCampaign?.raised_amount || 0).toLocaleString('en-IN')}</span>
-                        <span className="font-bold text-zinc-300">Goal: ₹{Number(spotlightCampaign?.target_amount || 0).toLocaleString('en-IN')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                          return (
+                            <tr key={camp.id || index} className="hover:bg-zinc-900/30 transition-colors">
+                              {/* Reorder Arrows */}
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="flex items-center gap-1.5 bg-zinc-950/60 border border-zinc-800/80 px-2 py-1 rounded-xl w-fit">
+                                  <button
+                                    type="button"
+                                    disabled={index === 0}
+                                    onClick={() => handleReorderCampaign('up', index)}
+                                    title="Move Up"
+                                    className="p-1 rounded-md bg-zinc-850 hover:bg-zinc-700 disabled:opacity-20 disabled:hover:bg-transparent text-zinc-300 hover:text-white transition-all text-[11px] font-black cursor-pointer disabled:cursor-not-allowed"
+                                  >
+                                    ▲
+                                  </button>
+                                  <span className="text-xs font-black text-[#F3A61E] min-w-[1.2rem] text-center">
+                                    {index + 1}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    disabled={index === spotlightCampaigns.length - 1}
+                                    onClick={() => handleReorderCampaign('down', index)}
+                                    title="Move Down"
+                                    className="p-1 rounded-md bg-zinc-850 hover:bg-zinc-700 disabled:opacity-20 disabled:hover:bg-transparent text-zinc-300 hover:text-white transition-all text-[11px] font-black cursor-pointer disabled:cursor-not-allowed"
+                                  >
+                                    ▼
+                                  </button>
+                                </div>
+                              </td>
 
-                <div className="flex justify-end pt-4">
-                  <button
-                    type="button"
-                    disabled={isSpotlightSaving}
-                    onClick={() => handleSaveSpotlightCampaign()}
-                    className="px-8 py-3 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-emerald-800/40 shadow-lg disabled:opacity-50"
-                  >
-                    {isSpotlightSaving ? "Saving..." : "Save Spotlight Campaign"}
-                  </button>
+                              {/* Photo Thumbnail */}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="h-12 w-16 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950">
+                                  <img src={camp.image} alt={camp.title} className="h-full w-full object-cover" />
+                                </div>
+                              </td>
+
+                              {/* Title & Badge */}
+                              <td className="px-6 py-4">
+                                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-500/15 border border-amber-500/30 text-amber-300 mb-1">
+                                  {camp.badge || "Spotlight Campaign"}
+                                </span>
+                                <p className="text-sm font-bold text-white line-clamp-1 max-w-sm">{camp.title}</p>
+                                <p className="text-xs text-zinc-400 line-clamp-1 max-w-sm mt-0.5">{camp.tagline}</p>
+                              </td>
+
+                              {/* Fundraising Progress */}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="space-y-1.5 min-w-[160px]">
+                                  <div className="flex items-center justify-between text-xs font-bold">
+                                    <span className="text-[#F3A61E]">₹{Number(raised).toLocaleString('en-IN')}</span>
+                                    <span className="text-zinc-400">₹{Number(target).toLocaleString('en-IN')}</span>
+                                  </div>
+                                  <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 rounded-full"
+                                      style={{ width: `${percent}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-[10px] font-bold text-emerald-400 block">{percent}% funded</span>
+                                </div>
+                              </td>
+
+                              {/* Live Status Toggle */}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleCampaignActive(camp)}
+                                  className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border cursor-pointer transition-all ${
+                                    isActive
+                                      ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60"
+                                      : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white"
+                                  }`}
+                                >
+                                  {isActive ? "Active on Home" : "Disabled"}
+                                </button>
+                              </td>
+
+                              {/* Actions */}
+                              <td className="px-6 py-4 text-right whitespace-nowrap">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditCampaignModal(camp)}
+                                    className="px-3 py-1 border border-zinc-700 rounded-lg text-xs text-zinc-300 hover:text-white cursor-pointer"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteCampaign(camp.id)}
+                                    className="px-3 py-1 bg-red-650/15 border border-red-900/40 rounded-lg text-xs text-red-400 hover:bg-red-650/25 cursor-pointer"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             )}
@@ -4287,6 +4341,195 @@ export default function AdminPanelPage() {
         )}
 
       </div>
+
+      {/* Spotlight Campaign Add / Edit Modal Overlay */}
+      <AnimatePresence>
+        {isCampaignModalOpen && editingCampaign && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
+            <div className="fixed inset-0" onClick={() => setIsCampaignModalOpen(false)} />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl z-10 text-left space-y-6"
+            >
+              <div className="flex justify-between items-center pb-4 border-b border-zinc-800">
+                <h3 className="text-xl font-black text-white">
+                  {spotlightCampaigns.some((c: any) => String(c.id) === String(editingCampaign.id)) ? "Edit Spotlight Campaign" : "Add New Spotlight Campaign"}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsCampaignModalOpen(false)}
+                  className="text-zinc-400 hover:text-white p-1"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveCampaignModal} className="space-y-5">
+                <div className="flex items-center justify-between p-4 bg-zinc-950/70 border border-zinc-800/80 rounded-xl">
+                  <div>
+                    <span className="text-xs font-bold text-white block">Active on Homepage</span>
+                    <span className="text-[11px] text-zinc-400">Feature this campaign in the live homepage slider</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editingCampaign.enabled !== false}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, enabled: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Campaign Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={editingCampaign.title || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, title: e.target.value })}
+                      placeholder="e.g. Mission Shiksha: Educate 500 Underprivileged Children"
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Badge / Header Label</label>
+                    <input
+                      type="text"
+                      value={editingCampaign.badge || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, badge: e.target.value })}
+                      placeholder="e.g. 🌟 Spotlight Fundraising Campaign"
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Donate Button Target Link</label>
+                    <input
+                      type="text"
+                      value={editingCampaign.donate_url || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, donate_url: e.target.value })}
+                      placeholder="/causes or /donate"
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Campaign Tagline / Description</label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={editingCampaign.tagline || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, tagline: e.target.value })}
+                      placeholder="Briefly describe the campaign's goals and direct grassroots impact..."
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Target Goal Amount (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      value={editingCampaign.target_amount || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, target_amount: Number(e.target.value) })}
+                      placeholder="500000"
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Raised Amount So Far (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      value={editingCampaign.raised_amount || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, raised_amount: Number(e.target.value) })}
+                      placeholder="284500"
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Supporters / Donors Count</label>
+                    <input
+                      type="number"
+                      value={editingCampaign.donors_count || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, donors_count: Number(e.target.value) })}
+                      placeholder="142"
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Days Left (Optional)</label>
+                    <input
+                      type="number"
+                      value={editingCampaign.days_left || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, days_left: Number(e.target.value) })}
+                      placeholder="18"
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                  </div>
+
+                  {/* Photo Upload */}
+                  <div className="sm:col-span-2 border border-zinc-800 p-4 rounded-xl bg-zinc-950/40 space-y-3">
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider">Campaign Photo</label>
+                    <div className="flex items-center gap-4">
+                      {editingCampaign.image && (
+                        <div className="h-16 w-24 rounded-lg overflow-hidden border border-zinc-800 shrink-0 bg-zinc-950">
+                          <img src={editingCampaign.image} alt="preview" className="h-full w-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, (url) => setEditingCampaign({ ...editingCampaign, image: url }))}
+                          className="block w-full text-xs text-zinc-400
+                            file:mr-4 file:py-1.5 file:px-3
+                            file:rounded-full file:border-0
+                            file:text-xs file:font-black file:uppercase file:tracking-wider
+                            file:bg-emerald-950 file:text-emerald-300
+                            hover:file:bg-emerald-900 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={editingCampaign.image || ""}
+                          onChange={(e) => setEditingCampaign({ ...editingCampaign, image: e.target.value })}
+                          placeholder="Or paste image URL"
+                          className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setIsCampaignModalOpen(false)}
+                    className="px-5 py-2.5 border border-zinc-700 text-zinc-300 rounded-xl text-xs font-bold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCampaignModalSaving}
+                    className="px-6 py-2.5 bg-[#F3A61E] hover:bg-[#d68f12] text-black text-xs font-black uppercase tracking-wider rounded-xl cursor-pointer disabled:opacity-50 shadow-md"
+                  >
+                    {isCampaignModalSaving ? "Saving..." : "Save Campaign"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Edit / Add Modal Overlays popup */}
       <AnimatePresence>
