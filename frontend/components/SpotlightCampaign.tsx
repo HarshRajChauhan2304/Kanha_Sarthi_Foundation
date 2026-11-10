@@ -169,7 +169,9 @@ export default function SpotlightCampaign() {
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <Link
-                    href={current.donate_url || "/causes"}
+                    href={(!current.donate_url || current.donate_url === "/causes")
+                      ? `/donate?title=${encodeURIComponent(current.title)}&category=${encodeURIComponent(current.badge || "Spotlight Campaign")}&amount=1000`
+                      : current.donate_url}
                     className="px-8 py-3.5 bg-[#F3A61E] hover:bg-[#d68f12] text-black text-sm font-black uppercase tracking-wider rounded-full shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer"
                   >
                     <span>Donate To This Campaign</span>

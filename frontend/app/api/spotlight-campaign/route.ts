@@ -15,7 +15,7 @@ const DEFAULT_CAMPAIGNS = [
     target_amount: 500000,
     raised_amount: 284500,
     donors_count: 142,
-    donate_url: "/causes",
+    donate_url: "/donate",
     days_left: 18
   }
 ];

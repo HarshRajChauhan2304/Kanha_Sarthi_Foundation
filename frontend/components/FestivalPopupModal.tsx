@@ -54,7 +54,9 @@ export default function FestivalPopupModal() {
 
   const handleDonate = () => {
     handleClose();
-    const destination = config?.donate_url || "/causes";
+    const destination = (!config?.donate_url || config.donate_url === "/causes")
+      ? `/donate?title=${encodeURIComponent(config?.title || "Special Festival Appeal")}&category=${encodeURIComponent(config?.badge || "Festival Relief")}&amount=1000`
+      : config.donate_url;
     router.push(destination);
   };
 

@@ -23,7 +23,8 @@ function DonateCheckoutPageContent() {
   useEffect(() => {
     if (isSessionExpired()) {
       clearAllSessions();
-      router.push('/signin?redirect=/donate&expired=1');
+      const fullPath = window.location.pathname + window.location.search;
+      router.push(`/signin?redirect=${encodeURIComponent(fullPath)}&expired=1`);
       return;
     }
     const auth = localStorage.getItem('auth');
@@ -32,7 +33,8 @@ function DonateCheckoutPageContent() {
     const isLoggedIn = auth === 'true' || adminAuth === 'true' || !!volunteerSession;
 
     if (!isLoggedIn) {
-      router.push('/signin?redirect=/donate');
+      const fullPath = window.location.pathname + window.location.search;
+      router.push(`/signin?redirect=${encodeURIComponent(fullPath)}`);
       return;
     }
 
@@ -63,7 +65,21 @@ function DonateCheckoutPageContent() {
       setPhone("");
       setMarketingPhone("+91");
     }
-  }, [router]);
+
+    // Also support donor details passed via search params (e.g. from Donate Monthly)
+    const paramName = searchParams?.get("name");
+    const paramEmail = searchParams?.get("email");
+    const paramPhone = searchParams?.get("phone");
+    if (paramName) setFullName(paramName);
+    if (paramEmail) {
+      setEmail(paramEmail);
+      setMarketingEmail(paramEmail);
+    }
+    if (paramPhone) {
+      setPhone(paramPhone);
+      setMarketingPhone(paramPhone.startsWith("+91") ? paramPhone : "+91" + paramPhone);
+    }
+  }, [router, searchParams]);
 
   const [causesList, setCausesList] = useState<any[]>([]);
   const [selectedCauseId, setSelectedCauseId] = useState<string>("");
@@ -76,15 +92,52 @@ function DonateCheckoutPageContent() {
       .then(data => {
         if (Array.isArray(data)) {
           setCausesList(data);
-          // If global cart is empty, keep cart empty
-          if (cartItems.length === 0) {
-            setSelectedCauseId("");
-            setLocalCart([]);
+
+          // If global cart has items from cause grid click, let the cartItems sync effect handle it
+          if (cartItems.length > 0) return;
+
+          // Check if user came from a specific campaign, causeId, festival popup, or monthly donation
+          const paramCauseId = searchParams?.get("causeId");
+          const paramTitle = searchParams?.get("title");
+          const paramAmount = searchParams?.get("amount");
+          const paramCategory = searchParams?.get("category");
+          const paramType = searchParams?.get("type"); // e.g. "monthly"
+
+          if (paramCauseId) {
+            const found = data.find((c: any) => c.id.toString() === paramCauseId);
+            if (found) {
+              setSelectedCauseId(found.id.toString());
+              setLocalCart([{
+                id: found.id,
+                title: found.title,
+                amount: paramAmount ? `₹${paramAmount}` : found.price,
+                category: found.category,
+                frequency: paramType === "monthly" ? "Monthly Subscription" : "One-Time"
+              }]);
+              return;
+            }
           }
+
+          if (paramTitle || paramAmount) {
+            const cleanAmt = (paramAmount || "1000").replace(/[^0-9]/g, "");
+            setCustomAmount(cleanAmt || "1000");
+            setSelectedCauseId("custom");
+            setLocalCart([{
+              id: "direct_" + Date.now(),
+              title: paramTitle || (paramType === "monthly" ? "Monthly Giving Subscription" : "Campaign Giving"),
+              amount: `₹${cleanAmt || "1000"}`,
+              category: paramCategory || (paramType === "monthly" ? "Monthly Subscription" : "General Support"),
+              frequency: paramType === "monthly" ? "Monthly Subscription" : "One-Time"
+            }]);
+            return;
+          }
+
+          setSelectedCauseId("");
+          setLocalCart([]);
         }
       })
       .catch(err => console.error("Error loading causes on checkout:", err));
-  }, []);
+  }, [cartItems, searchParams]);
 
   // Sync with global cartItems if user came from causes grid click
   useEffect(() => {
@@ -985,13 +1038,19 @@ function DonateCheckoutPageContent() {
                 Donation Summary
               </h2>
 
+              {searchParams?.get("type") === "monthly" && (
+                <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-2 text-xs font-black text-amber-500">
+                  <span>🔁 Monthly Recurring Subscription</span>
+                </div>
+              )}
+
               {localCart.length > 0 ? (
                 <div className="space-y-4 max-h-[250px] overflow-y-auto pr-1">
                   {localCart.map((item) => (
                     <div key={item.id} className="flex justify-between items-start gap-4">
                       <div className="text-left">
                         <p className="text-xs font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{item.title}</p>
-                        <span className="text-[10px] text-gray-400 font-bold">One-time Donation</span>
+                        <span className="text-[10px] text-gray-400 font-bold">{item.frequency || (searchParams?.get("type") === "monthly" ? "Monthly Subscription" : "One-time Donation")}</span>
                       </div>
                       <span className="text-xs font-black text-[#1E4D2B] dark:text-[#52c47c] flex-shrink-0">{item.amount}</span>
                     </div>

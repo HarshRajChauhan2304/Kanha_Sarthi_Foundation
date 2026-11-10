@@ -9,7 +9,7 @@
     "target_amount": 500000,
     "raised_amount": 284500,
     "donors_count": 142,
-    "donate_url": "/causes",
+    "donate_url": "/donate",
     "days_left": 18
   },
   {
@@ -22,7 +22,7 @@
     "target_amount": 300000,
     "raised_amount": 195000,
     "donors_count": 98,
-    "donate_url": "/causes",
+    "donate_url": "/donate",
     "days_left": 12
   }
 ]

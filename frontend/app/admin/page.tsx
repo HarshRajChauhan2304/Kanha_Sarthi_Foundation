@@ -244,7 +244,7 @@ export default function AdminPanelPage() {
     subtitle: "Join our festive drive to distribute dry ration kits, sweets, and warm clothes to hundreds of vulnerable families and slum children.",
     image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80",
     donate_text: "Donate Now & Share Joy",
-    donate_url: "/causes"
+    donate_url: "/donate"
   });
   const [isFestivalSaving, setIsFestivalSaving] = useState(false);
 
@@ -871,7 +871,7 @@ export default function AdminPanelPage() {
       target_amount: 500000,
       raised_amount: 0,
       donors_count: 0,
-      donate_url: "/causes",
+      donate_url: "/donate",
       days_left: 30
     });
     setIsCampaignModalOpen(true);
@@ -4256,7 +4256,7 @@ export default function AdminPanelPage() {
                       type="text"
                       value={festivalPopup?.donate_url || ""}
                       onChange={(e) => setFestivalPopup({ ...festivalPopup, donate_url: e.target.value })}
-                      placeholder="/causes or /donate"
+                      placeholder="/donate (Donation Form)"
                       className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
                     />
                   </div>
@@ -4413,7 +4413,7 @@ export default function AdminPanelPage() {
                       type="text"
                       value={editingCampaign.donate_url || ""}
                       onChange={(e) => setEditingCampaign({ ...editingCampaign, donate_url: e.target.value })}
-                      placeholder="/causes or /donate"
+                      placeholder="/donate (Donation Form)"
                       className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
                     />
                   </div>

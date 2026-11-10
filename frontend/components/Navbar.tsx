@@ -299,8 +299,19 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Far Right section: Profile & Cart */}
-          <div className="flex items-center space-x-3 ml-auto">
+          {/* Far Right section: Donate Monthly, Profile & Cart */}
+          <div className="flex items-center space-x-2 sm:space-x-3 ml-auto">
+            {/* Donate Monthly Button (matches user design screenshot) */}
+            <a
+              href="/donate-monthly"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-[#F3A61E] via-orange-500 to-[#e67e22] hover:from-[#e67e22] hover:to-[#d35400] text-white text-xs sm:text-sm font-black tracking-wide rounded-full shadow-md shadow-orange-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer uppercase shrink-0"
+            >
+              <span>Donate Monthly</span>
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </a>
+
             {/* Profile Dropdown Trigger */}
             <div className="relative">
               {!(isUserLoggedIn || isAdminLoggedIn || isVolunteerLoggedIn) ? (
@@ -475,6 +486,16 @@ export default function Navbar() {
 
               {/* Drawer Links (Full width block links) */}
               <div className="flex-1 bg-white pt-2 overflow-y-auto">
+                <div className="px-6 py-3 border-b border-gray-100">
+                  <a
+                    href="/donate-monthly"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-[#F3A61E] via-orange-500 to-[#e67e22] text-white text-sm font-black tracking-wide rounded-xl shadow-md uppercase"
+                  >
+                    <span>Donate Monthly</span>
+                    <span>❤️</span>
+                  </a>
+                </div>
                 {activeNavItems.map((item, idx) => {
                   const isActive = item.label === activeItem;
                   return (

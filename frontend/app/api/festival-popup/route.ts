@@ -11,7 +11,7 @@ const DEFAULT_POPUP = {
   subtitle: "Join our festive drive to distribute dry ration kits, sweets, and warm clothes to hundreds of vulnerable families and slum children.",
   image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80",
   donate_text: "Donate Now & Share Joy",
-  donate_url: "/causes"
+  donate_url: "/donate"
 };
 
 // GET festival popup data
