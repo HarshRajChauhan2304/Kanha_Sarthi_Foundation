@@ -24,9 +24,6 @@ export default function SessionManager() {
     // 2. Periodic check for session expiration (every 15 seconds)
     const checkExpiration = () => {
       if (isSessionExpired()) {
-        setShowExpiredToast(true);
-        setTimeout(() => setShowExpiredToast(false), 5000);
-
         // If on a protected route, redirect to signin with expired flag
         const isProtected = 
           pathname?.startsWith("/admin") || 
@@ -35,6 +32,9 @@ export default function SessionManager() {
 
         if (isProtected) {
           router.push("/signin?expired=1");
+        } else if (!pathname?.startsWith("/signin")) {
+          setShowExpiredToast(true);
+          setTimeout(() => setShowExpiredToast(false), 5000);
         }
       }
     };
@@ -51,10 +51,13 @@ export default function SessionManager() {
     const interval = setInterval(checkExpiration, 15000);
 
     const handleExpiredEvent = () => {
-      setShowExpiredToast(true);
-      setTimeout(() => setShowExpiredToast(false), 5000);
+      // Do not show the floating toast on signin page because it renders its own banner
+      if (!pathname?.startsWith("/signin")) {
+        setShowExpiredToast(true);
+        setTimeout(() => setShowExpiredToast(false), 5000);
+      }
     };
-    window.addEventListener("session_expired", handleExpiredEvent);
+    window.addEventListener("session_auto_expired", handleExpiredEvent);
 
     return () => {
       window.removeEventListener("mousedown", handleActivity);
@@ -62,7 +65,7 @@ export default function SessionManager() {
       window.removeEventListener("scroll", handleActivity);
       window.removeEventListener("touchstart", handleActivity);
       document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("session_expired", handleExpiredEvent);
+      window.removeEventListener("session_auto_expired", handleExpiredEvent);
       clearInterval(interval);
     };
   }, [pathname, router]);

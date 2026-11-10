@@ -51,12 +51,29 @@ export function createSession(role: SessionRole, userData?: any) {
 }
 
 /**
- * Updates the last active timestamp on user interaction (throttled to once every 30s)
+ * Updates the last active timestamp on user interaction (throttled to once every 30s).
+ * If the session has already expired from inactivity, it will not extend it.
  */
 export function touchSession() {
   if (typeof window === 'undefined') return;
 
+  const userAuth = localStorage.getItem('auth') === 'true';
+  const adminAuth = localStorage.getItem('admin_auth') === 'true';
+  const volSession = !!localStorage.getItem('volunteer_session');
+  if (!userAuth && !adminAuth && !volSession) return;
+
+  const lastActiveStr = localStorage.getItem('session_last_active');
   const now = Date.now();
+
+  // If already past the inactivity timeout, do not extend it - expire immediately
+  if (lastActiveStr) {
+    const lastActive = parseInt(lastActiveStr, 10);
+    if (now - lastActive > INACTIVITY_TIMEOUT_MS) {
+      triggerSessionExpired();
+      return;
+    }
+  }
+
   if (now - lastTouchTime < 30000) return; // throttle 30 seconds
   lastTouchTime = now;
 
@@ -103,7 +120,7 @@ export function isSessionExpired(): boolean {
   const isLifetimeExpired = now - createdAt > MAX_SESSION_LIFETIME_MS;
 
   if (isIdleExpired || isLifetimeExpired) {
-    clearAllSessions();
+    triggerSessionExpired();
     return true;
   }
 
@@ -139,7 +156,19 @@ export function getActiveSessionRole(): SessionRole | null {
 }
 
 /**
- * Clears all user, admin, and volunteer credentials and session metadata
+ * Explicitly triggers automatic session expiration due to inactivity or timeout.
+ * Cleans up sessions and notifies the app with 'session_auto_expired'.
+ */
+export function triggerSessionExpired() {
+  if (typeof window === 'undefined') return;
+  clearAllSessions();
+  window.dispatchEvent(new Event('session_auto_expired'));
+}
+
+/**
+ * Clears all user, admin, and volunteer credentials and session metadata.
+ * Note: Intentionally does NOT dispatch 'session_auto_expired' so manual logouts
+ * and login resets do not falsely show "session expired due to inactivity".
  */
 export function clearAllSessions() {
   if (typeof window === 'undefined') return;
@@ -170,7 +199,6 @@ export function clearAllSessions() {
   // Clear volunteer session
   localStorage.removeItem('volunteer_session');
 
-  window.dispatchEvent(new Event('session_expired'));
   window.dispatchEvent(new Event('session_update'));
   window.dispatchEvent(new Event('storage'));
 }

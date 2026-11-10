@@ -148,13 +148,13 @@ export default function Navbar() {
     window.addEventListener("storage", handleUpdate);
     window.addEventListener("user_avatar_update", handleUpdate);
     window.addEventListener("session_update", handleUpdate);
-    window.addEventListener("session_expired", handleUpdate);
+    window.addEventListener("session_auto_expired", handleUpdate);
 
     return () => {
       window.removeEventListener("storage", handleUpdate);
       window.removeEventListener("user_avatar_update", handleUpdate);
       window.removeEventListener("session_update", handleUpdate);
-      window.removeEventListener("session_expired", handleUpdate);
+      window.removeEventListener("session_auto_expired", handleUpdate);
     };
   }, [pathname]);
 

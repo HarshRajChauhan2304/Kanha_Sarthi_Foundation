@@ -43,6 +43,10 @@ export default function SignIn() {
         });
         const data = await res.json();
         if (data.success && data.user) {
+          setSessionExpiredNotice(false);
+          if (typeof window !== "undefined" && window.location.search.includes("expired")) {
+            window.history.replaceState({}, '', window.location.pathname);
+          }
           clearAllSessions();
 
           if (data.role === "admin") {
