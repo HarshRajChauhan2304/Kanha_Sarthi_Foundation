@@ -31,6 +31,7 @@ export default function UserProfilePage() {
   const [dob, setDob] = useState("");
   const [bio, setBio] = useState("Proud donor. Believer in direct grassroots impact.");
   const [avatar, setAvatar] = useState("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80");
+  const [role, setRole] = useState("Donor & Supporter");
 
   // Flow states
   const [isEditing, setIsEditing] = useState(false);
@@ -69,6 +70,14 @@ export default function UserProfilePage() {
     const storedDob = localStorage.getItem("user_dob") || "";
     const storedBio = localStorage.getItem("user_bio") || "Proud donor. Believer in direct grassroots impact.";
     const storedAvatar = localStorage.getItem("user_avatar") || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80";
+    const storedRoleRaw = localStorage.getItem("user_role") || localStorage.getItem("session_role") || "Donor & Supporter";
+
+    let displayRole = storedRoleRaw;
+    if (displayRole.toLowerCase() === 'admin') displayRole = 'Administrator';
+    else if (displayRole.toLowerCase() === 'volunteer') displayRole = 'Volunteer Member';
+    else if (displayRole.toLowerCase() === 'director') displayRole = 'Managing Director';
+    else if (displayRole.toLowerCase() === 'user') displayRole = 'Donor & Supporter';
+    setRole(displayRole);
 
     setName(storedName);
     setEmail(storedEmail);
@@ -372,7 +381,22 @@ export default function UserProfilePage() {
                 >
                   <div>
                     <h2 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">{name}</h2>
-                    <p className="text-xs text-[#F3A61E] font-black uppercase tracking-wider mt-1">Kanha Foundation Donor</p>
+                    <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-sm ${
+                      role.toLowerCase().includes('director') 
+                        ? 'bg-purple-950/40 text-purple-300 border-purple-500/40' 
+                        : role.toLowerCase().includes('admin') 
+                        ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40' 
+                        : role.toLowerCase().includes('volunteer') 
+                        ? 'bg-blue-950/40 text-blue-300 border-blue-500/40' 
+                        : 'bg-amber-950/40 text-[#F3A61E] border-amber-500/40'
+                    }`}>
+                      <span className={`h-2 w-2 rounded-full ${
+                        role.toLowerCase().includes('director') ? 'bg-purple-400' :
+                        role.toLowerCase().includes('admin') ? 'bg-emerald-400' :
+                        role.toLowerCase().includes('volunteer') ? 'bg-blue-400' : 'bg-[#F3A61E]'
+                      } animate-pulse`} />
+                      <span>Role: {role}</span>
+                    </div>
                   </div>
 
                   <p className="text-xs text-gray-500 dark:text-gray-400 italic max-w-xs mx-auto">
@@ -380,6 +404,12 @@ export default function UserProfilePage() {
                   </p>
 
                   <div className="border-t border-gray-150/40 dark:border-zinc-800/80 pt-6 text-left space-y-3.5">
+                    <div>
+                      <span className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Account Role / Designation</span>
+                      <span className="text-sm font-bold text-[#F3A61E] dark:text-[#F3A61E] flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs">🛡️</span> {role}
+                      </span>
+                    </div>
                     <div>
                       <span className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Email Address</span>
                       <span className="text-sm font-bold text-gray-800 dark:text-zinc-200">{email}</span>

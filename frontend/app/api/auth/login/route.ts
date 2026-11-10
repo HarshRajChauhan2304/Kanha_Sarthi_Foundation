@@ -64,7 +64,8 @@ export async function POST(request: Request) {
           user: {
             username: admin.username,
             email: admin.email,
-            phone: admin.phone || ""
+            phone: admin.phone || "",
+            role: admin.role || "Admin"
           }
         });
       } else {
@@ -126,7 +127,8 @@ export async function POST(request: Request) {
           phone: volunteer.phone,
           city: volunteer.city || "",
           skills: volunteer.skills || [],
-          status: volunteer.status
+          status: volunteer.status,
+          role: volunteer.role || "Volunteer"
         }
       });
     }
@@ -175,7 +177,8 @@ export async function POST(request: Request) {
             phone: displayPhone,
             gender: gender || user.gender || "",
             avatar: user.avatar || "",
-            bio: user.bio || ""
+            bio: user.bio || "",
+            role: user.role || "Donor & Supporter"
           }
         });
       } else {

@@ -7,6 +7,7 @@ import Counter from "@/components/Counter";
 import FeaturesCauses from "@/components/FeaturesCauses";
 import CausesThatMatter from "@/components/CausesThatMatter";
 import FeaturedCampaign from "@/components/FeaturedCampaign";
+import SpotlightCampaign from "@/components/SpotlightCampaign";
 import VolunteerSection from "@/components/VolunteerSection";
 import TrustSection from "@/components/TrustSection";
 import ReviewsSection from "@/components/ReviewsSection";
@@ -483,6 +484,9 @@ export default function Home() {
 
       
       
+
+      {/* Spotlight Active Fundraising Campaign */}
+      <SpotlightCampaign />
 
       {/* Featured Causes Section */}
         <section id="featured-causes" className="w-full py-16 relative overflow-visible">

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getResilientData, resilientDelete, resilientPost, resilientPut, saveResilientFallback } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -42,10 +42,14 @@ export async function GET() {
   // Load volunteer applications fallback
   const localApps = await getResilientData('volunteer_applications.json', []);
 
-  if (useFallback) {
-    const parsed = await getResilientData('about_highlights.json', { directors: [], volunteers: [] });
-    directors = parsed.directors || [];
-    volunteers = parsed.volunteers || [];
+  // Always load fallback JSON to ensure custom order and offline support
+  const parsed = await getResilientData('about_highlights.json', { directors: [], volunteers: [] });
+  const fallbackDirs = parsed.directors || [];
+  const fallbackVols = parsed.volunteers || [];
+
+  if (useFallback || directors.length === 0) {
+    directors = fallbackDirs;
+    volunteers = fallbackVols;
   }
 
   // Resolve approved applications (from Supabase or local fallback)
@@ -83,6 +87,33 @@ export async function GET() {
     }
   });
 
+  // Respect ordered sequence if configured in highlights
+  if (fallbackDirs.length > 0) {
+    const dirOrderMap = new Map<string, number>();
+    fallbackDirs.forEach((item: any, idx: number) => {
+      if (item.id !== undefined) dirOrderMap.set(String(item.id), idx);
+      if (item.name) dirOrderMap.set(item.name.trim().toLowerCase(), idx);
+    });
+    directors.sort((a: any, b: any) => {
+      const orderA = dirOrderMap.has(String(a.id)) ? dirOrderMap.get(String(a.id))! : (dirOrderMap.has(a.name?.trim().toLowerCase()) ? dirOrderMap.get(a.name?.trim().toLowerCase())! : 9999);
+      const orderB = dirOrderMap.has(String(b.id)) ? dirOrderMap.get(String(b.id))! : (dirOrderMap.has(b.name?.trim().toLowerCase()) ? dirOrderMap.get(b.name?.trim().toLowerCase())! : 9999);
+      return orderA - orderB;
+    });
+  }
+
+  if (fallbackVols.length > 0) {
+    const volOrderMap = new Map<string, number>();
+    fallbackVols.forEach((item: any, idx: number) => {
+      if (item.id !== undefined) volOrderMap.set(String(item.id), idx);
+      if (item.name) volOrderMap.set(item.name.trim().toLowerCase(), idx);
+    });
+    mergedVolunteers.sort((a: any, b: any) => {
+      const orderA = volOrderMap.has(String(a.id)) ? volOrderMap.get(String(a.id))! : (volOrderMap.has(a.name?.trim().toLowerCase()) ? volOrderMap.get(a.name?.trim().toLowerCase())! : 9999);
+      const orderB = volOrderMap.has(String(b.id)) ? volOrderMap.get(String(b.id))! : (volOrderMap.has(b.name?.trim().toLowerCase()) ? volOrderMap.get(b.name?.trim().toLowerCase())! : 9999);
+      return orderA - orderB;
+    });
+  }
+
   return NextResponse.json({
     directors,
     volunteers: mergedVolunteers
@@ -111,14 +142,33 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT (Edit) existing highlight record
+// PUT (Edit) existing highlight record or reorder items
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { type, id, name, role, image, quote } = body;
+    const { type, id, name, role, image, quote, action, items } = body;
 
     if (type !== "directors" && type !== "volunteers") {
       return NextResponse.json({ success: false, error: "Invalid highlight type specified" }, { status: 400 });
+    }
+
+    // Handle Rearrange / Reorder action
+    if (action === "reorder" && Array.isArray(items)) {
+      const currentData: any = await getResilientData('about_highlights.json', { directors: [], volunteers: [] });
+      currentData[type] = items;
+      await saveResilientFallback('about_highlights.json', currentData);
+
+      // Attempt Supabase order_index update if table supports it (non-blocking)
+      try {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.id && typeof item.id === 'number') {
+            await supabase.from(type).update({ order_index: i } as any).eq('id', item.id);
+          }
+        }
+      } catch (dbErr) {}
+
+      return NextResponse.json({ success: true, message: "Order updated successfully", [type]: items });
     }
 
     const result = await resilientPut({

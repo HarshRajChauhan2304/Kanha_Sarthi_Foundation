@@ -24,6 +24,9 @@ export function createSession(role: SessionRole, userData?: any) {
   localStorage.setItem('session_last_active', String(now));
   localStorage.setItem('session_role', role);
 
+  const resolvedRole = userData?.role || (role === 'admin' ? (userData?.role || 'Admin') : role === 'volunteer' ? (userData?.role || 'Volunteer') : (userData?.role || 'Donor & Supporter'));
+  localStorage.setItem('user_role', resolvedRole);
+
   if (role === 'admin') {
     localStorage.setItem('admin_auth', 'true');
     if (userData?.username) localStorage.setItem('admin_username', userData.username);
@@ -145,6 +148,7 @@ export function clearAllSessions() {
   localStorage.removeItem('session_created_at');
   localStorage.removeItem('session_last_active');
   localStorage.removeItem('session_role');
+  localStorage.removeItem('user_role');
 
   // Clear user auth
   localStorage.removeItem('auth');

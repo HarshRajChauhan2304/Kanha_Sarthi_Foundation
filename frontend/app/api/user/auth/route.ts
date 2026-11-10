@@ -85,7 +85,8 @@ export async function POST(request: Request) {
           gender: parsedGender || user.gender || "",
           dob: user.dob || "",
           avatar: user.avatar || "",
-          bio: user.bio || ""
+          bio: user.bio || "",
+          role: user.role || "Donor & Supporter"
         }
       });
     }

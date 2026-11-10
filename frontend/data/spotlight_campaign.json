@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "badge": "🌟 Spotlight Fundraising Campaign",
+  "title": "Mission Shiksha: Educate 500 Underprivileged Children",
+  "tagline": "Join our mission to provide quality education, school uniforms, books, and mid-day nutrition to children from vulnerable slum communities.",
+  "image": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=80",
+  "target_amount": 500000,
+  "raised_amount": 284500,
+  "donors_count": 142,
+  "donate_url": "/causes",
+  "days_left": 18
+}

@@ -16,6 +16,7 @@ interface Volunteer {
   skills: string[];
   status: string;
   created_at: string;
+  role?: string;
   profile_photo?: string;
   gender?: string;
   dob?: string;
@@ -577,8 +578,14 @@ export default function VolunteerProfilePage() {
                 className="h-16 w-16 rounded-full object-cover border-2 border-zinc-800 shadow-md"
               />
               <div>
-                <h1 className="text-xl sm:text-2xl font-black text-white">Volunteer Dashboard</h1>
-                <p className="text-xs text-zinc-400 mt-1">Hello, {volunteer?.name}! Thank you for your support. ❤️</p>
+                <h1 className="text-xl sm:text-2xl font-black text-white">{volunteer?.name || "Volunteer Dashboard"}</h1>
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-950/70 border border-blue-500/40 text-blue-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+                    ROLE: VOLUNTEER
+                  </span>
+                  <p className="text-xs text-zinc-400">Verified Member ❤️</p>
+                </div>
               </div>
             </div>
             <button
@@ -652,6 +659,12 @@ export default function VolunteerProfilePage() {
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Account Role / Designation</label>
+                    <p className="text-sm font-extrabold text-blue-300 mt-1 flex items-center gap-1.5">
+                      <span>🛡️</span> {volunteer?.role || "Volunteer Member"}
+                    </p>
+                  </div>
                   <div>
                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Full Name</label>
                     <p className="text-sm font-extrabold text-white mt-1">{volunteer?.name}</p>
