@@ -2,11 +2,11 @@
  * Universal Client-Side Session & Auto-Logout Manager
  * 
  * Automatically expires and cleans up sessions after:
- * 1. Inactivity Timeout: 2 hours of no user interaction (clicks, scrolls, keypresses)
+ * 1. Inactivity Timeout: 10 minutes of no user interaction (clicks, scrolls, keypresses)
  * 2. Max Session Lifetime: 24 hours absolute maximum from login time
  */
 
-export const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
+export const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 export const MAX_SESSION_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export type SessionRole = 'user' | 'admin' | 'volunteer';
@@ -93,7 +93,7 @@ export function isSessionExpired(): boolean {
   const createdAt = parseInt(createdAtStr, 10);
   const lastActive = parseInt(lastActiveStr, 10);
 
-  // Check 1: Inactivity timeout (e.g. 2 hours without touch)
+  // Check 1: Inactivity timeout (e.g. 10 minutes without touch)
   const isIdleExpired = now - lastActive > INACTIVITY_TIMEOUT_MS;
 
   // Check 2: Absolute lifetime expiration (e.g. 24 hours max)
@@ -170,3 +170,4 @@ export function clearAllSessions() {
   window.dispatchEvent(new Event('session_update'));
   window.dispatchEvent(new Event('storage'));
 }
+
