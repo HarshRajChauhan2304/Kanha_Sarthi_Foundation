@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 // GET all static page texts configuration settings
 export async function GET() {
@@ -26,7 +26,7 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const fallbackPath = path.join(process.cwd(), 'data', 'page_texts.json');
+      const fallbackPath = getFallbackPath('page_texts.json');
       if (fs.existsSync(fallbackPath)) {
         texts = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
       } else {

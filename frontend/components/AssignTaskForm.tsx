@@ -70,7 +70,7 @@ const AssignTaskForm: React.FC<{ onClose: () => void; refreshTasks: () => void }
       task_time: taskTime,
       status: 'Pending',
     };
-    const res = await fetch('/api/admin/assign-task', {
+    const res = await fetch('/api/volunteer/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

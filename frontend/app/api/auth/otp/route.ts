@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
+import { getFallbackPath } from '@/lib/db-fallback';
 
-const getOTPFilePath = () => path.join(process.cwd(), 'data', 'otps.json');
+const getOTPFilePath = () => getFallbackPath('otps.json');
 
 const readOTPs = (): Record<string, { otp: string; expiresAt: number }> => {
   try {
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
 
       if (!emailExists) {
         try {
-          const filePath = path.join(process.cwd(), 'data', 'users.json');
+          const filePath = getFallbackPath('users.json');
           if (fs.existsSync(filePath)) {
             const users = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
             if (users.some((u: any) => u.email?.trim().toLowerCase() === cleanEmail)) {

@@ -948,7 +948,7 @@ function DonateCheckoutPageContent() {
                     </div>
 
                     <p className="text-[10px] text-zinc-450 dark:text-zinc-550 leading-normal font-bold">
-                      By signing up via text or email, you agree to receive recurring automated marketing messages, including cart reminders, at the contact information provided. Consent is not a condition of purchase. Reply STOP to unsubscribe. Reply HELP for help. Message frequency varies. Msg & data rates may apply. View our <a href="#" className="underline">Privacy policy</a> and <a href="#" className="underline">Terms of service</a>.
+                      By signing up via text or email, you agree to receive recurring automated marketing messages, including cart reminders, at the contact information provided. Consent is not a condition of purchase. Reply STOP to unsubscribe. Reply HELP for help. Message frequency varies. Msg & data rates may apply. View our <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-emerald-500">Privacy policy</a> and <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-emerald-500">Terms of service</a>.
                     </p>
                   </motion.div>
                 )}

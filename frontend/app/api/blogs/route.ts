@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 // GET all blogs
 export async function GET() {
@@ -32,7 +32,7 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const fallbackPath = path.join(process.cwd(), 'data', 'blogs.json');
+      const fallbackPath = getFallbackPath('blogs.json');
       if (fs.existsSync(fallbackPath)) {
         const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
         blogs = JSON.parse(fileContent);

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +44,7 @@ export async function GET() {
   // Load volunteer applications fallback
   let localApps: any[] = [];
   try {
-    const appsFallbackPath = path.join(process.cwd(), 'data', 'volunteer_applications.json');
+    const appsFallbackPath = getFallbackPath('volunteer_applications.json');
     if (fs.existsSync(appsFallbackPath)) {
       localApps = JSON.parse(fs.readFileSync(appsFallbackPath, 'utf-8'));
     }
@@ -54,7 +54,7 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const fallbackPath = path.join(process.cwd(), 'data', 'about_highlights.json');
+      const fallbackPath = getFallbackPath('about_highlights.json');
       if (fs.existsSync(fallbackPath)) {
         const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
         const parsed = JSON.parse(fileContent);

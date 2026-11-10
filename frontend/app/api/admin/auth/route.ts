@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-
-const filePath = path.join(process.cwd(), 'data', 'admin_users.json');
+import { getFallbackPath } from '@/lib/db-fallback';
 
 const getLocalAdminUsers = (): any[] => {
   try {
+    const filePath = getFallbackPath('admin_users.json');
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, 'utf-8');
       return JSON.parse(data);
@@ -19,6 +19,7 @@ const getLocalAdminUsers = (): any[] => {
 
 const saveLocalAdminUsers = (users: any[]) => {
   try {
+    const filePath = getFallbackPath('admin_users.json');
     const dataDir = path.dirname(filePath);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });

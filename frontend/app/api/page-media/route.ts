@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +28,7 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const fallbackPath = path.join(process.cwd(), 'data', 'page_media.json');
+      const fallbackPath = getFallbackPath('page_media.json');
       if (fs.existsSync(fallbackPath)) {
         media = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
       } else {

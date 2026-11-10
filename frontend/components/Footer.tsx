@@ -11,7 +11,7 @@ export default function Footer() {
   const [copiedEmail, setCopiedEmail] = useState(false);
 
   const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const email = footerData?.contact?.email || 'kanhafoundation223@gmail.com';
+    const email = footerData?.contact?.email || 'kanhasathifoundation223@gmail.com';
     // On desktop browser, open Gmail web composer in new tab directly so Windows/Chrome users never get a dead link
     if (typeof window !== 'undefined' && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
       e.preventDefault();
@@ -23,7 +23,7 @@ export default function Footer() {
   const copyToClipboard = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const email = footerData?.contact?.email || 'kanhafoundation223@gmail.com';
+    const email = footerData?.contact?.email || 'kanhasathifoundation223@gmail.com';
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(email);
       setCopiedEmail(true);
@@ -122,12 +122,12 @@ export default function Footer() {
                   </p>
                   <div className="flex items-center justify-center md:justify-end gap-1.5 mt-1 flex-wrap">
                     <a 
-                      href={`mailto:${footerData?.contact?.email || 'kanhafoundation223@gmail.com'}`}
+                      href={`mailto:${footerData?.contact?.email || 'kanhasathifoundation223@gmail.com'}`}
                       onClick={handleEmailClick}
                       className="text-white hover:text-emerald-350 hover:underline inline-block font-black break-all text-[8px] sm:text-xs cursor-pointer transition-colors"
                       title="Click to send email (opens Gmail / default mail app)"
                     >
-                      {footerData?.contact?.email || "kanhafoundation223@gmail.com"}
+                      {footerData?.contact?.email || "kanhasathifoundation223@gmail.com"}
                     </a>
                     <button
                       type="button"

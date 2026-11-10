@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
+import { getFallbackPath } from '@/lib/db-fallback';
 
 // Helper to read local JSON files
 const readLocalJSON = (filename: string): any[] => {
   try {
-    const filePath = path.join(process.cwd(), 'data', filename);
+    const filePath = getFallbackPath(filename);
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, 'utf-8');
       return JSON.parse(data);

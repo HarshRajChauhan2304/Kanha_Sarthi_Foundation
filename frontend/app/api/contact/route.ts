@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { resilientDelete } from '@/lib/db-fallback';
+import { getFallbackPath, resilientDelete } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +28,7 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const dataPath = path.join(process.cwd(), 'data', 'contact_submissions.json');
+      const dataPath = getFallbackPath('contact_submissions.json');
       if (fs.existsSync(dataPath)) {
         const fileContent = fs.readFileSync(dataPath, 'utf-8');
         submissions = JSON.parse(fileContent);
@@ -57,11 +57,7 @@ export async function POST(request: Request) {
 
     // 1. Store in local JSON file as backup
     try {
-      const dataDir = path.join(process.cwd(), 'data');
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
-      const dataPath = path.join(dataDir, 'contact_submissions.json');
+      const dataPath = getFallbackPath('contact_submissions.json');
       let submissions = [];
       if (fs.existsSync(dataPath)) {
         const fileContent = fs.readFileSync(dataPath, 'utf-8');

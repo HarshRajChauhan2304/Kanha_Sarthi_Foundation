@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 const DEFAULT_CATEGORIES = [
   { id: 1, name: "Birthday Giving" },
@@ -37,7 +37,7 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const fallbackPath = path.join(process.cwd(), 'data', 'categories.json');
+      const fallbackPath = getFallbackPath('categories.json');
       if (fs.existsSync(fallbackPath)) {
         const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
         categories = JSON.parse(fileContent);

@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { syncVolunteerToHighlights } from '@/lib/db-fallback';
+import { getFallbackPath, syncVolunteerToHighlights } from '@/lib/db-fallback';
 
 // Helper to read local JSON files
 const readLocalJSON = (filename: string): any[] => {
   try {
-    const filePath = path.join(process.cwd(), 'data', filename);
+    const filePath = getFallbackPath(filename);
     if (fs.existsSync(filePath)) {
       return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     }
@@ -20,7 +20,7 @@ const readLocalJSON = (filename: string): any[] => {
 // Helper to write local JSON files
 const writeLocalJSON = (filename: string, data: any[]) => {
   try {
-    const filePath = path.join(process.cwd(), 'data', filename);
+    const filePath = getFallbackPath(filename);
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
   } catch (error) {
     console.error(`Error writing local ${filename}:`, error);

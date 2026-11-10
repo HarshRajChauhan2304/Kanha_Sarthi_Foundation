@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getFallbackPath } from '@/lib/db-fallback';
 
 async function readLocalJSON(filename: string) {
   try {
-    const filePath = path.join(process.cwd(), 'data', filename);
+    const filePath = getFallbackPath(filename);
     const data = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(data);
   } catch (error) {

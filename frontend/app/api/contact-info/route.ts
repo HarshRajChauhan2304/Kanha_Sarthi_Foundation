@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +28,13 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const fallbackPath = path.join(process.cwd(), 'data', 'contact_info.json');
+      const fallbackPath = getFallbackPath('contact_info.json');
       if (fs.existsSync(fallbackPath)) {
         contactInfo = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
       } else {
         contactInfo = [
           { id: 1, title: "Registered Address", value: "Kanha Foundation Office,\nRanchi, Jharkhand, 834001, India", type: "address", icon: "map-pin" },
-          { id: 2, title: "Email Inquiry", value: "kanhafoundation223@gmail.com", type: "email", icon: "mail" },
+          { id: 2, title: "Email Inquiry", value: "kanhasathifoundation223@gmail.com", type: "email", icon: "mail" },
           { id: 3, title: "WhatsApp Support", value: "+91 74881 64529", type: "whatsapp", icon: "whatsapp" }
         ];
         fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
