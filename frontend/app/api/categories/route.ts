@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import fs from 'fs';
-import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const DEFAULT_CATEGORIES = [
   { id: 1, name: "Birthday Giving" },
@@ -17,43 +18,23 @@ const DEFAULT_CATEGORIES = [
 
 // GET all categories
 export async function GET() {
-  let categories: any[] = [];
-  let useFallback = false;
-
   try {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
       .order('id', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      useFallback = true;
-    } else {
-      categories = data;
+    if (!error && data && data.length > 0) {
+      return NextResponse.json(data, {
+        headers: { 'Cache-Control': 'no-store, max-age=0' }
+      });
     }
-  } catch (err) {
-    useFallback = true;
-  }
+  } catch (err) {}
 
-  if (useFallback) {
-    try {
-      const fallbackPath = getFallbackPath('categories.json');
-      if (fs.existsSync(fallbackPath)) {
-        const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
-        categories = JSON.parse(fileContent);
-      } else {
-        categories = DEFAULT_CATEGORIES;
-        // Auto-create directory and file if missing
-        fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
-        fs.writeFileSync(fallbackPath, JSON.stringify(categories, null, 2), 'utf-8');
-      }
-    } catch (e) {
-      console.error("Failed to read categories fallback JSON:", e);
-      categories = DEFAULT_CATEGORIES;
-    }
-  }
-
-  return NextResponse.json(categories);
+  const categories = await getResilientData('categories.json', DEFAULT_CATEGORIES);
+  return NextResponse.json(categories, {
+    headers: { 'Cache-Control': 'no-store, max-age=0' }
+  });
 }
 
 // POST new category

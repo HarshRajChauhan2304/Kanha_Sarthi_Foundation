@@ -1,36 +1,19 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { getFallbackPath } from '@/lib/db-fallback';
+import { getFallbackPath, getResilientData, saveResilientFallback } from '@/lib/db-fallback';
 import { supabaseAdmin } from '@/lib/supabase';
+import fs from 'fs';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-const filePath = getFallbackPath('stats_cards.json');
 const donationsFilePath = getFallbackPath('donations.json');
 
-const getLocalCards = (): any[] => {
-  try {
-    if (fs.existsSync(filePath)) {
-      const data = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error("Error reading stats cards:", error);
-  }
-  return [];
+const getLocalCards = async (): Promise<any[]> => {
+  return await getResilientData('stats_cards.json', []);
 };
 
-const saveLocalCards = (cards: any[]) => {
-  try {
-    const dataDir = path.dirname(filePath);
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-    fs.writeFileSync(filePath, JSON.stringify(cards, null, 2), 'utf-8');
-  } catch (error) {
-    console.error("Error saving stats cards:", error);
-  }
+const saveLocalCards = async (cards: any[]) => {
+  await saveResilientFallback('stats_cards.json', cards);
 };
 
 // GET all stats cards
@@ -147,7 +130,7 @@ export async function GET() {
     const totalImpacted = totalLives + totalBirthday + totalMeals + totalStudykit;
 
     // 4. Update the stats cards
-    const cards = getLocalCards();
+    const cards = await getLocalCards();
     const updatedCards = cards.map(card => {
       switch (card.category) {
         case 'raised':
@@ -178,9 +161,10 @@ export async function GET() {
 
   } catch (error: any) {
     console.error("Error dynamically aggregating stats cards:", error);
-    return NextResponse.json(getLocalCards(), {
+    const fallbackCards = await getLocalCards();
+    return NextResponse.json(fallbackCards, {
       headers: {
-        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60'
+        'Cache-Control': 'no-store, max-age=0'
       }
     });
   }
@@ -196,7 +180,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Title is required" }, { status: 400 });
     }
 
-    const cards = getLocalCards();
+    const cards = await getLocalCards();
     const newCard = {
       id: Date.now(),
       title,
@@ -208,7 +192,7 @@ export async function POST(request: Request) {
     };
 
     cards.push(newCard);
-    saveLocalCards(cards);
+    await saveLocalCards(cards);
 
     return NextResponse.json({ success: true, card: newCard });
   } catch (error: any) {
@@ -226,7 +210,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, error: "ID and Title are required" }, { status: 400 });
     }
 
-    const cards = getLocalCards();
+    const cards = await getLocalCards();
     const cardIndex = cards.findIndex(c => c.id === id);
 
     if (cardIndex === -1) {
@@ -243,7 +227,7 @@ export async function PUT(request: Request) {
       category: category || "none"
     };
 
-    saveLocalCards(cards);
+    await saveLocalCards(cards);
     return NextResponse.json({ success: true, card: cards[cardIndex] });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -261,14 +245,14 @@ export async function DELETE(request: Request) {
     }
 
     const id = parseInt(idStr, 10);
-    const cards = getLocalCards();
+    const cards = await getLocalCards();
     const updatedCards = cards.filter(c => c.id !== id);
 
     if (cards.length === updatedCards.length) {
       return NextResponse.json({ success: false, error: "Card not found" }, { status: 404 });
     }
 
-    saveLocalCards(updatedCards);
+    await saveLocalCards(updatedCards);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

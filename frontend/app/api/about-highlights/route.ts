@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import fs from 'fs';
-import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
-
+export const revalidate = 0;
 
 // GET all directors and volunteers highlights
 export async function GET() {
@@ -42,28 +40,12 @@ export async function GET() {
   }
 
   // Load volunteer applications fallback
-  let localApps: any[] = [];
-  try {
-    const appsFallbackPath = getFallbackPath('volunteer_applications.json');
-    if (fs.existsSync(appsFallbackPath)) {
-      localApps = JSON.parse(fs.readFileSync(appsFallbackPath, 'utf-8'));
-    }
-  } catch (e) {
-    console.error("Failed to read volunteer applications fallback:", e);
-  }
+  const localApps = await getResilientData('volunteer_applications.json', []);
 
   if (useFallback) {
-    try {
-      const fallbackPath = getFallbackPath('about_highlights.json');
-      if (fs.existsSync(fallbackPath)) {
-        const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
-        const parsed = JSON.parse(fileContent);
-        directors = parsed.directors || [];
-        volunteers = parsed.volunteers || [];
-      }
-    } catch (e) {
-      console.error("Failed to read about_highlights fallback JSON:", e);
-    }
+    const parsed = await getResilientData('about_highlights.json', { directors: [], volunteers: [] });
+    directors = parsed.directors || [];
+    volunteers = parsed.volunteers || [];
   }
 
   // Resolve approved applications (from Supabase or local fallback)

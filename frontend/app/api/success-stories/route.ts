@@ -1,71 +1,29 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import fs from 'fs';
-import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // GET all success stories
 export async function GET() {
-  let successStories: any[] = [];
-  let useFallback = false;
-
   try {
     const { data, error } = await supabase
       .from('success_stories')
       .select('*')
       .order('id', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      useFallback = true;
-    } else {
-      successStories = data;
+    if (!error && data && data.length > 0) {
+      return NextResponse.json(data, {
+        headers: { 'Cache-Control': 'no-store, max-age=0' }
+      });
     }
-  } catch (err) {
-    useFallback = true;
-  }
+  } catch (err) {}
 
-  if (useFallback) {
-    try {
-      const fallbackPath = getFallbackPath('success_stories.json');
-      if (fs.existsSync(fallbackPath)) {
-        const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
-        successStories = JSON.parse(fileContent);
-      } else {
-        successStories = [
-          {
-            id: 1,
-            image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&auto=format&fit=crop&q=80",
-            title: "7 Lakh+ Birthday Giving",
-            desc: "7 Lakh Moments of Meaningful Giving"
-          },
-          {
-            id: 2,
-            image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&auto=format&fit=crop&q=80",
-            title: "Giving With Proof",
-            desc: "Transparent impact you can see and trust."
-          },
-          {
-            id: 3,
-            image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&auto=format&fit=crop&q=80",
-            title: "20 Lakh+ Lives Impacted",
-            desc: "Impacting Lives. Creating Hope."
-          },
-          {
-            id: 4,
-            image: "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600&auto=format&fit=crop&q=80",
-            title: "35 Lakh+ Meals Served",
-            desc: "35 Lakh Meals of Dignity"
-          }
-        ];
-        fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
-        fs.writeFileSync(fallbackPath, JSON.stringify(successStories, null, 2), 'utf-8');
-      }
-    } catch (e) {
-      console.error("Failed to read success_stories fallback JSON:", e);
-    }
-  }
-
-  return NextResponse.json(successStories);
+  const successStories = await getResilientData('success_stories.json', []);
+  return NextResponse.json(successStories, {
+    headers: { 'Cache-Control': 'no-store, max-age=0' }
+  });
 }
 
 // POST a new success story

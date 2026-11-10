@@ -1,53 +1,28 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import fs from 'fs';
-import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // GET all static page media settings
 export async function GET() {
-  let media: any[] = [];
-  let useFallback = false;
-
   try {
     const { data, error } = await supabase
       .from('page_media')
       .select('*')
       .order('title', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      useFallback = true;
-    } else {
-      media = data;
+    if (!error && data && data.length > 0) {
+      return NextResponse.json(data, {
+        headers: { 'Cache-Control': 'no-store, max-age=0' }
+      });
     }
-  } catch (err) {
-    useFallback = true;
-  }
+  } catch (err) {}
 
-  if (useFallback) {
-    try {
-      const fallbackPath = getFallbackPath('page_media.json');
-      if (fs.existsSync(fallbackPath)) {
-        media = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
-      } else {
-        media = [
-          { key: "home_hero_video", url: "/AAY%20HO%20MERI%20JINDI%20ME.mp4", title: "Home Page - Hero Background Video", type: "video" },
-          { key: "about_header", url: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1600&auto=format&fit=crop&q=80", title: "About Page - Top Banner Header Image", type: "image" }
-        ];
-        fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
-        fs.writeFileSync(fallbackPath, JSON.stringify(media, null, 2), 'utf-8');
-      }
-    } catch (e) {
-      console.error("Failed to read page_media fallback JSON:", e);
-    }
-  }
-
+  const media = await getResilientData('page_media.json', []);
   return NextResponse.json(media, {
-    headers: {
-      'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120'
-    }
+    headers: { 'Cache-Control': 'no-store, max-age=0' }
   });
 }
 

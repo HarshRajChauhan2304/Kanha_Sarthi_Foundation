@@ -358,6 +358,7 @@ export default function AdminPanelPage() {
 
   const [alertMsg, setAlertMsg] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
   // Certificate Modal states
@@ -523,29 +524,29 @@ export default function AdminPanelPage() {
       }
 
       if (activeTab === "Causes") {
-        const res = await fetch('/api/causes');
+        const res = await fetch('/api/causes', { cache: 'no-store' });
         const data = await res.json();
         setCauses(Array.isArray(data) ? data : []);
       } else if (activeTab === "Categories") {
         // categoriesList already loaded
       } else if (activeTab === "Reviews") {
-        const res = await fetch('/api/reviews');
+        const res = await fetch('/api/reviews', { cache: 'no-store' });
         const data = await res.json();
         setReviews(Array.isArray(data) ? data : []);
       } else if (activeTab === "Blogs") {
-        const res = await fetch('/api/blogs');
+        const res = await fetch('/api/blogs', { cache: 'no-store' });
         const data = await res.json();
         setBlogs(Array.isArray(data) ? data : []);
       } else if (activeTab === "Stories") {
-        const res = await fetch('/api/stories');
+        const res = await fetch('/api/stories', { cache: 'no-store' });
         const data = await res.json();
         setStories(Array.isArray(data) ? data : []);
       } else if (activeTab === "DetailedStories") {
-        const res = await fetch('/api/stories/detailed');
+        const res = await fetch('/api/stories/detailed', { cache: 'no-store' });
         const data = await res.json();
         setDetailedStories(Array.isArray(data) ? data : []);
       } else if (activeTab === "SuccessStories") {
-        const res = await fetch('/api/success-stories');
+        const res = await fetch('/api/success-stories', { cache: 'no-store' });
         const data = await res.json();
         setSuccessStories(Array.isArray(data) ? data : []);
       } else if (activeTab === "Donations") {
@@ -553,7 +554,7 @@ export default function AdminPanelPage() {
         const data = await res.json();
         setDonations(Array.isArray(data) ? data : []);
         try {
-          const causesRes = await fetch('/api/causes');
+          const causesRes = await fetch('/api/causes', { cache: 'no-store' });
           const causesData = await causesRes.json();
           if (Array.isArray(causesData) && causesData.length > 0) {
             setCausesList(causesData);
@@ -562,7 +563,7 @@ export default function AdminPanelPage() {
           console.error("Failed to load causes for donations:", e);
         }
       } else if (activeTab === "Highlights") {
-        const res = await fetch('/api/about-highlights');
+        const res = await fetch('/api/about-highlights', { cache: 'no-store' });
         const data = await res.json();
         if (data && !data.error) {
           setDirectors(Array.isArray(data.directors) ? data.directors : []);
@@ -572,16 +573,16 @@ export default function AdminPanelPage() {
           setVolunteers([]);
         }
       } else if (activeTab === "Applications") {
-        const res = await fetch('/api/volunteer');
+        const res = await fetch('/api/volunteer', { cache: 'no-store' });
         const data = await res.json();
         setVolApps(Array.isArray(data) ? data : []);
       } else if (activeTab === "Tasks") {
-        const res = await fetch('/api/volunteer/tasks');
+        const res = await fetch('/api/volunteer/tasks', { cache: 'no-store' });
         const data = await res.json();
         setTasks(data.success && Array.isArray(data.tasks) ? data.tasks : []);
         
         // Populate volApps list for selection dropdown
-        const volRes = await fetch('/api/volunteer');
+        const volRes = await fetch('/api/volunteer', { cache: 'no-store' });
         const volData = await volRes.json();
         setVolApps(Array.isArray(volData) ? volData.filter((a: any) => a.status === "Approved") : []);
 
@@ -594,19 +595,19 @@ export default function AdminPanelPage() {
           console.error("Failed to load donations for Tasks tab:", e);
         }
       } else if (activeTab === "StarVolunteers") {
-        const res = await fetch('/api/volunteer/star');
+        const res = await fetch('/api/volunteer/star', { cache: 'no-store' });
         const data = await res.json();
         setStarVolunteers(data.success && Array.isArray(data.stars) ? data.stars : []);
         
-        const volRes = await fetch('/api/volunteer');
+        const volRes = await fetch('/api/volunteer', { cache: 'no-store' });
         const volData = await volRes.json();
         setVolApps(Array.isArray(volData) ? volData.filter((a: any) => a.status === "Approved") : []);
       } else if (activeTab === "ContactInfo") {
-        const res = await fetch('/api/contact-info');
+        const res = await fetch('/api/contact-info', { cache: 'no-store' });
         const data = await res.json();
         setContactInfoList(Array.isArray(data) ? data : []);
       } else if (activeTab === "ContactSubmissions") {
-        const res = await fetch('/api/contact');
+        const res = await fetch('/api/contact', { cache: 'no-store' });
         const data = await res.json();
         setContactSubmissionsList(Array.isArray(data) ? data : []);
       } else if (activeTab === "PageMedia") {
@@ -614,11 +615,11 @@ export default function AdminPanelPage() {
         const data = await res.json();
         setPageMedia(Array.isArray(data) ? data : []);
       } else if (activeTab === "PageTexts") {
-        const res = await fetch('/api/page-texts');
+        const res = await fetch('/api/page-texts', { cache: 'no-store' });
         const data = await res.json();
         setPageTexts(Array.isArray(data) ? data : []);
       } else if (activeTab === "WhatsAppCommunity") {
-        const res = await fetch('/api/page-texts');
+        const res = await fetch('/api/page-texts', { cache: 'no-store' });
         const data = await res.json();
         setPageTexts(Array.isArray(data) ? data : []);
         if (Array.isArray(data)) {
@@ -628,16 +629,16 @@ export default function AdminPanelPage() {
           setWhatsappCommunityLinkInput("");
         }
       } else if (activeTab === "StatsCards") {
-        const res = await fetch('/api/stats-cards');
+        const res = await fetch('/api/stats-cards', { cache: 'no-store' });
         const data = await res.json();
         setStatsCards(Array.isArray(data) ? data : []);
       } else if (activeTab === "RoleManagement") {
         try {
-          const userRes = await fetch('/api/admin/users');
+          const userRes = await fetch('/api/admin/users', { cache: 'no-store' });
           const userData = await userRes.json();
           setUsersList(userData.success && Array.isArray(userData.users) ? userData.users : []);
 
-          const volRes = await fetch('/api/volunteer');
+          const volRes = await fetch('/api/volunteer', { cache: 'no-store' });
           const volData = await volRes.json();
           setVolApps(Array.isArray(volData) ? volData.filter((a: any) => a.status === "Approved") : []);
         } catch (roleErr) {
@@ -1063,6 +1064,7 @@ export default function AdminPanelPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
     const endpoint = activeTab === "Highlights" 
       ? "/api/about-highlights" 
       : activeTab === "Applications"
@@ -1299,6 +1301,7 @@ export default function AdminPanelPage() {
       };
     }
 
+    setIsSaving(true);
     try {
       const res = await fetch(endpoint, {
         method: editingItem ? 'PUT' : 'POST',
@@ -1316,6 +1319,8 @@ export default function AdminPanelPage() {
     } catch (error) {
       console.error("Save error:", error);
       triggerAlert("Failed to save changes.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1677,7 +1682,7 @@ export default function AdminPanelPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 right-6 z-50 bg-[#1E4D2B] border border-emerald-500/30 text-white px-6 py-3 rounded-xl shadow-2xl font-bold flex items-center gap-2"
+            className="fixed top-6 right-6 z-[9999] bg-[#1E4D2B] border border-emerald-500/30 text-white px-6 py-3 rounded-xl shadow-2xl font-bold flex items-center gap-2 pointer-events-auto"
           >
             <svg className="h-5 w-5 text-emerald-400 fill-current" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -3752,8 +3757,8 @@ export default function AdminPanelPage() {
             >
               <h2 className="text-xl sm:text-2xl font-black text-white mb-6">
                 {editingItem 
-                  ? `Edit ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab.substring(0, activeTab.length - 1)}` 
-                  : `Add ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab.substring(0, activeTab.length - 1)}`}
+                  ? `Edit ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}` 
+                  : `Add ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}`}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4 text-left">
@@ -4915,8 +4920,8 @@ export default function AdminPanelPage() {
                 {/* Unified Save / Cancel button */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-zinc-800/80 mt-6">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 rounded-full border border-[#1A1A1A] text-xs font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer">Cancel</button>
-                  <button type="submit" disabled={isUploading} className={`px-7 py-2 rounded-full text-white text-xs font-black uppercase tracking-wider shadow-lg cursor-pointer ${isUploading ? 'bg-zinc-700 cursor-not-allowed' : 'bg-[#1E4D2B] hover:bg-[#15381E]'}`}>
-                    {isUploading ? "Uploading..." : "Save changes"}
+                  <button type="submit" disabled={isUploading || isSaving} className={`px-7 py-2 rounded-full text-white text-xs font-black uppercase tracking-wider shadow-lg cursor-pointer ${isUploading || isSaving ? 'bg-zinc-700 cursor-not-allowed opacity-75' : 'bg-[#1E4D2B] hover:bg-[#15381E]'}`}>
+                    {isSaving ? "Saving..." : isUploading ? "Uploading..." : "Save changes"}
                   </button>
                 </div>
 

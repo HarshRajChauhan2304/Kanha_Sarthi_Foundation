@@ -1,53 +1,38 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import fs from 'fs';
-import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const defaultContactInfo = [
+  { id: 1, title: "Registered Address", value: "Kanha Foundation Office,\nRanchi, Jharkhand, 834001, India", type: "address", icon: "map-pin" },
+  { id: 2, title: "Email Inquiry", value: "kanhasathifoundation223@gmail.com", type: "email", icon: "mail" },
+  { id: 3, title: "WhatsApp Support", value: "+91 74881 64529", type: "whatsapp", icon: "whatsapp" }
+];
 
 // GET all contact details
 export async function GET() {
-  let contactInfo: any[] = [];
-  let useFallback = false;
-
   try {
     const { data, error } = await supabase
       .from('contact_info')
       .select('*')
       .order('id', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      useFallback = true;
-    } else {
-      contactInfo = data;
+    if (!error && data && data.length > 0) {
+      return NextResponse.json(data, {
+        headers: {
+          'Cache-Control': 'no-store, max-age=0'
+        }
+      });
     }
-  } catch (err) {
-    useFallback = true;
-  }
+  } catch (err) {}
 
-  if (useFallback) {
-    try {
-      const fallbackPath = getFallbackPath('contact_info.json');
-      if (fs.existsSync(fallbackPath)) {
-        contactInfo = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
-      } else {
-        contactInfo = [
-          { id: 1, title: "Registered Address", value: "Kanha Foundation Office,\nRanchi, Jharkhand, 834001, India", type: "address", icon: "map-pin" },
-          { id: 2, title: "Email Inquiry", value: "kanhasathifoundation223@gmail.com", type: "email", icon: "mail" },
-          { id: 3, title: "WhatsApp Support", value: "+91 74881 64529", type: "whatsapp", icon: "whatsapp" }
-        ];
-        fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
-        fs.writeFileSync(fallbackPath, JSON.stringify(contactInfo, null, 2), 'utf-8');
-      }
-    } catch (e) {
-      console.error("Failed to read contact_info fallback JSON:", e);
-    }
-  }
+  const contactInfo = await getResilientData('contact_info.json', defaultContactInfo);
 
   return NextResponse.json(contactInfo, {
     headers: {
-      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      'Cache-Control': 'no-store, max-age=0'
     }
   });
 }

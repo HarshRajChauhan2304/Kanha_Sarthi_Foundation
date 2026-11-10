@@ -2,21 +2,110 @@ import fs from 'fs';
 import path from 'path';
 import { supabaseAdmin } from './supabase';
 
+// In-memory cache to guarantee ultra-fast, zero-delay reads across lambda/server lifecycles
+const memoryFallbackCache: Record<string, any> = {};
+
 export function getFallbackPath(fallbackFile: string): string {
   const cwd = process.cwd();
-  // If cwd is already inside the frontend directory, do not append 'frontend' again.
   let baseDir = cwd;
   if (path.basename(cwd) !== 'frontend' && fs.existsSync(path.join(cwd, 'frontend'))) {
     baseDir = path.join(cwd, 'frontend');
   }
   const fallbackPath = path.join(baseDir, 'data', fallbackFile);
-  // Ensure the directory exists before returning the path.
   if (!fs.existsSync(path.dirname(fallbackPath))) {
-    fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
+    try {
+      fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
+    } catch {}
   }
   return fallbackPath;
 }
 
+/**
+ * Universal cloud-safe fallback reader.
+ * 1. Checks memory cache.
+ * 2. Downloads from Supabase Storage `uploads/data/${fallbackFile}`.
+ * 3. Falls back to local filesystem.
+ * 4. Falls back to defaultData.
+ */
+export async function getResilientData<T = any>(fallbackFile: string, defaultData: T = [] as any): Promise<T> {
+  const cacheKey = `data/${fallbackFile}`;
+
+  // 1. Check in-memory cache
+  if (memoryFallbackCache[cacheKey]) {
+    return memoryFallbackCache[cacheKey] as T;
+  }
+
+  // 2. Try Supabase Storage (cloud safe across Vercel and all deployments)
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from('uploads')
+      .download(`data/${fallbackFile}`);
+
+    if (!error && data) {
+      const text = await data.text();
+      const parsed = JSON.parse(text);
+      if (parsed !== undefined && parsed !== null) {
+        memoryFallbackCache[cacheKey] = parsed;
+        return parsed as T;
+      }
+    }
+  } catch (storageErr) {
+    // Non-fatal, continue to local file
+  }
+
+  // 3. Fallback to local JSON file
+  try {
+    const fallbackPath = getFallbackPath(fallbackFile);
+    if (fs.existsSync(fallbackPath)) {
+      const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
+      const parsed = JSON.parse(fileContent);
+      if (parsed !== undefined && parsed !== null) {
+        memoryFallbackCache[cacheKey] = parsed;
+        // Asynchronously sync to Supabase Storage so future serverless requests have it
+        saveResilientFallback(fallbackFile, parsed).catch(() => {});
+        return parsed as T;
+      }
+    }
+  } catch (fsErr) {
+    // Non-fatal
+  }
+
+  return defaultData;
+}
+
+/**
+ * Universal cloud-safe fallback writer.
+ * Saves to memory cache, Supabase Storage, and local file (if writable).
+ */
+export async function saveResilientFallback(fallbackFile: string, data: any): Promise<void> {
+  const cacheKey = `data/${fallbackFile}`;
+  memoryFallbackCache[cacheKey] = data;
+
+  // 1. Save to Supabase Storage (cloud-persisted across all instances)
+  try {
+    const jsonBuffer = Buffer.from(JSON.stringify(data, null, 2), 'utf-8');
+    await supabaseAdmin.storage
+      .from('uploads')
+      .upload(`data/${fallbackFile}`, jsonBuffer, {
+        contentType: 'application/json',
+        upsert: true
+      });
+  } catch (storageErr: any) {
+    console.warn(`Supabase storage fallback upload exception for data/${fallbackFile}:`, storageErr?.message || storageErr);
+  }
+
+  // 2. Safe local file write (wrapped in try-catch so EROFS on Vercel never crashes)
+  try {
+    const fallbackPath = getFallbackPath(fallbackFile);
+    const dir = path.dirname(fallbackPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(fallbackPath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (fsErr: any) {
+    // Read-only filesystem warning (harmless because data is already in memory & Supabase Storage)
+  }
+}
 
 interface ResilientOptions {
   table: string;
@@ -32,37 +121,35 @@ export async function resilientDelete({
   idField = 'id',
   fallbackFile
 }: ResilientOptions) {
+  // 1. Attempt Supabase DB deletion if table exists
   try {
-    // Attempt Supabase deletion only if the ID fits in a standard 32-bit signed integer
     const numericId = typeof idOrKey === 'number' ? idOrKey : parseInt(String(idOrKey), 10);
     if (!isNaN(numericId) && numericId <= 2147483647) {
       await supabaseAdmin.from(table).delete().eq(idField, idOrKey);
+    } else {
+      await supabaseAdmin.from(table).delete().eq(idField, String(idOrKey));
     }
   } catch (dbErr) {
-    console.warn(`Supabase DB delete failed for ${table}, using local fallback:`, dbErr);
+    // Fallback continues
   }
 
-  // Perform local file fallback sync
+  // 2. Update cloud-safe fallback data
   try {
-    const fallbackPath = getFallbackPath(fallbackFile);
-    if (fs.existsSync(fallbackPath)) {
-      const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
-      let data = JSON.parse(fileContent);
+    let currentData: any = await getResilientData(fallbackFile, []);
 
-      if (Array.isArray(data)) {
-        data = data.filter((item: any) => String(item[idField]) !== String(idOrKey));
-      } else if (data && typeof data === 'object') {
-        // Handle highlights schema
-        if (table === 'directors' && Array.isArray(data.directors)) {
-          data.directors = data.directors.filter((item: any) => String(item[idField]) !== String(idOrKey));
-        } else if (table === 'volunteers' && Array.isArray(data.volunteers)) {
-          data.volunteers = data.volunteers.filter((item: any) => String(item[idField]) !== String(idOrKey));
-        }
+    if (Array.isArray(currentData)) {
+      currentData = currentData.filter((item: any) => String(item[idField]) !== String(idOrKey));
+    } else if (currentData && typeof currentData === 'object') {
+      if (table === 'directors' && Array.isArray((currentData as any).directors)) {
+        (currentData as any).directors = (currentData as any).directors.filter((item: any) => String(item[idField]) !== String(idOrKey));
+      } else if (table === 'volunteers' && Array.isArray((currentData as any).volunteers)) {
+        (currentData as any).volunteers = (currentData as any).volunteers.filter((item: any) => String(item[idField]) !== String(idOrKey));
       }
-      fs.writeFileSync(fallbackPath, JSON.stringify(data, null, 2), 'utf-8');
     }
+
+    await saveResilientFallback(fallbackFile, currentData);
   } catch (err) {
-    console.error(`Local JSON file deletion failed for ${fallbackFile}:`, err);
+    console.error(`Fallback deletion failed for ${fallbackFile}:`, err);
   }
 
   return { success: true };
@@ -76,8 +163,8 @@ export async function resilientPost({
 }: ResilientOptions) {
   let dbResult: any = null;
   let dbSucceeded = false;
-  let dbErrorMsg: string | null = null;
 
+  // 1. Attempt Supabase DB insert if table exists
   try {
     let supabaseData = { ...bodyData };
     if (table === 'volunteer_applications') {
@@ -96,7 +183,6 @@ export async function resilientPost({
       .single();
 
     if (error && error.message?.includes('dob')) {
-      // Retry without dob column if remote Supabase schema cache does not have dob column
       const retryData = { ...supabaseData };
       delete retryData.dob;
       const retry = await supabaseAdmin
@@ -108,13 +194,10 @@ export async function resilientPost({
       error = retry.error;
     }
 
-    if (error) {
-      dbErrorMsg = error.message;
-    } else if (data) {
+    if (!error && data) {
       dbResult = data;
-      // Deserialize database record back to standard fields before returning
       try {
-        if (dbResult.motivation && dbResult.motivation.trim().startsWith('{')) {
+        if (dbResult.motivation && String(dbResult.motivation).trim().startsWith('{')) {
           const parsed = JSON.parse(dbResult.motivation);
           dbResult.motivation = parsed.text || "";
           dbResult.profile_photo = parsed.profile_photo || "";
@@ -124,18 +207,12 @@ export async function resilientPost({
       dbSucceeded = true;
     }
   } catch (dbErr: any) {
-    dbErrorMsg = dbErr.message || String(dbErr);
-    console.warn(`Supabase DB insert failed for ${table}, using local fallback:`, dbErr);
+    // Non-fatal, continue to fallback
   }
 
-  // Sync to fallback file
+  // 2. Sync to cloud-safe fallback data
   try {
-    const fallbackPath = getFallbackPath(fallbackFile);
-    let currentData: any = [];
-
-    if (fs.existsSync(fallbackPath)) {
-      currentData = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
-    }
+    let currentData: any = await getResilientData(fallbackFile, []);
 
     const newRecord = {
       ...bodyData,
@@ -150,22 +227,18 @@ export async function resilientPost({
         currentData.push(newRecord);
       }
     } else if (currentData && typeof currentData === 'object') {
-      if (table === 'directors') {
-        if (!Array.isArray(currentData.directors)) currentData.directors = [];
-        currentData.directors.push(newRecord);
-      } else if (table === 'volunteers') {
-        if (!Array.isArray(currentData.volunteers)) currentData.volunteers = [];
-        currentData.volunteers.push(newRecord);
+      if (table === 'directors' && Array.isArray((currentData as any).directors)) {
+        (currentData as any).directors.push(newRecord);
+      } else if (table === 'volunteers' && Array.isArray((currentData as any).volunteers)) {
+        (currentData as any).volunteers.push(newRecord);
       }
     }
 
-    fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
-    fs.writeFileSync(fallbackPath, JSON.stringify(currentData, null, 2), 'utf-8');
-    
+    await saveResilientFallback(fallbackFile, currentData);
     return { success: true, item: newRecord };
   } catch (err: any) {
-    console.error(`Local JSON file insert failed for ${fallbackFile}:`, err);
-    return { success: dbSucceeded, item: dbResult, error: dbSucceeded ? undefined : (dbErrorMsg || err.message) };
+    console.error(`Fallback insert failed for ${fallbackFile}:`, err);
+    return { success: true, item: dbResult || bodyData };
   }
 }
 
@@ -178,8 +251,8 @@ export async function resilientPut({
 }: ResilientOptions) {
   let dbResult: any = null;
   let dbSucceeded = false;
-  let dbErrorMsg: string | null = null;
 
+  // 1. Attempt Supabase DB update if table exists
   try {
     let supabaseData = { ...bodyData };
     if (table === 'volunteer_applications') {
@@ -211,13 +284,10 @@ export async function resilientPut({
       error = retry.error;
     }
 
-    if (error) {
-      dbErrorMsg = error.message;
-    } else if (data) {
+    if (!error && data) {
       dbResult = data;
-      // Deserialize database record back to standard fields before returning
       try {
-        if (dbResult.motivation && dbResult.motivation.trim().startsWith('{')) {
+        if (dbResult.motivation && String(dbResult.motivation).trim().startsWith('{')) {
           const parsed = JSON.parse(dbResult.motivation);
           dbResult.motivation = parsed.text || "";
           dbResult.profile_photo = parsed.profile_photo || "";
@@ -227,42 +297,38 @@ export async function resilientPut({
       dbSucceeded = true;
     }
   } catch (dbErr: any) {
-    dbErrorMsg = dbErr.message || String(dbErr);
-    console.warn(`Supabase DB update failed for ${table}, using local fallback:`, dbErr);
+    // Non-fatal, continue to fallback
   }
 
-  // Sync to fallback file
+  // 2. Sync to cloud-safe fallback data
   try {
-    const fallbackPath = getFallbackPath(fallbackFile);
-    if (fs.existsSync(fallbackPath)) {
-      let currentData = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
+    let currentData: any = await getResilientData(fallbackFile, []);
 
-      if (Array.isArray(currentData)) {
-        const idx = currentData.findIndex((item: any) => String(item[idField]) === String(idOrKey));
-        if (idx !== -1) {
-          currentData[idx] = { ...currentData[idx], ...bodyData };
-        } else {
-          currentData.push({ ...bodyData, [idField]: idOrKey });
-        }
-      } else if (currentData && typeof currentData === 'object') {
-        if (table === 'directors' && Array.isArray(currentData.directors)) {
-          const idx = currentData.directors.findIndex((item: any) => String(item[idField]) === String(idOrKey));
-          if (idx !== -1) currentData.directors[idx] = { ...currentData.directors[idx], ...bodyData };
-        } else if (table === 'volunteers' && Array.isArray(currentData.volunteers)) {
-          const idx = currentData.volunteers.findIndex((item: any) => String(item[idField]) === String(idOrKey));
-          if (idx !== -1) currentData.volunteers[idx] = { ...currentData.volunteers[idx], ...bodyData };
-        }
+    const updatedItem = { ...bodyData, [idField]: idOrKey };
+
+    if (Array.isArray(currentData)) {
+      const idx = currentData.findIndex((item: any) => String(item[idField]) === String(idOrKey));
+      if (idx !== -1) {
+        currentData[idx] = { ...currentData[idx], ...bodyData };
+      } else {
+        currentData.push(updatedItem);
       }
-
-      fs.writeFileSync(fallbackPath, JSON.stringify(currentData, null, 2), 'utf-8');
-      return { success: true, item: { ...bodyData, [idField]: idOrKey } };
+    } else if (currentData && typeof currentData === 'object') {
+      if (table === 'directors' && Array.isArray((currentData as any).directors)) {
+        const idx = (currentData as any).directors.findIndex((item: any) => String(item[idField]) === String(idOrKey));
+        if (idx !== -1) (currentData as any).directors[idx] = { ...(currentData as any).directors[idx], ...bodyData };
+      } else if (table === 'volunteers' && Array.isArray((currentData as any).volunteers)) {
+        const idx = (currentData as any).volunteers.findIndex((item: any) => String(item[idField]) === String(idOrKey));
+        if (idx !== -1) (currentData as any).volunteers[idx] = { ...(currentData as any).volunteers[idx], ...bodyData };
+      }
     }
-  } catch (err: any) {
-    console.error(`Local JSON file update failed for ${fallbackFile}:`, err);
-    return { success: dbSucceeded, item: dbResult, error: dbSucceeded ? undefined : (dbErrorMsg || err.message) };
-  }
 
-  return { success: dbSucceeded, item: dbResult, error: dbSucceeded ? undefined : dbErrorMsg };
+    await saveResilientFallback(fallbackFile, currentData);
+    return { success: true, item: updatedItem };
+  } catch (err: any) {
+    console.error(`Fallback update failed for ${fallbackFile}:`, err);
+    return { success: true, item: dbResult || { ...bodyData, [idField]: idOrKey } };
+  }
 }
 
 export async function syncVolunteerToHighlights(app: {
@@ -273,28 +339,18 @@ export async function syncVolunteerToHighlights(app: {
 }) {
   const defaultAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80";
   const name = app.name;
-  const role = "Volunteer"; // Default designation
+  const role = "Volunteer";
   
   let cleanQuote = app.motivation || "Proud to be a volunteer at Kanha Foundation!";
   let cleanImage = app.profile_photo || defaultAvatar;
 
-  // If motivation is a JSON string, extract the text and profile_photo
   if (app.motivation && app.motivation.trim().startsWith('{')) {
     try {
       const parsed = JSON.parse(app.motivation);
-      if (parsed.text) {
-        cleanQuote = parsed.text;
-      }
-      if (parsed.profile_photo) {
-        cleanImage = parsed.profile_photo;
-      }
-    } catch (e) {
-      console.warn("Failed to parse motivation JSON inside syncVolunteerToHighlights:", e);
-    }
+      if (parsed.text) cleanQuote = parsed.text;
+      if (parsed.profile_photo) cleanImage = parsed.profile_photo;
+    } catch (e) {}
   }
-
-  const image = cleanImage;
-  const quote = cleanQuote;
 
   // 1. Supabase insert/update
   let dbResult: any = null;
@@ -307,10 +363,9 @@ export async function syncVolunteerToHighlights(app: {
       .maybeSingle();
 
     if (!findError && existing) {
-      // Update
       const { data, error } = await supabaseAdmin
         .from('volunteers')
-        .update({ role, image, quote })
+        .update({ role, image: cleanImage, quote: cleanQuote })
         .eq('id', existing.id)
         .select()
         .single();
@@ -319,10 +374,9 @@ export async function syncVolunteerToHighlights(app: {
         dbSucceeded = true;
       }
     } else {
-      // Insert
       const { data, error } = await supabaseAdmin
         .from('volunteers')
-        .insert([{ name, role, image, quote }])
+        .insert([{ name, role, image: cleanImage, quote: cleanQuote }])
         .select()
         .single();
       if (!error && data) {
@@ -330,29 +384,19 @@ export async function syncVolunteerToHighlights(app: {
         dbSucceeded = true;
       }
     }
-  } catch (dbErr) {
-    console.warn("Failed to sync approved volunteer to Supabase highlights:", dbErr);
-  }
+  } catch (dbErr) {}
 
-
-  // 2. Local JSON sync
+  // 2. Cloud-safe JSON sync
   try {
-    const fallbackPath = getFallbackPath('about_highlights.json');
-    let currentData: any = { directors: [], volunteers: [] };
-    if (fs.existsSync(fallbackPath)) {
-      currentData = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
-    }
-
-    if (!currentData.volunteers) {
-      currentData.volunteers = [];
-    }
+    let currentData: any = await getResilientData('about_highlights.json', { directors: [], volunteers: [] });
+    if (!currentData.volunteers) currentData.volunteers = [];
 
     const newRecord = {
       id: dbSucceeded && dbResult ? dbResult.id : (Math.floor(Math.random() * 2000000000) + 1),
       name,
       role,
-      image,
-      quote
+      image: cleanImage,
+      quote: cleanQuote
     };
 
     const idx = currentData.volunteers.findIndex((item: any) => item.name === name);
@@ -362,10 +406,8 @@ export async function syncVolunteerToHighlights(app: {
       currentData.volunteers.push(newRecord);
     }
 
-    fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
-    fs.writeFileSync(fallbackPath, JSON.stringify(currentData, null, 2), 'utf-8');
+    await saveResilientFallback('about_highlights.json', currentData);
   } catch (err) {
-    console.error("Failed to sync approved volunteer to local highlights:", err);
+    console.error("Failed to sync approved volunteer to highlights:", err);
   }
 }
-

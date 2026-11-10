@@ -1,50 +1,28 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import fs from 'fs';
-import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // GET all static page texts configuration settings
 export async function GET() {
-  let texts: any[] = [];
-  let useFallback = false;
-
   try {
     const { data, error } = await supabase
       .from('page_texts')
       .select('*')
       .order('title', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      useFallback = true;
-    } else {
-      texts = data;
+    if (!error && data && data.length > 0) {
+      return NextResponse.json(data, {
+        headers: { 'Cache-Control': 'no-store, max-age=0' }
+      });
     }
-  } catch (err) {
-    useFallback = true;
-  }
+  } catch (err) {}
 
-  if (useFallback) {
-    try {
-      const fallbackPath = getFallbackPath('page_texts.json');
-      if (fs.existsSync(fallbackPath)) {
-        texts = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
-      } else {
-        texts = [
-          { key: "about_vision_desc", title: "About Page - Vision Description", value: "To create a just, equitable, and compassionate society where every child, animal, and needy individual gets proper care, nutrition, and education." }
-        ];
-        fs.mkdirSync(path.dirname(fallbackPath), { recursive: true });
-        fs.writeFileSync(fallbackPath, JSON.stringify(texts, null, 2), 'utf-8');
-      }
-    } catch (e) {
-      console.error("Failed to read page_texts fallback JSON:", e);
-    }
-  }
-
+  const texts = await getResilientData('page_texts.json', []);
   return NextResponse.json(texts, {
-    headers: {
-      'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120'
-    }
+    headers: { 'Cache-Control': 'no-store, max-age=0' }
   });
 }
 

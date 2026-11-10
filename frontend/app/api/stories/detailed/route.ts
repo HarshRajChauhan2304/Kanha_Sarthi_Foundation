@@ -1,42 +1,29 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import fs from 'fs';
-import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // GET all detailed stories
 export async function GET() {
-  let detailedStories: any[] = [];
-  let useFallback = false;
-
   try {
     const { data, error } = await supabase
       .from('detailed_stories')
       .select('*')
       .order('id', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      useFallback = true;
-    } else {
-      detailedStories = data;
+    if (!error && data && data.length > 0) {
+      return NextResponse.json(data, {
+        headers: { 'Cache-Control': 'no-store, max-age=0' }
+      });
     }
-  } catch (err) {
-    useFallback = true;
-  }
+  } catch (err) {}
 
-  if (useFallback) {
-    try {
-      const fallbackPath = getFallbackPath('detailed_stories.json');
-      if (fs.existsSync(fallbackPath)) {
-        const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
-        detailedStories = JSON.parse(fileContent);
-      }
-    } catch (e) {
-      console.error("Failed to read detailed stories fallback JSON:", e);
-    }
-  }
-
-  return NextResponse.json(detailedStories);
+  const detailedStories = await getResilientData('detailed_stories.json', []);
+  return NextResponse.json(detailedStories, {
+    headers: { 'Cache-Control': 'no-store, max-age=0' }
+  });
 }
 
 // POST new detailed story
