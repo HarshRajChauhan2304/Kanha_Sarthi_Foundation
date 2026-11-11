@@ -119,7 +119,7 @@ export default function StoriesPage() {
               transition={{ delay: 0.2 }}
               className="text-xs sm:text-base text-zinc-300 font-normal leading-relaxed max-w-xl mx-auto"
             >
-              At Kanha Foundation, every single contribution translates to an on-ground drive that is verified, documented, and delivered. See the real transformation.
+              At Kanha Sarthi Foundation, every single contribution translates to an on-ground drive that is verified, documented, and delivered. See the real transformation.
             </motion.p>
           </div>
         </div>
@@ -240,7 +240,7 @@ export default function StoriesPage() {
                     <button
                       onClick={() => {
                         if (typeof window !== "undefined") {
-                          const msg = `Check out this amazing story of hope: "${story.title}" by Kanha Foundation! ❤️\n\n`;
+                          const msg = `Check out this amazing story of hope: "${story.title}" by Kanha Sarthi Foundation! ❤️\n\n`;
                           const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg + window.location.origin + "/stories")}`;
                           window.open(url, "_blank");
                         }

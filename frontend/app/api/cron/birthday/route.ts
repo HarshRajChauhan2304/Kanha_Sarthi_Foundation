@@ -68,14 +68,14 @@ async function sendBirthdayEmail(toEmail: string, name: string, userType: string
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const donateUrl = `${siteUrl}/donate?cause=birthday`;
 
-  const subject = `🎉 Happy Birthday ${name}! Wish from Kanha Foundation 🎂`;
+  const subject = `🎉 Happy Birthday ${name}! Wish from Kanha Sarthi Foundation 🎂`;
   const htmlContent = `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #18181b; color: #ffffff; padding: 30px; border-radius: 16px; border: 1px solid #f59e0b;">
       <div style="text-align: center; margin-bottom: 20px;">
         <span style="font-size: 50px;">🎂</span>
         <h1 style="color: #f59e0b; font-size: 28px; margin-top: 10px;">Happy Birthday, ${name}! 🎉</h1>
         <p style="color: #e4e4e7; font-size: 16px; line-height: 1.6;">
-          On this beautiful day, the entire <strong>Kanha Foundation</strong> family wishes you endless happiness, good health, and abundant joy!
+          On this beautiful day, the entire <strong>Kanha Sarthi Foundation</strong> family wishes you endless happiness, good health, and abundant joy!
         </p>
       </div>
 
@@ -92,7 +92,7 @@ async function sendBirthdayEmail(toEmail: string, name: string, userType: string
       </div>
 
       <div style="text-align: center; margin-top: 30px; border-top: 1px solid #3f3f46; padding-top: 15px; font-size: 12px; color: #a1a1aa;">
-        <p>Kanha Foundation &copy; ${new Date().getFullYear()} | Direct Grassroots Impact</p>
+        <p>Kanha Sarthi Foundation &copy; ${new Date().getFullYear()} | Direct Grassroots Impact</p>
       </div>
     </div>
   `;
@@ -101,7 +101,7 @@ async function sendBirthdayEmail(toEmail: string, name: string, userType: string
   if (transporter) {
     try {
       await transporter.sendMail({
-        from: `"Kanha Foundation" <${process.env.SMTP_USER || process.env.EMAIL_USER}>`,
+        from: `"Kanha Sarthi Foundation" <${process.env.SMTP_USER || process.env.EMAIL_USER}>`,
         to: toEmail,
         subject,
         html: htmlContent
@@ -128,7 +128,7 @@ function formatWhatsAppMessage(name: string, phone: string) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const donateUrl = `${siteUrl}/donate?cause=birthday`;
 
-  const messageText = `🎉 *Happy Birthday, ${name}!* 🎂%0A%0AThe *Kanha Foundation* team wishes you a wonderful birthday filled with joy and health!%0A%0A🎁 *Make your birthday extra special:* Celebrate today by sharing smiles with slum children. Sponsor a birthday meal or cake here:%0A👉 ${donateUrl}%0A%0AWith warm wishes,%0AKanha Foundation Team`;
+  const messageText = `🎉 *Happy Birthday, ${name}!* 🎂%0A%0AThe *Kanha Sarthi Foundation* team wishes you a wonderful birthday filled with joy and health!%0A%0A🎁 *Make your birthday extra special:* Celebrate today by sharing smiles with slum children. Sponsor a birthday meal or cake here:%0A👉 ${donateUrl}%0A%0AWith warm wishes,%0AKanha Foundation Team`;
 
   const cleanPhone = phone.replace(/[^0-9]/g, '');
   const waLink = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${messageText}`;

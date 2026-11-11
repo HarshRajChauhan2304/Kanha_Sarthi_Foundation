@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
           {/* Content */}
           <div className="space-y-6 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed text-justify">
             <p>
-              At <strong>Kanha Foundation</strong> (<a href="https://kanhafoundation.org" className="text-[#1E4D2B] dark:text-[#52c47c] font-bold hover:underline">kanhafoundation.org</a>), we strictly comply with all statutory regulations prescribed by the <strong>Central Government of India</strong> for Non-Governmental Organizations (NGOs). As a non-profit incorporated under <strong>Section 8 of the Companies Act, 2013 (Ministry of Corporate Affairs, Govt. of India)</strong>, registered on <strong>NITI Aayog (NGO Darpan)</strong>, and operating across Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India, we uphold the highest standards of data safety.
+              At <strong>Kanha Sarthi Foundation</strong> (<a href="https://kanhafoundation.org" className="text-[#1E4D2B] dark:text-[#52c47c] font-bold hover:underline">kanhafoundation.org</a>), we strictly comply with all statutory regulations prescribed by the <strong>Central Government of India</strong> for Non-Governmental Organizations (NGOs). As a non-profit incorporated under <strong>Section 8 of the Companies Act, 2013 (Ministry of Corporate Affairs, Govt. of India)</strong>, registered on <strong>NITI Aayog (NGO Darpan)</strong>, and operating across Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India, we uphold the highest standards of data safety.
             </p>
             <p>
               Our data processing protocols comply with the <strong>Digital Personal Data Protection (DPDP) Act, 2023</strong> enacted by the Parliament of India, ensuring donor and volunteer data confidentiality across all operational branches.
@@ -50,7 +50,7 @@ export default function PrivacyPolicy() {
               2. Purpose of Processing & Central Statutory Reporting
             </h2>
             <p>
-              All personal data processed by Kanha Foundation is utilized strictly for non-commercial, charitable purpose execution:
+              All personal data processed by Kanha Sarthi Foundation is utilized strictly for non-commercial, charitable purpose execution:
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Generating official 80G Tax Exemption Certificates and Form 10BD filings with the Income Tax Department (Govt. of India).</li>
@@ -64,7 +64,7 @@ export default function PrivacyPolicy() {
               3. Payment Gateway Security & Non-Storage of Card Data
             </h2>
             <p>
-              Online contributions are processed through certified PCI-DSS compliant third-party payment gateway aggregators (Razorpay, Cashfree, UPI BHIM/Google Pay/PhonePe). Kanha Foundation <strong>does not store raw credit/debit card numbers or bank passwords</strong> on any server.
+              Online contributions are processed through certified PCI-DSS compliant third-party payment gateway aggregators (Razorpay, Cashfree, UPI BHIM/Google Pay/PhonePe). Kanha Sarthi Foundation <strong>does not store raw credit/debit card numbers or bank passwords</strong> on any server.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
@@ -84,7 +84,7 @@ export default function PrivacyPolicy() {
               5. Non-Disclosure & Third-Party Sharing
             </h2>
             <p>
-              Kanha Foundation <strong>never sells, rents, or commercializes donor databases</strong> to commercial third parties. Data is shared exclusively with certified payment processors or government regulatory authorities when mandatorily required under Indian law.
+              Kanha Sarthi Foundation <strong>never sells, rents, or commercializes donor databases</strong> to commercial third parties. Data is shared exclusively with certified payment processors or government regulatory authorities when mandatorily required under Indian law.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
@@ -94,7 +94,7 @@ export default function PrivacyPolicy() {
               For data access requests, privacy concerns, or 80G receipt queries across any of our branches, please contact our Data Protection Officer:
             </p>
             <div className="bg-zinc-100 dark:bg-zinc-900/60 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-xs space-y-1">
-              <p className="font-bold text-zinc-900 dark:text-white">Kanha Foundation (Section 8 NPO • Govt. of India Regulated)</p>
+              <p className="font-bold text-zinc-900 dark:text-white">Kanha Sarthi Foundation (Section 8 NPO • Govt. of India Regulated)</p>
               <p className="text-zinc-500 dark:text-zinc-400">Head Office: G 96, Block G, Gamma 2, Greater Noida, U.P., India</p>
               <p className="text-zinc-500 dark:text-zinc-400">Multi-State Branches: Bihar • Jharkhand • Delhi NCR • Uttar Pradesh • Pan-India</p>
               <p className="text-zinc-500 dark:text-zinc-400">Email: <span className="font-bold text-emerald-600 dark:text-emerald-400">kanhasathifoundation223@gmail.com</span></p>

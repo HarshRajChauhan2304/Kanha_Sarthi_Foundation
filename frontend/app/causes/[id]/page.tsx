@@ -137,7 +137,7 @@ export default function CauseDetailPage({ params }: { params: Promise<{ id: stri
   const handleShare = async () => {
     if (typeof window !== "undefined") {
       const shareUrl = window.location.href;
-      const shareText = `Support this noble cause: "${cause.title}" on Kanha Foundation. Every contribution counts! ❤️\n\n`;
+      const shareText = `Support this noble cause: "${cause.title}" on Kanha Sarthi Foundation. Every contribution counts! ❤️\n\n`;
       
       if (navigator.share) {
         try {

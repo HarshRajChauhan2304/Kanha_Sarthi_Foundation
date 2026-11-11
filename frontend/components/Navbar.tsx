@@ -252,11 +252,11 @@ export default function Navbar() {
               </svg>
             </button>
 
-            {/* Kanha Foundation Logo */}
+            {/* Kanha Sarthi Foundation Logo */}
             <a href="/" className="flex items-center space-x-2 group">
                 <img
                   src={navbarData.logo}
-                  alt={navbarData.name ? `${navbarData.name} Logo` : "Kanha Foundation Logo"}
+                  alt={navbarData.name ? `${navbarData.name} Logo` : "Kanha Sarthi Foundation Logo"}
                   className="navbar-logo w-auto object-contain drop-shadow-sm -mt-0.5"
                   style={{ 
                     backgroundColor: "transparent",

@@ -202,12 +202,12 @@ export default function OurImpactsPage() {
       {/* Intro Description section */}
       <section className="mx-auto max-w-4xl px-4 py-16 text-center">
         <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-snug">
-          {textSettings.impacts_intro_title || "At Kanha Foundation, impact isn't a promise — it's a responsibility."}
+          {textSettings.impacts_intro_title || "At Kanha Sarthi Foundation, impact isn't a promise — it's a responsibility."}
         </h2>
         
         <div className="mt-8 space-y-6 text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed font-normal">
           <p>
-            {textSettings.impacts_intro_desc_1 || "Every contribution made on Kanha Foundation turns into action on the ground. From feeding hungry children and supporting women's hygiene, to caring for stray animals and planting trees — each cause is executed with transparency, speed, and heart."}
+            {textSettings.impacts_intro_desc_1 || "Every contribution made on Kanha Sarthi Foundation turns into action on the ground. From feeding hungry children and supporting women's hygiene, to caring for stray animals and planting trees — each cause is executed with transparency, speed, and heart."}
           </p>
           <p>
             {textSettings.impacts_intro_desc_2 || "We work closely with on-ground teams and partner organizations to ensure that every donation reaches where it's needed the most. What makes us different is simple: you don't just give — you see your impact."}

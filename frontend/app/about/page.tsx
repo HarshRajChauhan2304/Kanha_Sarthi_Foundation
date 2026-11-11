@@ -85,16 +85,16 @@ export default function AboutPage() {
   // Page Texts CMS settings
   const [textSettings, setTextSettings] = useState<Record<string, string>>({
     about_banner_title_prefix: "About",
-    about_banner_title_highlight: "Kanha Foundation",
-    about_summary_text: "Kanha Foundation is a purpose-driven impact platform built to make giving simple, transparent, and meaningful. Every contribution made through our platform is executed on-ground and documented with real photos and videos, ensuring complete transparency and trust.",
+    about_banner_title_highlight: "Kanha Sarthi Foundation",
+    about_summary_text: "Kanha Sarthi Foundation is a purpose-driven impact platform built to make giving simple, transparent, and meaningful. Every contribution made through our platform is executed on-ground and documented with real photos and videos, ensuring complete transparency and trust.",
     about_vision_title: "Our Vision",
     about_vision_desc: "We envision a world where giving is not just an act, but an experience—one rooted in empathy, transparency, and human connection.",
     about_mission_title: "Our Mission",
     about_mission_desc: "To empower children and families across India by providing essential resources, education, and opportunities that foster sustainable growth and lasting impact.",
     about_team_title: "Our Team",
-    about_team_desc: "Kanha Foundation is powered by a committed team of professionals and verified field partners working together to ensure transparent, on-ground impact.",
+    about_team_desc: "Kanha Sarthi Foundation is powered by a committed team of professionals and verified field partners working together to ensure transparent, on-ground impact.",
     about_leadership_title: "Our Leadership",
-    about_leadership_sub: "Meet the guiding minds behind the mission and growth of Kanha Foundation.",
+    about_leadership_sub: "Meet the guiding minds behind the mission and growth of Kanha Sarthi Foundation.",
     about_volunteers_title: "Our Team",
     about_volunteers_sub: "Recognizing the passionate volunteers dedicating their time and hearts on the ground.",
     about_footer_cta_title: "Your Kindness Can Change Lives",
@@ -177,7 +177,7 @@ export default function AboutPage() {
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight drop-shadow-md flex flex-wrap justify-center items-center gap-3">
             <span>{textSettings.about_banner_title_prefix || "About"}</span>
             <span className="bg-[#F3A61E] rounded-3xl px-6 py-1.5 text-black text-2xl sm:text-4xl md:text-5xl font-black shadow-lg">
-              {textSettings.about_banner_title_highlight || "Kanha Foundation"}
+              {textSettings.about_banner_title_highlight || "Kanha Sarthi Foundation"}
             </span>
           </h1>
         </div>
@@ -310,7 +310,7 @@ export default function AboutPage() {
               Our Core Values
             </h2>
             <p className="mt-3 text-sm text-zinc-400 max-w-xl mx-auto font-medium">
-              The fundamental principles guiding Kanha Foundation's ground operations, donor relationships, and non-profit governance.
+              The fundamental principles guiding Kanha Sarthi Foundation's ground operations, donor relationships, and non-profit governance.
             </p>
           </div>
 

@@ -57,7 +57,7 @@ export async function GET() {
 
   // Map approved applications to volunteer highlight format
   const appVolunteers = approvedApps.map((item: any) => {
-    let quote = item.motivation || "Proud to be a volunteer at Kanha Foundation!";
+    let quote = item.motivation || "Proud to be a volunteer at Kanha Sarthi Foundation!";
     let profile_photo = item.profile_photo || "";
     try {
       if (item.motivation && item.motivation.trim().startsWith('{')) {

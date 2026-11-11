@@ -27,10 +27,10 @@ export default function TermsOfService() {
           {/* Content */}
           <div className="space-y-6 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed text-justify">
             <p>
-              Welcome to <strong>Kanha Foundation</strong> (<a href="https://kanhafoundation.org" className="text-[#1E4D2B] dark:text-[#52c47c] font-bold hover:underline">kanhafoundation.org</a>). By accessing or using our website, donation portal, volunteer dashboard, or relief contribution services, you agree to be bound by these Terms & Conditions of Service. Please read them carefully.
+              Welcome to <strong>Kanha Sarthi Foundation</strong> (<a href="https://kanhafoundation.org" className="text-[#1E4D2B] dark:text-[#52c47c] font-bold hover:underline">kanhafoundation.org</a>). By accessing or using our website, donation portal, volunteer dashboard, or relief contribution services, you agree to be bound by these Terms & Conditions of Service. Please read them carefully.
             </p>
             <p>
-              Kanha Foundation is a non-profit company incorporated under <strong>Section 8 of the Companies Act, 2013 enacted by the Parliament of India (Ministry of Corporate Affairs, Govt. of India)</strong>, registered on <strong>NITI Aayog (NGO Darpan)</strong>, and operating multi-state regional branches across <strong>Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India</strong>.
+              Kanha Sarthi Foundation is a non-profit company incorporated under <strong>Section 8 of the Companies Act, 2013 enacted by the Parliament of India (Ministry of Corporate Affairs, Govt. of India)</strong>, registered on <strong>NITI Aayog (NGO Darpan)</strong>, and operating multi-state regional branches across <strong>Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India</strong>.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
@@ -68,21 +68,21 @@ export default function TermsOfService() {
               <li>Onboarding internship start date is recorded as the day of application approval by the admin team.</li>
               <li>Volunteers agree to complete assigned tasks (e.g. field support, media creation, community outreach) diligently.</li>
               <li>Official Internship Completion Certificates are issued automatically upon reaching the scheduled completion end date, provided task compliance is maintained.</li>
-              <li>Kanha Foundation reserves the right to terminate volunteer dashboard access in case of code of conduct violations or fraudulent activity.</li>
+              <li>Kanha Sarthi Foundation reserves the right to terminate volunteer dashboard access in case of code of conduct violations or fraudulent activity.</li>
             </ul>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
               4. Intellectual Property & Portal Use
             </h2>
             <p>
-              All logo graphics, design layouts, campaign media, and field impact photographs are the exclusive intellectual property of Kanha Foundation. Users may view, share, or download content for personal, non-commercial awareness creation only.
+              All logo graphics, design layouts, campaign media, and field impact photographs are the exclusive intellectual property of Kanha Sarthi Foundation. Users may view, share, or download content for personal, non-commercial awareness creation only.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
               5. Governing Law & Central Jurisdiction of India
             </h2>
             <p>
-              These Terms & Conditions shall be governed by and construed in accordance with the Central Laws of the Republic of India. Any legal dispute or proceeding arising out of or related to Kanha Foundation's portal, branches, or operations shall be subject to the exclusive jurisdiction of the competent <strong>High Courts & Supreme Court of India</strong>.
+              These Terms & Conditions shall be governed by and construed in accordance with the Central Laws of the Republic of India. Any legal dispute or proceeding arising out of or related to Kanha Sarthi Foundation's portal, branches, or operations shall be subject to the exclusive jurisdiction of the competent <strong>High Courts & Supreme Court of India</strong>.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
@@ -92,7 +92,7 @@ export default function TermsOfService() {
               For legal or statutory inquiries across any of our operating states, contact our central secretarial team:
             </p>
             <div className="bg-zinc-100 dark:bg-zinc-900/60 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-xs space-y-1">
-              <p className="font-bold text-zinc-900 dark:text-white">Kanha Foundation (Section 8 NPO • Govt. of India Regulated)</p>
+              <p className="font-bold text-zinc-900 dark:text-white">Kanha Sarthi Foundation (Section 8 NPO • Govt. of India Regulated)</p>
               <p className="text-zinc-500 dark:text-zinc-400">Head Office: G 96, Block G, Gamma 2, Greater Noida, U.P., India</p>
               <p className="text-zinc-500 dark:text-zinc-400">Branches & Operations: Bihar • Jharkhand • Delhi NCR • Uttar Pradesh • Pan-India</p>
               <p className="text-zinc-500 dark:text-zinc-400">Email: <span className="font-bold text-emerald-600 dark:text-emerald-400">kanhasathifoundation223@gmail.com</span></p>

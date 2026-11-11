@@ -108,7 +108,7 @@ export default function Home() {
     extraStudykit: 0
   });
 
-  // 5 videos representing Kanha Foundation's work formatted as reels (utilizing the user's actual uploaded videos)
+  // 5 videos representing Kanha Sarthi Foundation's work formatted as reels (utilizing the user's actual uploaded videos)
   const videoPlaylist = [
     {
       id: 1,
@@ -407,7 +407,7 @@ export default function Home() {
             <img
               key={heroMedia.url}
               src={heroMedia.url}
-              alt="Kanha Foundation Hero"
+              alt="Kanha Sarthi Foundation Hero"
               className="w-full h-full object-fill"
             />
           )

@@ -62,7 +62,7 @@ export default function BirthdayWishModal({ isOpen, onClose, userName, userType 
           </h2>
 
           <p className="text-zinc-300 text-sm sm:text-base mb-6 leading-relaxed">
-            The entire <strong className="text-amber-400 font-semibold">Kanha Foundation</strong> family wishes you endless joy, peace, and health on your special day! {userType === 'volunteer' ? 'Thank you for your incredible dedication as a volunteer.' : 'Thank you for being part of our journey.'}
+            The entire <strong className="text-amber-400 font-semibold">Kanha Sarthi Foundation</strong> family wishes you endless joy, peace, and health on your special day! {userType === 'volunteer' ? 'Thank you for your incredible dedication as a volunteer.' : 'Thank you for being part of our journey.'}
           </p>
 
           {/* Donation Call To Action Card */}

@@ -20,17 +20,17 @@ export default function RefundPolicy() {
               Return & Refund Policy
             </h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 font-bold uppercase tracking-wider">
-              Last Updated: July 2026 • Kanha Foundation Financial Guidelines
+              Last Updated: July 2026 • Kanha Sarthi Foundation Financial Guidelines
             </p>
           </div>
 
           {/* Content */}
           <div className="space-y-6 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed text-justify">
             <p>
-              At <strong>Kanha Foundation</strong>, operating across <strong>Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India</strong>, we are deeply grateful for your generous contributions supporting our relief campaigns, education kit distributions, menstrual hygiene drives, animal welfare, and tree plantations.
+              At <strong>Kanha Sarthi Foundation</strong>, operating across <strong>Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India</strong>, we are deeply grateful for your generous contributions supporting our relief campaigns, education kit distributions, menstrual hygiene drives, animal welfare, and tree plantations.
             </p>
             <p>
-              Since Kanha Foundation is a Section 8 Non-Profit Organization and contributions are immediately allocated to active field operations and resource procurement, we maintain a transparent and structured Refund & Cancellation Policy.
+              Since Kanha Sarthi Foundation is a Section 8 Non-Profit Organization and contributions are immediately allocated to active field operations and resource procurement, we maintain a transparent and structured Refund & Cancellation Policy.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
@@ -47,7 +47,7 @@ export default function RefundPolicy() {
               2. Exceptional Refund Eligibility (Duplicate or Unauthorized Charges)
             </h2>
             <p>
-              We recognize that technical or payment gateway anomalies may occur. Kanha Foundation will evaluate refund claims strictly under the following conditions:
+              We recognize that technical or payment gateway anomalies may occur. Kanha Sarthi Foundation will evaluate refund claims strictly under the following conditions:
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li><strong>Duplicate Transaction Glitch:</strong> If a donor is accidentally double-billed due to a network error during checkout processing.</li>
@@ -82,7 +82,7 @@ export default function RefundPolicy() {
               For refund status inquiries or payment assistance across any branch, contact our finance team:
             </p>
             <div className="bg-zinc-100 dark:bg-zinc-900/60 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-xs space-y-1">
-              <p className="font-bold text-zinc-900 dark:text-white">Kanha Foundation (Finance Section)</p>
+              <p className="font-bold text-zinc-900 dark:text-white">Kanha Sarthi Foundation (Finance Section)</p>
               <p className="text-zinc-500 dark:text-zinc-400">Multi-State Operations: Bihar • Jharkhand • Delhi NCR • Uttar Pradesh • Pan-India</p>
               <p className="text-zinc-500 dark:text-zinc-400">Email: <span className="font-bold text-emerald-600 dark:text-emerald-400">kanhasathifoundation223@gmail.com</span></p>
             </div>

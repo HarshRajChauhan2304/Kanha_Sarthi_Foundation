@@ -223,7 +223,7 @@ export default function AdminPanelPage() {
   });
   const [footerConfig, setFooterConfig] = useState<any>({
     logo: "",
-    copyrightText: "Kanha Foundation",
+    copyrightText: "Kanha Sarthi Foundation",
     companyOverview: [],
     quickLinks: [],
     contact: { email: "", ctaText: "" },
@@ -240,7 +240,7 @@ export default function AdminPanelPage() {
   const [festivalPopup, setFestivalPopup] = useState<any>({
     enabled: true,
     badge: "🎉 Special Festival Appeal",
-    title: "Spread Festive Smiles With Kanha Foundation! 🪔",
+    title: "Spread Festive Smiles With Kanha Sarthi Foundation! 🪔",
     subtitle: "Join our festive drive to distribute dry ration kits, sweets, and warm clothes to hundreds of vulnerable families and slum children.",
     image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80",
     donate_text: "Donate Now & Share Joy",
@@ -1524,7 +1524,7 @@ export default function AdminPanelPage() {
 
         // Launch simulated WhatsApp text window
         const cleanPhone = app.phone.replace(/[^0-9]/g, "");
-        const msg = encodeURIComponent(`Hello ${app.name},\n\nThank you for joining as a volunteer with Kanha Foundation! Your application has been approved. Welcome to the team! ❤️`);
+        const msg = encodeURIComponent(`Hello ${app.name},\n\nThank you for joining as a volunteer with Kanha Sarthi Foundation! Your application has been approved. Welcome to the team! ❤️`);
         window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
       } else {
         triggerAlert(data.error || "Approval failed.");
@@ -1579,7 +1579,7 @@ export default function AdminPanelPage() {
     setCertText(app.certificate_text || "");
     setCertSigName(app.certificate_signature_name || "");
     setCertSigTitle(app.certificate_signature_title || "Authorized Officer");
-    setCertSealText(app.certificate_seal_text || "KANHA FOUNDATION SEAL");
+    setCertSealText(app.certificate_seal_text || "KANHA SARTHI FOUNDATION SEAL");
     setCertSigImg(app.certificate_signature_image_url || "");
     setCertSealImg(app.certificate_seal_image_url || "");
     setIsCertModalOpen(true);
@@ -1760,7 +1760,7 @@ export default function AdminPanelPage() {
             <div className="relative inline-block mb-4 px-6 py-2 bg-zinc-950/40 rounded-2xl border border-zinc-800/40">
               <img
                 src="/kanha_logo_round.png"
-                alt="Kanha Foundation Logo"
+                alt="Kanha Sarthi Foundation Logo"
                 className="h-12 w-auto mx-auto object-contain relative z-10"
               />
             </div>
@@ -3381,13 +3381,13 @@ export default function AdminPanelPage() {
                         </div>
                         <input
                           type="text"
-                          value={footerConfig.copyrightText ?? "Kanha Foundation"}
+                          value={footerConfig.copyrightText ?? "Kanha Sarthi Foundation"}
                           onChange={(e) => setFooterConfig({ ...footerConfig, copyrightText: e.target.value })}
-                          placeholder="Kanha Foundation"
+                          placeholder="Kanha Sarthi Foundation"
                           className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white"
                         />
                         <p className="text-[10px] text-zinc-500">
-                          Appears in footer as: Copyright &copy; {new Date().getFullYear()} {footerConfig.copyrightText || "Kanha Foundation"}
+                          Appears in footer as: Copyright &copy; {new Date().getFullYear()} {footerConfig.copyrightText || "Kanha Sarthi Foundation"}
                         </p>
                       </div>
 
@@ -4212,7 +4212,7 @@ export default function AdminPanelPage() {
                       type="text"
                       value={festivalPopup?.title || ""}
                       onChange={(e) => setFestivalPopup({ ...festivalPopup, title: e.target.value })}
-                      placeholder="e.g., Spread Festive Smiles With Kanha Foundation! 🪔"
+                      placeholder="e.g., Spread Festive Smiles With Kanha Sarthi Foundation! 🪔"
                       className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
                     />
                   </div>
@@ -5782,7 +5782,7 @@ export default function AdminPanelPage() {
                 {/* Document Header */}
                 <div className="border-b-2 border-zinc-900 pb-6 mb-8 flex justify-between items-start">
                   <div>
-                    <h1 className="text-2xl font-black uppercase tracking-tight text-gray-900">KANHA FOUNDATION</h1>
+                    <h1 className="text-2xl font-black uppercase tracking-tight text-gray-900">KANHA SARTHI FOUNDATION</h1>
                     <p className="text-xs text-zinc-550 mt-1 font-bold">Ranchi, Jharkhand, India</p>
                     <p className="text-[10px] text-zinc-500 font-medium">Email: contact@kanhafoundation.org | Web: kanhafoundation.org</p>
                   </div>
@@ -5852,7 +5852,7 @@ export default function AdminPanelPage() {
                 <div className="mt-8 border-t border-zinc-900 pt-6 flex justify-between items-start">
                   <div>
                     <p className="text-[10px] text-zinc-500 leading-relaxed max-w-sm">
-                      * Note: Kanha Foundation is registered under Section 80G of the Income Tax Act. All donations compiled here are fully eligible for tax exemption computations.
+                      * Note: Kanha Sarthi Foundation is registered under Section 80G of the Income Tax Act. All donations compiled here are fully eligible for tax exemption computations.
                     </p>
                   </div>
                   <div className="w-64 text-right space-y-2">
@@ -5918,7 +5918,7 @@ export default function AdminPanelPage() {
                   <div className="text-right w-48">
                     <div className="border-b border-zinc-800 h-10 w-full mb-2"></div>
                     <p className="font-bold text-zinc-800 uppercase text-[10px] tracking-wider">Authorized Officer</p>
-                    <p className="text-[9px] text-zinc-500">Kanha Foundation</p>
+                    <p className="text-[9px] text-zinc-500">Kanha Sarthi Foundation</p>
                   </div>
                 </div>
 
@@ -6203,7 +6203,7 @@ export default function AdminPanelPage() {
                         <textarea
                           value={certText}
                           onChange={(e) => setCertText(e.target.value)}
-                          placeholder="e.g. has successfully completed their volunteering internship under Kanha Foundation..."
+                          placeholder="e.g. has successfully completed their volunteering internship under Kanha Sarthi Foundation..."
                           className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none h-16 resize-none"
                         />
                       </div>
@@ -6235,7 +6235,7 @@ export default function AdminPanelPage() {
                           type="text"
                           value={certSealText}
                           onChange={(e) => setCertSealText(e.target.value)}
-                          placeholder="Default: KANHA FOUNDATION SEAL"
+                          placeholder="Default: KANHA SARTHI FOUNDATION SEAL"
                           className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none"
                         />
                       </div>
@@ -6461,13 +6461,13 @@ export default function AdminPanelPage() {
                 <div className="relative z-10 flex flex-col items-center">
                   <img
                     src="/kanha_logo_round.png"
-                    alt="Kanha Foundation Logo"
+                    alt="Kanha Sarthi Foundation Logo"
                     className="h-16 w-16 object-contain mb-3"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=120&auto=format&fit=crop&q=80";
                     }}
                   />
-                  <h4 className="text-sm font-black tracking-[0.25em] text-[#1E4D2B] uppercase mb-1">KANHA FOUNDATION</h4>
+                  <h4 className="text-sm font-black tracking-[0.25em] text-[#1E4D2B] uppercase mb-1">KANHA SARTHI FOUNDATION</h4>
                   <p className="text-[10px] text-zinc-550 uppercase tracking-widest font-bold">Registered Charity & Volunteer Network</p>
                   <div className="w-24 h-0.5 bg-[#F3A61E] mt-3 mb-1"></div>
                 </div>
@@ -6490,7 +6490,7 @@ export default function AdminPanelPage() {
                       viewingCertVol.certificate_text
                     ) : (
                       <>
-                        has successfully completed their volunteering internship under Kanha Foundation from <strong className="text-[#1E4D2B]">{viewingCertVol.internship_start_date || certStartDate || "N/A"}</strong> to <strong className="text-[#1E4D2B]">{viewingCertVol.certificate_issue_date || certDate || "N/A"}</strong>. Their contributions have significantly impacted local relief drives and education initiatives.
+                        has successfully completed their volunteering internship under Kanha Sarthi Foundation from <strong className="text-[#1E4D2B]">{viewingCertVol.internship_start_date || certStartDate || "N/A"}</strong> to <strong className="text-[#1E4D2B]">{viewingCertVol.certificate_issue_date || certDate || "N/A"}</strong>. Their contributions have significantly impacted local relief drives and education initiatives.
                       </>
                     )}
                   </p>
@@ -6557,7 +6557,7 @@ export default function AdminPanelPage() {
                     <p className="text-[10px] font-black text-[#1E4D2B] uppercase tracking-wider">
                       {viewingCertVol.certificate_signature_title || "Authorized Officer"}
                     </p>
-                    <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Kanha Foundation</p>
+                    <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Kanha Sarthi Foundation</p>
                   </div>
                 </div>
               </div>

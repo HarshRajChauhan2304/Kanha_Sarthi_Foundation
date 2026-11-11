@@ -14,7 +14,7 @@ const FAQ_LIST: FAQItem[] = [
     id: 1,
     category: "donations",
     question: "Is my donation eligible for 80G Tax Exemption?",
-    answer: "Yes! Kanha Foundation is a Section 8 Non-Profit Organization registered under Section 80G of the Income Tax Act, 1961. Donors receive an instant official donation receipt containing the 80G reference details, enabling up to 50% tax exemption on eligible contributions."
+    answer: "Yes! Kanha Sarthi Foundation is a Section 8 Non-Profit Organization registered under Section 80G of the Income Tax Act, 1961. Donors receive an instant official donation receipt containing the 80G reference details, enabling up to 50% tax exemption on eligible contributions."
   },
   {
     id: 2,
@@ -25,7 +25,7 @@ const FAQ_LIST: FAQItem[] = [
   {
     id: 3,
     category: "donations",
-    question: "What payment methods are supported on Kanha Foundation?",
+    question: "What payment methods are supported on Kanha Sarthi Foundation?",
     answer: "We accept all major secure payment methods including UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, Debit Cards, and Credit Cards via certified payment gateways (Cashfree / Razorpay) with 256-bit SSL encryption."
   },
   {
@@ -61,8 +61,8 @@ const FAQ_LIST: FAQItem[] = [
   {
     id: 9,
     category: "npo",
-    question: "Where does Kanha Foundation operate its regional branches and campaigns?",
-    answer: "Kanha Foundation is a Section 8 Non-Profit Organization operating multi-state regional branches and welfare drives across Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India. Our verified volunteer network and field coordinators execute community welfare drives across underprivileged settlements in all these operating regions."
+    question: "Where does Kanha Sarthi Foundation operate its regional branches and campaigns?",
+    answer: "Kanha Sarthi Foundation is a Section 8 Non-Profit Organization operating multi-state regional branches and welfare drives across Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India. Our verified volunteer network and field coordinators execute community welfare drives across underprivileged settlements in all these operating regions."
   }
 ];
 

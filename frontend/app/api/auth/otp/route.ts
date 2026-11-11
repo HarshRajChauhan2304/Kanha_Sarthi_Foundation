@@ -84,11 +84,11 @@ export async function POST(request: Request) {
 =========================================================
 [SMTP EMAIL SIMULATOR] Sending Email Verification OTP...
 To: ${cleanEmail}
-Subject: Email Verification OTP - Kanha Foundation
+Subject: Email Verification OTP - Kanha Sarthi Foundation
 Body:
   Hello,
 
-  Thank you for signing up with Kanha Foundation.
+  Thank you for signing up with Kanha Sarthi Foundation.
   Your 6-digit Email Verification code is:
 
   👉 ${code} 👈

@@ -33,7 +33,7 @@ export default function OurValuesPage() {
       icon: "🏛️",
       title: "Section 8 Central Compliance",
       highlight: "Regulated Non-Profit Governance",
-      description: "Incorporated under Section 8 of the Indian Companies Act, 2013 enacted by the Central Government of India, and registered on NITI Aayog (NGO Darpan), Kanha Foundation maintains 100% statutory compliance.",
+      description: "Incorporated under Section 8 of the Indian Companies Act, 2013 enacted by the Central Government of India, and registered on NITI Aayog (NGO Darpan), Kanha Sarthi Foundation maintains 100% statutory compliance.",
       points: [
         "Section 80G Tax Exemption receipts under Income Tax Act, 1961",
         "Annual financial reporting submitted to MCA and Income Tax Department",
@@ -69,7 +69,7 @@ export default function OurValuesPage() {
       icon: "🌐",
       title: "Pan-India Multi-State Reach",
       highlight: "Greater Noida HQ • Multi-Regional Network",
-      description: "Headquartered in Greater Noida, U.P., Kanha Foundation operates active field coordinator networks and volunteer teams across Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India.",
+      description: "Headquartered in Greater Noida, U.P., Kanha Sarthi Foundation operates active field coordinator networks and volunteer teams across Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India.",
       points: [
         "Multi-state regional branch execution hubs",
         "Local volunteer mobilization in rural and urban settlements",
@@ -95,7 +95,7 @@ export default function OurValuesPage() {
             Our Core Values
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto mt-4 font-medium leading-relaxed">
-            The fundamental ethical pillars guiding Kanha Foundation's ground operations, donor relationships, field executions, and non-profit governance across India.
+            The fundamental ethical pillars guiding Kanha Sarthi Foundation's ground operations, donor relationships, field executions, and non-profit governance across India.
           </p>
         </motion.div>
 

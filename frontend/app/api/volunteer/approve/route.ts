@@ -188,7 +188,7 @@ export async function POST(request: Request) {
 ========================================================================
 [SMTP EMAIL SIMULATOR] Dispatching Thank-You Email...
 To: ${app.email}
-Subject: Welcome to Kanha Foundation, ${app.name}!
+Subject: Welcome to Kanha Sarthi Foundation, ${app.name}!
 Body:
   Dear ${app.name},
 
@@ -201,7 +201,7 @@ Body:
 
   Warm regards,
   Volunteering Team
-  Kanha Foundation
+  Kanha Sarthi Foundation
 ========================================================================
     `);
 
@@ -212,7 +212,7 @@ Body:
 To: ${app.phone}
 Message:
   Hello ${app.name}! Thank you for registering as a volunteer with 
-  Kanha Foundation. Your application has been approved. Welcome to the team!
+  Kanha Sarthi Foundation. Your application has been approved. Welcome to the team!
 ========================================================================
     `);
 

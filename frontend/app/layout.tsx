@@ -20,8 +20,8 @@ import SessionManager from "@/components/SessionManager";
 import FestivalPopupModal from "@/components/FestivalPopupModal";
 
 export const metadata: Metadata = {
-  title: "Kanha Foundation",
-  description: "Official donation platform for Kanha Foundation - supporting community growth, education, stray care, and dynamic food relief projects.",
+  title: "Kanha Sarthi Foundation",
+  description: "Official donation platform for Kanha Sarthi Foundation - supporting community growth, education, stray care, and dynamic food relief projects.",
 };
 
 export default function RootLayout({

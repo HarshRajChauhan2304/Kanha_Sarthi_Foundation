@@ -467,7 +467,7 @@ export default function VolunteerProfilePage() {
             <div className="relative inline-block mb-4 px-6 py-2 bg-zinc-950/40 rounded-2xl border border-zinc-800/40">
               <img
                 src="/kanha_logo_round.png"
-                alt="Kanha Foundation Logo"
+                alt="Kanha Sarthi Foundation Logo"
                 className="h-20 w-auto mx-auto object-contain relative z-10"
               />
             </div>
@@ -1456,13 +1456,13 @@ export default function VolunteerProfilePage() {
                     <div className="relative z-10 flex flex-col items-center">
                       <img
                         src="/kanha_logo_round.png"
-                        alt="Kanha Foundation Logo"
+                        alt="Kanha Sarthi Foundation Logo"
                         className="h-16 w-16 object-contain mb-3"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=120&auto=format&fit=crop&q=80";
                         }}
                       />
-                      <h4 className="text-sm font-black tracking-[0.25em] text-[#1E4D2B] uppercase mb-1">KANHA FOUNDATION</h4>
+                      <h4 className="text-sm font-black tracking-[0.25em] text-[#1E4D2B] uppercase mb-1">KANHA SARTHI FOUNDATION</h4>
                       <p className="text-[10px] text-zinc-550 uppercase tracking-widest font-bold">Registered Charity & Volunteer Network</p>
                       <div className="w-24 h-0.5 bg-[#F3A61E] mt-3 mb-1"></div>
                     </div>
@@ -1485,7 +1485,7 @@ export default function VolunteerProfilePage() {
                           volunteer.certificate_text
                         ) : (
                           <>
-                            has successfully completed their volunteering internship under Kanha Foundation from <strong className="text-[#1E4D2B]">{volunteer.internship_start_date || "N/A"}</strong> to <strong className="text-[#1E4D2B]">{volunteer.certificate_issue_date || "N/A"}</strong>. Their contributions have significantly impacted local relief drives and education initiatives.
+                            has successfully completed their volunteering internship under Kanha Sarthi Foundation from <strong className="text-[#1E4D2B]">{volunteer.internship_start_date || "N/A"}</strong> to <strong className="text-[#1E4D2B]">{volunteer.certificate_issue_date || "N/A"}</strong>. Their contributions have significantly impacted local relief drives and education initiatives.
                           </>
                         )}
                       </p>
@@ -1552,7 +1552,7 @@ export default function VolunteerProfilePage() {
                         <p className="text-[10px] font-black text-[#1E4D2B] uppercase tracking-wider">
                           {volunteer.certificate_signature_title || "Authorized Officer"}
                         </p>
-                        <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Kanha Foundation</p>
+                        <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Kanha Sarthi Foundation</p>
                       </div>
                     </div>
                   </div>
@@ -1622,7 +1622,7 @@ export default function VolunteerProfilePage() {
                   )}
 
                   <p className="text-xs text-zinc-400 text-center">
-                    Issued officially by the Kanha Foundation on {volunteer.certificate_issue_date || "N/A"}.
+                    Issued officially by the Kanha Sarthi Foundation on {volunteer.certificate_issue_date || "N/A"}.
                   </p>
                 </div>
               </div>
@@ -1650,7 +1650,7 @@ export default function VolunteerProfilePage() {
               </h2>
               
               <p className="text-sm text-zinc-350 leading-relaxed mb-6">
-                Your volunteering internship certificate has been officially issued by the Kanha Foundation! Thank you for your incredible support and dedication.
+                Your volunteering internship certificate has been officially issued by the Kanha Sarthi Foundation! Thank you for your incredible support and dedication.
               </p>
 
               <div className="flex flex-col gap-3">
@@ -1804,13 +1804,13 @@ export default function VolunteerProfilePage() {
               <div className="relative z-10 flex flex-col items-center">
                 <img
                   src="/kanha_logo_round.png"
-                  alt="Kanha Foundation Logo"
+                  alt="Kanha Sarthi Foundation Logo"
                   className="h-16 w-16 object-contain mb-3"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=120&auto=format&fit=crop&q=80";
                   }}
                 />
-                <h4 className="text-sm font-black tracking-[0.25em] text-[#1E4D2B] uppercase mb-1">KANHA FOUNDATION</h4>
+                <h4 className="text-sm font-black tracking-[0.25em] text-[#1E4D2B] uppercase mb-1">KANHA SARTHI FOUNDATION</h4>
                 <p className="text-[10px] text-zinc-550 uppercase tracking-widest font-bold">Registered Charity & Volunteer Network</p>
                 <div className="w-24 h-0.5 bg-[#F3A61E] mt-3 mb-1"></div>
               </div>
@@ -1829,7 +1829,7 @@ export default function VolunteerProfilePage() {
                 </div>
 
                 <p className="text-sm text-zinc-655 max-w-2xl mx-auto leading-relaxed mt-4">
-                  in recognition of their outstanding performance and dedication as the <strong className="text-[#F3A61E]">Star Volunteer of the Week ({starRecord.week_label})</strong> at Kanha Foundation. They achieved <strong className="text-[#1E4D2B]">Grade {starRecord.grade}</strong> by successfully completing volunteer tasks.
+                  in recognition of their outstanding performance and dedication as the <strong className="text-[#F3A61E]">Star Volunteer of the Week ({starRecord.week_label})</strong> at Kanha Sarthi Foundation. They achieved <strong className="text-[#1E4D2B]">Grade {starRecord.grade}</strong> by successfully completing volunteer tasks.
                 </p>
 
                 <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto pt-4 text-xs font-bold text-zinc-600">
@@ -1865,7 +1865,7 @@ export default function VolunteerProfilePage() {
                 <div className="text-right w-44">
                   <div className="h-8 border-b border-zinc-300 w-full mb-1"></div>
                   <p className="text-[10px] font-black text-[#1E4D2B] uppercase tracking-wider">Authorized Officer</p>
-                  <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Kanha Foundation</p>
+                  <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Kanha Sarthi Foundation</p>
                 </div>
               </div>
             </div>

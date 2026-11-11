@@ -262,7 +262,7 @@ export default function Footer() {
               ? (footerData.copyrightText.toLowerCase().includes("copyright")
                   ? footerData.copyrightText
                   : `Copyright \u00a9 ${new Date().getFullYear()} ${footerData.copyrightText}`)
-              : `Copyright \u00a9 ${new Date().getFullYear()} Kanha Foundation`}
+              : `Copyright \u00a9 ${new Date().getFullYear()} Kanha Sarthi Foundation`}
           </p>
         </div>
 

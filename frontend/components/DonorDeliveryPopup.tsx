@@ -94,7 +94,7 @@ export default function DonorDeliveryPopup() {
   const videoCount = mediaUrls.filter(u => isVideo(u)).length;
   const photoCount = mediaUrls.length - videoCount;
 
-  const shareText = `❤️ I sponsored a life with Kanha Foundation!\n\n` +
+  const shareText = `❤️ I sponsored a life with Kanha Sarthi Foundation!\n\n` +
     `✨ Beneficiary: ${beneficiaryDisplayName}\n` +
     `🙏 Cause: ${causeName}\n` +
     `📍 Real-time transparent distribution completed.\n\n` +
@@ -155,7 +155,7 @@ export default function DonorDeliveryPopup() {
                   KH
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
-                  Kanha Foundation • On-Ground Proof
+                  Kanha Sarthi Foundation • On-Ground Proof
                 </span>
               </div>
               <span className="px-2 py-0.5 bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 text-[9px] font-bold rounded-full">

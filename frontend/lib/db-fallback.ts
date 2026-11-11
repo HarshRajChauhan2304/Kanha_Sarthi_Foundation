@@ -341,7 +341,7 @@ export async function syncVolunteerToHighlights(app: {
   const name = app.name;
   const role = "Volunteer";
   
-  let cleanQuote = app.motivation || "Proud to be a volunteer at Kanha Foundation!";
+  let cleanQuote = app.motivation || "Proud to be a volunteer at Kanha Sarthi Foundation!";
   let cleanImage = app.profile_photo || defaultAvatar;
 
   if (app.motivation && app.motivation.trim().startsWith('{')) {

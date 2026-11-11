@@ -556,12 +556,12 @@ export default function VolunteerRegistrationPage() {
                 }}
                 className="w-full h-24 overflow-y-auto px-4 py-3 bg-gray-50 dark:bg-[#0c1510]/50 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-500 dark:text-gray-400 leading-relaxed scrollbar-thin select-none"
               >
-                <p className="font-bold mb-1 text-zinc-800 dark:text-zinc-200">Kanha Foundation Volunteer Code of Conduct</p>
+                <p className="font-bold mb-1 text-zinc-800 dark:text-zinc-200">Kanha Sarthi Foundation Volunteer Code of Conduct</p>
                 <p className="mb-2">1. Respect: All volunteers must treat community members, fellow volunteers, and staff with absolute dignity and respect.</p>
                 <p className="mb-2">2. Confidentiality: Volunteers must protect the privacy of any sensitive information or beneficiaries they work with.</p>
                 <p className="mb-2">3. Integrity: Volunteers must report true financial and project details on-ground and respect resources allotted to campaigns.</p>
                 <p className="mb-2">4. Safety: Adhere strictly to dynamic instructions and safety protocols established by campaign coordinates.</p>
-                <p className="mb-2">By checking the box below, you confirm that you have read, understood, and agreed to be bound by the volunteer guidelines and terms of Kanha Foundation.</p>
+                <p className="mb-2">By checking the box below, you confirm that you have read, understood, and agreed to be bound by the volunteer guidelines and terms of Kanha Sarthi Foundation.</p>
               </div>
             </div>
 
@@ -583,7 +583,7 @@ export default function VolunteerRegistrationPage() {
                   hasScrolledToBottom ? "text-gray-600 dark:text-gray-400 cursor-pointer" : "text-gray-400 dark:text-gray-600 cursor-not-allowed"
                 }`}
               >
-                I agree to the Terms & Conditions and Privacy Policy of Kanha Foundation. {!hasScrolledToBottom && <span className="text-[10px] text-[#F3A61E] font-bold block mt-1">(Please scroll the terms text box above to enable checking this box)</span>}
+                I agree to the Terms & Conditions and Privacy Policy of Kanha Sarthi Foundation. {!hasScrolledToBottom && <span className="text-[10px] text-[#F3A61E] font-bold block mt-1">(Please scroll the terms text box above to enable checking this box)</span>}
               </label>
             </div>
 

@@ -20,38 +20,38 @@ export default function DisclaimerPage() {
               Legal Disclaimer
             </h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 font-bold uppercase tracking-wider">
-              Last Updated: July 2026 • Kanha Foundation Multi-State Legal Disclosures
+              Last Updated: July 2026 • Kanha Sarthi Foundation Multi-State Legal Disclosures
             </p>
           </div>
 
           {/* Content */}
           <div className="space-y-6 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed text-justify">
             <p>
-              The information provided on <strong>Kanha Foundation</strong> website (<a href="https://kanhafoundation.org" className="text-[#1E4D2B] dark:text-[#52c47c] font-bold hover:underline">kanhafoundation.org</a>) and associated digital portals is for general informational and charitable contribution purposes only.
+              The information provided on <strong>Kanha Sarthi Foundation</strong> website (<a href="https://kanhafoundation.org" className="text-[#1E4D2B] dark:text-[#52c47c] font-bold hover:underline">kanhafoundation.org</a>) and associated digital portals is for general informational and charitable contribution purposes only.
             </p>
             <p>
-              Kanha Foundation is incorporated as a <strong>Section 8 Non-Profit Company under the Indian Companies Act, 2013</strong>, operating multi-state regional branches and welfare networks across <strong>Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India</strong>. All funds raised through our platform are strictly deployed toward approved public welfare, food relief, educational support, animal care, menstrual hygiene, and environmental conservation projects.
+              Kanha Sarthi Foundation is incorporated as a <strong>Section 8 Non-Profit Company under the Indian Companies Act, 2013</strong>, operating multi-state regional branches and welfare networks across <strong>Bihar, Jharkhand, Delhi NCR, Uttar Pradesh, and Pan-India</strong>. All funds raised through our platform are strictly deployed toward approved public welfare, food relief, educational support, animal care, menstrual hygiene, and environmental conservation projects.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
               1. Non-Commercial & No Financial Warranty
             </h2>
             <p>
-              All materials, images, impact reports, and story summaries on this platform are provided on an "as is" and "as available" basis without warranties of any kind, either express or implied. Kanha Foundation makes no representations or warranties regarding the absolute error-free nature or uninterrupted availability of server portals.
+              All materials, images, impact reports, and story summaries on this platform are provided on an "as is" and "as available" basis without warranties of any kind, either express or implied. Kanha Sarthi Foundation makes no representations or warranties regarding the absolute error-free nature or uninterrupted availability of server portals.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
               2. 80G Tax Exemption & Financial Advice Disclaimer
             </h2>
             <p>
-              Donations made to Kanha Foundation may qualify for tax deduction under <strong>Section 80G of the Income Tax Act, 1961</strong> (subject to applicable limits and tax regulations). However, nothing on this website constitutes professional accounting, tax, or legal advice. Donors are encouraged to consult their personal tax advisor or chartered accountant to ascertain individual tax savings applicability under the Income Tax Act.
+              Donations made to Kanha Sarthi Foundation may qualify for tax deduction under <strong>Section 80G of the Income Tax Act, 1961</strong> (subject to applicable limits and tax regulations). However, nothing on this website constitutes professional accounting, tax, or legal advice. Donors are encouraged to consult their personal tax advisor or chartered accountant to ascertain individual tax savings applicability under the Income Tax Act.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
               3. Multi-State Field Delivery & Operational Flexibility
             </h2>
             <p>
-              While Kanha Foundation makes every effort to execute relief distributions (e.g. food packets, study kits, plant saplings) in exact accordance with listed campaign details across Bihar, Jharkhand, Delhi NCR, and Uttar Pradesh, unexpected field conditions—such as severe weather, emergency administrative curfews, or local supply availability—may require minor operational adaptations. In all such cases, resources are redirected to serve beneficiary groups of equivalent need in neighboring regional areas.
+              While Kanha Sarthi Foundation makes every effort to execute relief distributions (e.g. food packets, study kits, plant saplings) in exact accordance with listed campaign details across Bihar, Jharkhand, Delhi NCR, and Uttar Pradesh, unexpected field conditions—such as severe weather, emergency administrative curfews, or local supply availability—may require minor operational adaptations. In all such cases, resources are redirected to serve beneficiary groups of equivalent need in neighboring regional areas.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
@@ -65,7 +65,7 @@ export default function DisclaimerPage() {
               5. Third-Party Links & Payment Gateways
             </h2>
             <p>
-              Our website integrates certified third-party payment gateways (e.g. Razorpay, Cashfree, UPI provider SDKs) for secure contribution processing. Kanha Foundation does not exercise direct control over third-party external networks and shall not be held liable for external network downtime or bank server delays during transaction processing.
+              Our website integrates certified third-party payment gateways (e.g. Razorpay, Cashfree, UPI provider SDKs) for secure contribution processing. Kanha Sarthi Foundation does not exercise direct control over third-party external networks and shall not be held liable for external network downtime or bank server delays during transaction processing.
             </p>
 
             <h2 className="text-lg font-black text-zinc-900 dark:text-white pt-4 uppercase tracking-wider">
@@ -75,7 +75,7 @@ export default function DisclaimerPage() {
               For legal inquiries, corporate compliance documentation, or verification of Section 8 registration details across any state branch, please reach out to our legal officer at:
             </p>
             <div className="bg-zinc-100 dark:bg-zinc-900/60 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-xs space-y-1">
-              <p className="font-bold text-zinc-900 dark:text-white">Kanha Foundation (Section 8 Company)</p>
+              <p className="font-bold text-zinc-900 dark:text-white">Kanha Sarthi Foundation (Section 8 Company)</p>
               <p className="text-zinc-500 dark:text-zinc-400">Branches & Operations: Bihar • Jharkhand • Delhi NCR • Uttar Pradesh • Pan-India</p>
               <p className="text-zinc-500 dark:text-zinc-400">Email: <span className="font-bold text-emerald-600 dark:text-emerald-400">kanhasathifoundation223@gmail.com</span></p>
             </div>
