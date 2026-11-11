@@ -76,69 +76,69 @@ export default function FestivalPopupModal() {
           className="absolute inset-0 cursor-pointer"
         />
 
-        {/* Modal Dialog Card */}
+        {/* Modal Dialog Card (Compact, 3:4 Image & Mobile Portable) */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.85, y: 30 }}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.85, y: 30 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto bg-gradient-to-br from-zinc-950 via-zinc-900 to-[#0e2a14] border border-amber-500/40 rounded-[2.5rem] shadow-[0_0_50px_rgba(243,166,30,0.25)] text-center text-white p-6 sm:p-8 z-10"
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-sm sm:max-w-md max-h-[92vh] overflow-y-auto bg-gradient-to-br from-zinc-950 via-zinc-900 to-[#0e2a14] border border-amber-500/40 rounded-3xl shadow-[0_0_40px_rgba(243,166,30,0.25)] text-center text-white p-4 sm:p-6 z-10"
         >
           {/* Close cross button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 z-20 p-2.5 text-zinc-300 hover:text-white bg-black/60 hover:bg-black/90 border border-white/10 rounded-full transition-all cursor-pointer shadow-lg hover:scale-110 active:scale-95"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 p-2 text-zinc-300 hover:text-white bg-black/70 hover:bg-black/90 border border-white/15 rounded-full transition-all cursor-pointer shadow-lg hover:scale-110 active:scale-95"
             aria-label="Close Announcement"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
           {/* Decorative Top Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black uppercase tracking-wider mb-4 animate-pulse">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] sm:text-xs font-black uppercase tracking-wider mb-2.5">
             <span>{config.badge || "🎉 Special Festival Drive"}</span>
           </div>
 
-          {/* Poster / Banner Image */}
+          {/* Poster / Banner Image (3:4 Aspect Ratio, Portable & Clean) */}
           {config.image && (
-            <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden mb-6 border border-amber-500/30 shadow-2xl group">
+            <div className="relative mx-auto aspect-[3/4] max-h-[250px] sm:max-h-[300px] w-auto rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-amber-500/30 shadow-xl bg-black/40 flex items-center justify-center group">
               <img
                 src={config.image}
                 alt={config.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                className="w-full h-full object-contain group-hover:scale-102 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
             </div>
           )}
 
-          {/* Title */}
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight mb-3">
+          {/* Title (Sleek & Compact) */}
+          <h2 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug mb-1 sm:mb-1.5 px-2">
             {config.title}
           </h2>
 
           {/* Message Subtitle */}
-          <p className="text-sm sm:text-base text-zinc-300 leading-relaxed font-normal mb-8 max-w-md mx-auto">
+          <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal mb-3.5 sm:mb-4 max-w-xs sm:max-w-sm mx-auto px-1">
             {config.subtitle}
           </p>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+          {/* Action Buttons (Compact Single-Row on Mobile & Desktop) */}
+          <div className="flex gap-2 sm:gap-2.5 justify-center items-center pt-1">
             <button
               onClick={handleDonate}
-              className="w-full sm:w-auto px-8 py-4 bg-[#F3A61E] hover:bg-[#d68f12] text-black text-sm font-black uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 py-2.5 sm:py-3 px-3.5 sm:px-4 bg-[#F3A61E] hover:bg-[#d68f12] active:bg-[#bf7e0c] text-black text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl shadow-lg shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span>{config.donate_text || "Donate Now"}</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <span className="truncate">{config.donate_text || "Donate Now"}</span>
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </button>
 
             <button
               onClick={handleClose}
-              className="w-full sm:w-auto px-6 py-4 bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-bold uppercase tracking-wider rounded-2xl transition-colors cursor-pointer"
+              className="py-2.5 sm:py-3 px-3 sm:px-4 bg-zinc-800/90 hover:bg-zinc-800 active:bg-zinc-700 text-zinc-300 hover:text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xl transition-colors cursor-pointer shrink-0"
             >
-              Continue to Website
+              Continue
             </button>
           </div>
         </motion.div>

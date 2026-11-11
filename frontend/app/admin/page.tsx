@@ -4301,23 +4301,23 @@ export default function AdminPanelPage() {
                 {/* Modal Mockup Preview */}
                 <div className="border-t border-zinc-800/80 pt-6">
                   <span className="text-xs font-black uppercase tracking-wider text-zinc-400 block mb-4">Modal Preview (What visitors will see)</span>
-                  <div className="relative p-6 max-w-md mx-auto rounded-[2rem] bg-gradient-to-br from-zinc-950 via-zinc-900 to-[#0e2a14] border border-amber-500/40 text-center text-white shadow-2xl">
-                    <span className="absolute top-4 right-4 h-7 w-7 rounded-full bg-black/60 flex items-center justify-center text-xs text-zinc-300 font-bold">✕</span>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30 inline-block mb-3">
+                  <div className="relative p-5 max-w-xs mx-auto rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-[#0e2a14] border border-amber-500/40 text-center text-white shadow-2xl">
+                    <span className="absolute top-3 right-3 h-6 w-6 rounded-full bg-black/60 flex items-center justify-center text-[10px] text-zinc-300 font-bold">✕</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-500/30 inline-block mb-2.5">
                       {festivalPopup?.badge || "🎉 Special Festival Appeal"}
                     </span>
                     {festivalPopup?.image && (
-                      <div className="w-full h-36 rounded-xl overflow-hidden mb-4 border border-amber-500/20">
-                        <img src={festivalPopup.image} alt="preview" className="h-full w-full object-cover" />
+                      <div className="mx-auto aspect-[3/4] max-h-48 w-auto rounded-xl overflow-hidden mb-3 border border-amber-500/20 bg-black/40 flex items-center justify-center">
+                        <img src={festivalPopup.image} alt="preview" className="h-full w-full object-contain" />
                       </div>
                     )}
-                    <h4 className="text-base font-black text-white mb-2">{festivalPopup?.title || "Festival Announcement"}</h4>
-                    <p className="text-xs text-zinc-300 mb-5 line-clamp-3">{festivalPopup?.subtitle || "Message..."}</p>
+                    <h4 className="text-sm font-black text-white mb-1.5 px-1">{festivalPopup?.title || "Festival Announcement"}</h4>
+                    <p className="text-[11px] text-zinc-300 mb-3.5 line-clamp-3 px-1">{festivalPopup?.subtitle || "Message..."}</p>
                     <div className="flex gap-2 justify-center">
-                      <span className="px-5 py-2.5 bg-[#F3A61E] text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-md">
+                      <span className="flex-1 px-3 py-2 bg-[#F3A61E] text-black font-black text-[11px] uppercase tracking-wider rounded-lg shadow-md truncate">
                         {festivalPopup?.donate_text || "Donate Now"}
                       </span>
-                      <span className="px-4 py-2.5 bg-zinc-800 text-zinc-400 text-xs font-bold rounded-xl">
+                      <span className="px-3 py-2 bg-zinc-800 text-zinc-400 text-[11px] font-bold rounded-lg shrink-0">
                         Close
                       </span>
                     </div>
