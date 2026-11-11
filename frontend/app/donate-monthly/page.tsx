@@ -146,43 +146,44 @@ export default function DonateMonthlyPage() {
     activeCategory.impactNotes.default;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-950 to-black text-white py-10 sm:py-16 px-4 font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-950 to-black text-white py-6 sm:py-16 px-3 sm:px-4 font-sans">
       <div className="max-w-xl mx-auto">
         
-        {/* Main Card Container (Matches User Screenshot) */}
+        {/* Main Card Container (Matches User Screenshot & Fully Mobile-Portable) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="bg-white dark:bg-[#121614] text-zinc-900 dark:text-white rounded-[2rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+          className="bg-white dark:bg-[#121614] text-zinc-900 dark:text-white rounded-2xl sm:rounded-[2rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
         >
           {/* Card Top Header */}
-          <div className="p-6 sm:p-7 pb-4 flex items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80">
+          <div className="p-4 sm:p-7 pb-3 sm:pb-4 flex items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80">
             <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
                 <span>Monthly Subscriptions</span>
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+              <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
                 Reliable grassroots impact created every month
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Claim Tax Benefits Button (Orange badge from user screenshot) */}
               <button
                 type="button"
                 onClick={() => setShowTaxModal(true)}
-                className="px-3.5 py-2 bg-[#F35E1E] hover:bg-[#e04e0e] text-white text-xs font-black rounded-xl shadow-md shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-[#F35E1E] hover:bg-[#e04e0e] text-white text-[11px] sm:text-xs font-black rounded-xl shadow-md shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
                 title="Claim 80G Tax Benefits"
               >
-                <span>🎁 Claim Tax Benefits</span>
+                <span className="hidden sm:inline">🎁 Claim Tax Benefits</span>
+                <span className="sm:hidden">🎁 80G Tax</span>
               </button>
 
               {/* Close Button linking back */}
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer"
+                className="p-1.5 sm:p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer"
                 aria-label="Back to home"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -193,8 +194,8 @@ export default function DonateMonthlyPage() {
           </div>
 
           {/* Category Tabs: Education | Healthcare | Food & Nutrition */}
-          <div className="px-6 sm:px-7 pt-5">
-            <div className="grid grid-cols-3 gap-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+          <div className="px-4 sm:px-7 pt-4 sm:pt-5">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
               {CATEGORIES.map((cat) => {
                 const isActive = activeCategory.id === cat.id;
                 return (
@@ -206,13 +207,27 @@ export default function DonateMonthlyPage() {
                       setSelectedPreset(1000);
                       setCustomAmount("1000");
                     }}
-                    className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    className={`py-2 sm:py-3 px-1.5 sm:px-2 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-1 ${
                       isActive
                         ? "bg-[#7C3AED] text-white shadow-md shadow-purple-500/30 scale-100"
                         : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                     }`}
                   >
-                    <span>{cat.tabLabel}</span>
+                    <span>
+                      {cat.id === "healthcare" ? (
+                        <>
+                          <span className="hidden sm:inline">Healthcare</span>
+                          <span className="sm:hidden">Health</span>
+                        </>
+                      ) : cat.id === "food" ? (
+                        <>
+                          <span className="hidden sm:inline">Food & Nutrition</span>
+                          <span className="sm:hidden">Food</span>
+                        </>
+                      ) : (
+                        cat.tabLabel
+                      )}
+                    </span>
                   </button>
                 );
               })}
@@ -220,28 +235,28 @@ export default function DonateMonthlyPage() {
           </div>
 
           {/* Category Banner with Image and Headline */}
-          <div className="px-6 sm:px-7 pt-5">
+          <div className="px-4 sm:px-7 pt-4 sm:pt-5">
             <div className="relative w-full aspect-[2.3/1] rounded-2xl overflow-hidden border border-purple-500/30 shadow-lg group">
               <img
                 src={activeCategory.image}
                 alt={activeCategory.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20 flex flex-col justify-end p-4 sm:p-5 text-left">
-                <span className="text-[10px] sm:text-xs font-black tracking-widest uppercase text-purple-300 mb-1">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20 flex flex-col justify-end p-3 sm:p-5 text-left">
+                <span className="text-[10px] sm:text-xs font-black tracking-widest uppercase text-purple-300 mb-0.5 sm:mb-1">
                   Kanha Sarthi Foundation Monthly Drive
                 </span>
-                <h3 className="text-lg sm:text-2xl font-black text-white leading-tight">
+                <h3 className="text-base sm:text-2xl font-black text-white leading-tight">
                   {activeCategory.title}
                 </h3>
-                <p className="text-xs text-zinc-200 line-clamp-1 mt-1 font-medium">
+                <p className="text-[11px] sm:text-xs text-zinc-200 line-clamp-1 mt-0.5 sm:mt-1 font-medium">
                   {activeCategory.tagline}
                 </p>
               </div>
             </div>
           </div>
 
-          <form onSubmit={handleDonateNow} className="p-6 sm:p-7 space-y-6">
+          <form onSubmit={handleDonateNow} className="p-4 sm:p-7 space-y-4 sm:space-y-6">
             
             {/* Preset Amount Buttons (Matches user screenshot: ₹1000, ₹5000, ₹10000, ₹20000) */}
             <div>
@@ -256,7 +271,7 @@ export default function DonateMonthlyPage() {
                       key={amt}
                       type="button"
                       onClick={() => handlePresetClick(amt)}
-                      className={`py-3 px-1 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer ${
+                      className={`py-2 sm:py-3 px-1 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer ${
                         isSelected
                           ? "bg-purple-50 dark:bg-purple-950/40 border-[#7C3AED] text-[#7C3AED] dark:text-purple-300 ring-2 ring-[#7C3AED]/30 scale-102"
                           : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-purple-300"
@@ -281,20 +296,20 @@ export default function DonateMonthlyPage() {
                   value={customAmount}
                   onChange={handleCustomAmountChange}
                   placeholder="Enter amount"
-                  className="w-full pl-9 pr-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-base font-black text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent"
+                  className="w-full pl-9 pr-4 py-2.5 sm:py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-base font-black text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent"
                   required
                 />
               </div>
 
               {/* Dynamic Impact Note */}
-              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-[11px] font-bold text-purple-700 dark:text-purple-300 flex items-center gap-2">
+              <div className="p-2.5 sm:p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-[11px] font-bold text-purple-700 dark:text-purple-300 flex items-center gap-2">
                 <span>✨</span>
                 <span>{currentImpactNote}</span>
               </div>
             </div>
 
             {/* Donor Information Input Fields (Clean underline style from user screenshot) */}
-            <div className="space-y-4 pt-2">
+            <div className="space-y-3 sm:space-y-4 pt-1 sm:pt-2">
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                   Your Name *
@@ -305,7 +320,7 @@ export default function DonateMonthlyPage() {
                   onChange={(e) => setDonorName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
                   required
-                  className="w-full px-3 py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
+                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
 
@@ -318,7 +333,7 @@ export default function DonateMonthlyPage() {
                   value={donorPhone}
                   onChange={(e) => setDonorPhone(e.target.value)}
                   placeholder="e.g. +91 98765 43210"
-                  className="w-full px-3 py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
+                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
 
@@ -331,13 +346,13 @@ export default function DonateMonthlyPage() {
                   value={donorEmail}
                   onChange={(e) => setDonorEmail(e.target.value)}
                   placeholder="e.g. rahul@example.com"
-                  className="w-full px-3 py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
+                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
             </div>
 
             {/* 80G Tax Exemption Note */}
-            <div className="flex items-start gap-2.5 pt-1">
+            <div className="flex items-start gap-2 pt-1">
               <input
                 id="claimTaxCheckbox"
                 type="checkbox"
@@ -345,7 +360,7 @@ export default function DonateMonthlyPage() {
                 onChange={(e) => setClaimTax(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-[#7C3AED] focus:ring-[#7C3AED]"
               />
-              <label htmlFor="claimTaxCheckbox" className="text-xs text-zinc-600 dark:text-zinc-400 font-medium select-none cursor-pointer">
+              <label htmlFor="claimTaxCheckbox" className="text-[11px] sm:text-xs text-zinc-600 dark:text-zinc-400 font-medium select-none cursor-pointer">
                 I would like an <strong className="text-zinc-900 dark:text-white">80G 50% Tax Exemption Certificate</strong> sent to my registered email address for this monthly contribution.
               </label>
             </div>
@@ -360,7 +375,7 @@ export default function DonateMonthlyPage() {
             {/* Big Action Button (Matches User Screenshot: DONATE NOW) */}
             <button
               type="submit"
-              className="w-full py-4 bg-[#7C3AED] hover:bg-[#6D28D9] active:bg-[#5B21B6] text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-500/30 hover:scale-[1.01] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3.5 sm:py-4 bg-[#7C3AED] hover:bg-[#6D28D9] active:bg-[#5B21B6] text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-500/30 hover:scale-[1.01] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <span>DONATE NOW</span>
               <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
