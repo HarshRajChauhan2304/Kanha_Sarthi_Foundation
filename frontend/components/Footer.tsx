@@ -7,7 +7,7 @@ import footerJSON from '@/data/footer.json';
 export default function Footer() {
   const [footerData, setFooterData] = useState<any>(footerJSON);
   const router = useRouter();
-  const [whatsappLink, setWhatsappLink] = useState("");
+  const [whatsappLink, setWhatsappLink] = useState("https://chat.whatsapp.com/LpQgFf8xnBH5ojH0pVOCTg");
   const [copiedEmail, setCopiedEmail] = useState(false);
 
   const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -53,6 +53,8 @@ export default function Footer() {
           const linkItem = data.find((t: any) => t.key === 'whatsapp_community_link');
           if (linkItem && linkItem.value) {
             setWhatsappLink(linkItem.value);
+          } else {
+            setWhatsappLink("https://chat.whatsapp.com/LpQgFf8xnBH5ojH0pVOCTg");
           }
         }
       })

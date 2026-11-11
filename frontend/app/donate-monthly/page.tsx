@@ -141,59 +141,74 @@ export default function DonateMonthlyPage() {
     router.push(`/donate?${query.toString()}`);
   };
 
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+      } else {
+        router.push("/");
+      }
+    } catch {
+      router.push("/");
+    }
+  };
+
   const currentImpactNote = 
     activeCategory.impactNotes[parseInt(customAmount, 10)] || 
     activeCategory.impactNotes.default;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-950 to-black text-white py-6 sm:py-16 px-3 sm:px-4 font-sans">
+    <div className="min-h-screen bg-gray-100/90 dark:bg-[#07100b] text-zinc-900 dark:text-white pt-24 pb-16 sm:pt-32 sm:pb-24 px-3 sm:px-4 font-sans">
       <div className="max-w-xl mx-auto">
         
-        {/* Main Card Container (Matches User Screenshot & Fully Mobile-Portable) */}
+        {/* Main Card Container (Matches User Screenshot Image 2 & Mobile Portable) */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="bg-white dark:bg-[#121614] text-zinc-900 dark:text-white rounded-2xl sm:rounded-[2rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+          transition={{ duration: 0.3 }}
+          className="bg-white dark:bg-[#121614] text-zinc-900 dark:text-white rounded-2xl sm:rounded-3xl shadow-2xl border border-zinc-200/80 dark:border-zinc-800 overflow-hidden"
         >
-          {/* Card Top Header */}
-          <div className="p-4 sm:p-7 pb-3 sm:pb-4 border-b border-zinc-100 dark:border-zinc-800/80">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h1 className="text-lg sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
+          {/* Card Top Header: Matches Image 2 */}
+          <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-zinc-100 dark:border-zinc-800/80">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-xl font-black tracking-tight text-zinc-900 dark:text-white truncate">
                   Monthly Subscriptions
                 </h1>
-                <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium truncate">
                   Reliable grassroots impact created every month
                 </p>
               </div>
 
-              {/* Close Button linking back */}
-              <button
-                type="button"
-                onClick={() => router.push("/")}
-                className="p-1.5 sm:p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer shrink-0"
-                aria-label="Back to home"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+              {/* Tax Benefits Button & Close Cross Button side-by-side like Image 2 */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowTaxModal(true)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-[#F35E1E] hover:bg-[#e04e0e] active:bg-[#c93f06] text-white text-[11px] sm:text-xs font-black rounded-lg sm:rounded-xl shadow-sm cursor-pointer transition-transform active:scale-95 shrink-0"
+                >
+                  <span>🎁</span>
+                  <span className="hidden xs:inline">Claim Tax Benefits</span>
+                  <span className="xs:hidden">Tax 80G</span>
+                </button>
 
-            {/* Claim Tax Benefits Row */}
-            <div className="mt-3 flex items-center justify-between p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-xs">
-              <span className="font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
-                <span>🎁</span>
-                <span>50% Tax Deduction (Section 80G)</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowTaxModal(true)}
-                className="px-2.5 py-1 bg-[#F35E1E] hover:bg-[#e04e0e] text-white text-[10px] font-black rounded-lg shadow-sm cursor-pointer uppercase shrink-0"
-              >
-                Details
-              </button>
+                {/* Close Button linking back (Always works with href="/" fallback) */}
+                <a
+                  href="/"
+                  onClick={handleClose}
+                  className="flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-full transition-all cursor-pointer shrink-0"
+                  aria-label="Back to home"
+                  title="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </a>
+              </div>
             </div>
           </div>
 

@@ -26,7 +26,8 @@ const defaultFooter = {
     { platform: "Instagram", href: "https://www.instagram.com/kh_foundation_223/" },
     { platform: "Facebook", href: "https://www.facebook.com/profile.php?id=61564493773786" },
     { platform: "YouTube", href: "https://www.youtube.com/@KanhaFoundation-i8f" },
-    { platform: "LinkedIn", href: "https://www.linkedin.com/in/kanha-foundation-635778400?" }
+    { platform: "LinkedIn", href: "https://www.linkedin.com/in/kanha-foundation-635778400?" },
+    { platform: "WhatsApp", href: "https://chat.whatsapp.com/LpQgFf8xnBH5ojH0pVOCTg" }
   ]
 };
 

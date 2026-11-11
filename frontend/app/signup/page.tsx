@@ -72,7 +72,7 @@ export default function SignUp() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-[#07100b] px-4 font-sans py-12">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-[#07100b] px-4 font-sans pt-28 pb-16">
       <motion.div 
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}

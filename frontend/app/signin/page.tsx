@@ -105,7 +105,7 @@ export default function SignIn() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-[#07100b] px-4 font-sans">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-[#07100b] px-4 font-sans pt-28 pb-16">
       <div className="w-full max-w-md rounded-3xl bg-white dark:bg-[#101412] p-8 shadow-xl border border-gray-150/40 dark:border-zinc-800/80">
         
         <AnimatePresence mode="wait">

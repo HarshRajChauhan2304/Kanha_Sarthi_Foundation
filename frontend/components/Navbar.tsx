@@ -395,8 +395,8 @@ export default function Navbar() {
                         </div>
                         <div className="border-t border-gray-100 my-1"></div>
                         <div className="px-4 py-1.5">
-                          <a href="https://wa.me/917488164529" target="_blank" rel="noopener noreferrer" className="block text-xs font-black text-emerald-650 hover:underline">
-                            Chat with us
+                          <a href="https://chat.whatsapp.com/LpQgFf8xnBH5ojH0pVOCTg" target="_blank" rel="noopener noreferrer" className="block text-xs font-black text-emerald-650 hover:underline">
+                            💬 Join WhatsApp Community
                           </a>
                         </div>
                       </>
@@ -591,7 +591,7 @@ export default function Navbar() {
                 </a>
                 {/* WhatsApp Community */}
                 <a 
-                  href="https://wa.me/917488164529" 
+                  href="https://chat.whatsapp.com/LpQgFf8xnBH5ojH0pVOCTg" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-[#1C1B1F] hover:text-[#25D366] transition-colors" 

@@ -87,7 +87,7 @@ export default function Home() {
   const [tutorialVideo, setTutorialVideo] = useState("/DIL%20KAHTA%20HAI.mp4");
   const [educationBanner, setEducationBanner] = useState("https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop&q=80");
   const [birthdayBanner, setBirthdayBanner] = useState("https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&auto=format&fit=crop&q=80");
-  const [whatsappLink, setWhatsappLink] = useState("");
+  const [whatsappLink, setWhatsappLink] = useState("https://chat.whatsapp.com/LpQgFf8xnBH5ojH0pVOCTg");
 
   // Dynamic metrics stats cards list state
   const [statsCards, setStatsCards] = useState<any[]>([
@@ -539,17 +539,18 @@ export default function Home() {
 
 
 
-      {/* Floating WhatsApp chat widget (Matching screenshot) */}
+      {/* Floating WhatsApp chat widget (Connected to Official WhatsApp Community) */}
       <a
-        href="https://wa.me/917488164529" 
+        href={whatsappLink || "https://chat.whatsapp.com/LpQgFf8xnBH5ojH0pVOCTg"} 
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-40 bg-[#25D366] text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-2.5 hover:scale-105 active:scale-95 transition-all duration-200 font-semibold text-sm cursor-pointer border border-white/10"
+        title="Join WhatsApp Community"
       >
         <svg className="h-5.5 w-5.5" fill="currentColor" viewBox="0 0 24 24">
           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.864.002-2.637-1.018-5.114-2.873-6.971-1.857-1.859-4.331-2.88-6.967-2.881-5.441 0-9.866 4.42-9.87 9.865-.001 1.716.452 3.39 1.309 4.866L1.892 21.8l4.755-1.646zM17.78 14.77c-.3-.15-1.782-.88-2.062-.98-.28-.1-.485-.15-.69.15-.205.3-.79.98-.97 1.18-.18.2-.36.225-.66.075-1.923-.96-3.153-1.748-4.417-3.918-.33-.568.33-.527.944-1.75.102-.203.05-.382-.025-.532-.075-.15-.69-1.66-.945-2.27-.249-.6-.508-.52-.69-.53-.18-.01-.385-.01-.59-.01-.205 0-.538.075-.82.38-.28.305-1.072 1.05-1.072 2.56 0 1.51 1.1 2.97 1.25 3.17.15.2 2.165 3.31 5.245 4.64.733.316 1.307.505 1.753.647.737.234 1.409.201 1.94.12.59-.09 1.782-.73 2.032-1.43.25-.7.25-1.3.175-1.43-.075-.13-.28-.205-.58-.355z"/>
         </svg>
-        Chat with us
+        WhatsApp Community
       </a>
 
       {/* Tutorial Video Modal popup (Triggers when info ribbon is clicked) */}
