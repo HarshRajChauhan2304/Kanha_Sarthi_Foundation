@@ -280,7 +280,7 @@ export default function Navbar() {
 
           {/* Center section: Desktop navigation links (centered tabs) */}
           <div className="hidden flex-1 justify-center px-8 md:flex">
-            <div className="flex space-x-1">
+            <div className="flex space-x-1 items-center">
               {activeNavItems.map((item, idx) => (
                 <a
                   key={idx}
@@ -296,23 +296,22 @@ export default function Navbar() {
               >
                 📊 Donors Report
               </button>
+              {/* Donate Monthly Button (Placed just next to Donors Report) */}
+              <a
+                href="/donate-monthly"
+                className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 bg-gradient-to-r from-[#F3A61E] via-orange-500 to-[#e67e22] hover:from-[#e67e22] hover:to-[#d35400] text-white text-xs font-bold tracking-normal shadow-sm shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer ml-1 uppercase"
+                title="Donate Monthly (Recurring Support)"
+              >
+                <span>Donate Monthly</span>
+                <svg className="w-3.5 h-3.5 fill-white shrink-0" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </a>
             </div>
           </div>
 
-          {/* Far Right section: Profile & Cart (Donate Monthly on desktop only) */}
+          {/* Far Right section: Profile & Cart */}
           <div className="flex items-center space-x-2 sm:space-x-3 ml-auto">
-            {/* Donate Monthly Button (Desktop Only - hidden on mobile so it never crowds or overlaps logo) */}
-            <a
-              href="/donate-monthly"
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#F3A61E] via-orange-500 to-[#e67e22] hover:from-[#e67e22] hover:to-[#d35400] text-white text-xs font-bold tracking-normal rounded-full shadow-sm shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer uppercase shrink-0"
-              title="Donate Monthly (Recurring Support)"
-            >
-              <span>Donate Monthly</span>
-              <svg className="w-3.5 h-3.5 fill-white shrink-0" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-              </svg>
-            </a>
-
             {/* Profile Dropdown Trigger */}
             <div className="relative">
               {!(isUserLoggedIn || isAdminLoggedIn || isVolunteerLoggedIn) ? (
