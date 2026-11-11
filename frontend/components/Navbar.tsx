@@ -299,17 +299,16 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Far Right section: Donate Monthly, Profile & Cart */}
+          {/* Far Right section: Profile & Cart (Donate Monthly on desktop only) */}
           <div className="flex items-center space-x-2 sm:space-x-3 ml-auto">
-            {/* Donate Monthly Button (Compact & Mobile Portable) */}
+            {/* Donate Monthly Button (Desktop Only - hidden on mobile so it never crowds or overlaps logo) */}
             <a
               href="/donate-monthly"
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 bg-gradient-to-r from-[#F3A61E] via-orange-500 to-[#e67e22] hover:from-[#e67e22] hover:to-[#d35400] text-white text-[10px] sm:text-xs font-bold tracking-tight sm:tracking-normal rounded-full shadow-sm shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer uppercase shrink-0"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#F3A61E] via-orange-500 to-[#e67e22] hover:from-[#e67e22] hover:to-[#d35400] text-white text-xs font-bold tracking-normal rounded-full shadow-sm shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer uppercase shrink-0"
               title="Donate Monthly (Recurring Support)"
             >
-              <span className="hidden sm:inline">Donate Monthly</span>
-              <span className="sm:hidden">Monthly</span>
-              <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-white shrink-0" viewBox="0 0 24 24">
+              <span>Donate Monthly</span>
+              <svg className="w-3.5 h-3.5 fill-white shrink-0" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
               </svg>
             </a>
@@ -488,16 +487,6 @@ export default function Navbar() {
 
               {/* Drawer Links (Full width block links) */}
               <div className="flex-1 bg-white pt-2 overflow-y-auto">
-                <div className="px-5 py-2.5 border-b border-gray-100">
-                  <a
-                    href="/donate-monthly"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-[#F3A61E] via-orange-500 to-[#e67e22] text-white text-xs font-bold tracking-wide rounded-xl shadow-sm uppercase"
-                  >
-                    <span>Donate Monthly</span>
-                    <span>❤️</span>
-                  </a>
-                </div>
                 {activeNavItems.map((item, idx) => {
                   const isActive = item.label === activeItem;
                   return (
@@ -527,34 +516,91 @@ export default function Navbar() {
                 >
                   📊 Donors Report
                 </button>
+                {/* Donate Monthly Button (placed down below with other buttons) */}
+                <a
+                  href="/donate-monthly"
+                  onClick={() => {
+                    setActiveItem("Donate Monthly");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left py-4 px-6 text-[18px] font-bold text-[#F3A61E] hover:bg-orange-50 hover:text-[#d35400] transition-all cursor-pointer border-t border-gray-100 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <span>Donate Monthly</span>
+                  </span>
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-[#F3A61E] to-[#e67e22] text-white font-black uppercase shadow-sm">
+                    ❤️ Give Monthly
+                  </span>
+                </a>
               </div>
 
-              {/* Drawer Footer with Social Icons (matches user screenshot) */}
-              <div className="bg-[#F8F9FA] px-6 py-6 border-t border-gray-100 flex items-center justify-start space-x-7 shrink-0">
-                {/* X Icon */}
-                <a href="#" className="text-[#1C1B1F] hover:opacity-75 transition-opacity" aria-label="X (Twitter)">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                </a>
-                {/* Facebook Icon */}
-                <a href="#" className="text-[#1C1B1F] hover:opacity-75 transition-opacity" aria-label="Facebook">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/>
-                  </svg>
-                </a>
-                {/* Instagram Icon */}
-                <a href="#" className="text-[#1C1B1F] hover:opacity-75 transition-opacity" aria-label="Instagram">
+              {/* Drawer Footer with Official Social Media Links */}
+              <div className="bg-[#F8F9FA] px-6 py-6 border-t border-gray-100 flex items-center justify-start space-x-6 shrink-0">
+                {/* Instagram */}
+                <a 
+                  href="https://www.instagram.com/kh_foundation_223/" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#1C1B1F] hover:text-[#E4405F] transition-colors" 
+                  aria-label="Instagram"
+                  title="Instagram"
+                >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
                   </svg>
                 </a>
-                {/* YouTube Icon */}
-                <a href="#" className="text-[#1C1B1F] hover:opacity-75 transition-opacity" aria-label="YouTube">
+                {/* Facebook */}
+                <a 
+                  href="https://www.facebook.com/profile.php?id=61564493773786" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#1C1B1F] hover:text-[#1877F2] transition-colors" 
+                  aria-label="Facebook"
+                  title="Facebook"
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/>
+                  </svg>
+                </a>
+                {/* YouTube */}
+                <a 
+                  href="https://www.youtube.com/@KanhaFoundation-i8f" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#1C1B1F] hover:text-[#CD201F] transition-colors" 
+                  aria-label="YouTube"
+                  title="YouTube"
+                >
                   <svg className="h-5.5 w-5.5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.518 3.5 12 3.5 12 3.5s-7.518 0-9.388.553a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.87.553 9.388.553 9.388.553s7.518 0 9.388-.553a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </a>
+                {/* LinkedIn */}
+                <a 
+                  href="https://www.linkedin.com/in/kanha-foundation-635778400?" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#1C1B1F] hover:text-[#0A66C2] transition-colors" 
+                  aria-label="LinkedIn"
+                  title="LinkedIn"
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                  </svg>
+                </a>
+                {/* WhatsApp Community */}
+                <a 
+                  href="https://wa.me/917488164529" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#1C1B1F] hover:text-[#25D366] transition-colors" 
+                  aria-label="WhatsApp Community"
+                  title="WhatsApp Community"
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.456 5.711 1.457h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                   </svg>
                 </a>
               </div>

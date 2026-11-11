@@ -157,33 +157,22 @@ export default function DonateMonthlyPage() {
           className="bg-white dark:bg-[#121614] text-zinc-900 dark:text-white rounded-2xl sm:rounded-[2rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
         >
           {/* Card Top Header */}
-          <div className="p-4 sm:p-7 pb-3 sm:pb-4 flex items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/80">
-            <div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
-                <span>Monthly Subscriptions</span>
-              </h1>
-              <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
-                Reliable grassroots impact created every month
-              </p>
-            </div>
-
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Claim Tax Benefits Button (Orange badge from user screenshot) */}
-              <button
-                type="button"
-                onClick={() => setShowTaxModal(true)}
-                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-[#F35E1E] hover:bg-[#e04e0e] text-white text-[11px] sm:text-xs font-black rounded-xl shadow-md shadow-orange-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
-                title="Claim 80G Tax Benefits"
-              >
-                <span className="hidden sm:inline">🎁 Claim Tax Benefits</span>
-                <span className="sm:hidden">🎁 80G Tax</span>
-              </button>
+          <div className="p-4 sm:p-7 pb-3 sm:pb-4 border-b border-zinc-100 dark:border-zinc-800/80">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h1 className="text-lg sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
+                  Monthly Subscriptions
+                </h1>
+                <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                  Reliable grassroots impact created every month
+                </p>
+              </div>
 
               {/* Close Button linking back */}
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="p-1.5 sm:p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer"
+                className="p-1.5 sm:p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer shrink-0"
                 aria-label="Back to home"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -191,10 +180,25 @@ export default function DonateMonthlyPage() {
                 </svg>
               </button>
             </div>
+
+            {/* Claim Tax Benefits Row */}
+            <div className="mt-3 flex items-center justify-between p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-xs">
+              <span className="font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
+                <span>🎁</span>
+                <span>50% Tax Deduction (Section 80G)</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowTaxModal(true)}
+                className="px-2.5 py-1 bg-[#F35E1E] hover:bg-[#e04e0e] text-white text-[10px] font-black rounded-lg shadow-sm cursor-pointer uppercase shrink-0"
+              >
+                Details
+              </button>
+            </div>
           </div>
 
           {/* Category Tabs: Education | Healthcare | Food & Nutrition */}
-          <div className="px-4 sm:px-7 pt-4 sm:pt-5">
+          <div className="px-4 sm:px-7 pt-4">
             <div className="grid grid-cols-3 gap-1.5 sm:gap-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
               {CATEGORIES.map((cat) => {
                 const isActive = activeCategory.id === cat.id;
@@ -207,26 +211,26 @@ export default function DonateMonthlyPage() {
                       setSelectedPreset(1000);
                       setCustomAmount("1000");
                     }}
-                    className={`py-2 sm:py-3 px-1.5 sm:px-2 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                    className={`py-2 sm:py-3 px-1 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-1 ${
                       isActive
                         ? "bg-[#7C3AED] text-white shadow-md shadow-purple-500/30 scale-100"
                         : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                     }`}
                   >
                     <span>
+                      {cat.id === "education" ? "🎓 Education" : null}
                       {cat.id === "healthcare" ? (
                         <>
-                          <span className="hidden sm:inline">Healthcare</span>
-                          <span className="sm:hidden">Health</span>
+                          <span className="hidden sm:inline">🩺 Healthcare</span>
+                          <span className="sm:hidden">🩺 Health</span>
                         </>
-                      ) : cat.id === "food" ? (
+                      ) : null}
+                      {cat.id === "food" ? (
                         <>
-                          <span className="hidden sm:inline">Food & Nutrition</span>
-                          <span className="sm:hidden">Food</span>
+                          <span className="hidden sm:inline">🍲 Food & Care</span>
+                          <span className="sm:hidden">🍲 Food</span>
                         </>
-                      ) : (
-                        cat.tabLabel
-                      )}
+                      ) : null}
                     </span>
                   </button>
                 );
@@ -235,21 +239,21 @@ export default function DonateMonthlyPage() {
           </div>
 
           {/* Category Banner with Image and Headline */}
-          <div className="px-4 sm:px-7 pt-4 sm:pt-5">
-            <div className="relative w-full aspect-[2.3/1] rounded-2xl overflow-hidden border border-purple-500/30 shadow-lg group">
+          <div className="px-4 sm:px-7 pt-4">
+            <div className="relative w-full h-36 sm:h-48 rounded-2xl overflow-hidden border border-purple-500/30 shadow-lg group">
               <img
                 src={activeCategory.image}
                 alt={activeCategory.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20 flex flex-col justify-end p-3 sm:p-5 text-left">
-                <span className="text-[10px] sm:text-xs font-black tracking-widest uppercase text-purple-300 mb-0.5 sm:mb-1">
-                  Kanha Sarthi Foundation Monthly Drive
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end p-3 sm:p-5 text-left">
+                <span className="text-[10px] font-black tracking-wider uppercase text-purple-300">
+                  Kanha Sarthi Monthly Drive
                 </span>
-                <h3 className="text-base sm:text-2xl font-black text-white leading-tight">
+                <h3 className="text-base sm:text-xl font-black text-white leading-tight mt-0.5">
                   {activeCategory.title}
                 </h3>
-                <p className="text-[11px] sm:text-xs text-zinc-200 line-clamp-1 mt-0.5 sm:mt-1 font-medium">
+                <p className="text-[11px] sm:text-xs text-zinc-200 line-clamp-1 mt-0.5 font-medium">
                   {activeCategory.tagline}
                 </p>
               </div>
