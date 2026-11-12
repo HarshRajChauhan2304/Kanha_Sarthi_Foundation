@@ -68,6 +68,38 @@ export default function SpotlightCampaign() {
     setCurrentIndex((prev) => (prev + 1) % campaigns.length);
   };
 
+  // Resolve target cause page redirect (e.g. /causes/6 for study kit, /causes/1 for food, /causes/3 for menstrual kit)
+  const getRedirectUrl = (camp: CampaignData) => {
+    if (camp.donate_url && camp.donate_url.trim() !== "" && camp.donate_url !== "/donate" && camp.donate_url !== "/causes") {
+      return camp.donate_url;
+    }
+
+    const text = `${camp.title} ${camp.badge} ${camp.tagline}`.toLowerCase();
+    if (text.includes("study") || text.includes("shiksha") || text.includes("book") || text.includes("education")) {
+      return "/causes/6"; // Study Kit Cause Page
+    }
+    if (text.includes("menstrual") || text.includes("hygiene") || text.includes("girl") || text.includes("swabhiman") || text.includes("pad")) {
+      return "/causes/3"; // Menstrual Hygiene Kit Cause Page
+    }
+    if (text.includes("food") || text.includes("meal") || text.includes("annapurna") || text.includes("ration") || text.includes("packet")) {
+      return "/causes/1"; // Food Packet Cause Page
+    }
+    if (text.includes("thali")) {
+      return "/causes/2"; // Wholesome Thali Cause Page
+    }
+    if (text.includes("birthday") || text.includes("cake")) {
+      return "/causes/4"; // Birthday Cause Page
+    }
+    if (text.includes("tree") || text.includes("plant")) {
+      return "/causes/7"; // Plantation Cause Page
+    }
+    if (text.includes("cow") || text.includes("dog") || text.includes("animal")) {
+      return "/causes/8"; // Animal Welfare Cause Page
+    }
+
+    return camp.donate_url || "/causes";
+  };
+
   return (
     <section 
       className="relative mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 md:px-8 overflow-hidden font-sans"
@@ -95,16 +127,16 @@ export default function SpotlightCampaign() {
             }}
             className="px-4 py-6 sm:px-8 sm:py-10 md:py-14 md:px-12 flex flex-col lg:flex-row gap-6 sm:gap-8 lg:gap-12 items-center"
           >
-            {/* Left Side: Campaign Photo with Badge */}
+            {/* Left Side: Campaign Photo Frame (Adapts to uploaded poster size so the entire poster is visible) */}
             <div className="w-full lg:w-5/12 flex justify-center relative z-10">
-              <div className="relative w-full max-w-sm sm:max-w-md aspect-[16/10] sm:aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-600/30 group">
+              <div className="relative w-full max-w-sm sm:max-w-md rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-600/40 bg-black/60 p-2 sm:p-2.5 flex items-center justify-center min-h-[220px] sm:min-h-[280px] group">
                 <img
                   src={current.image || "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=80"}
                   alt={current.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-auto h-auto max-w-full max-h-[280px] sm:max-h-[340px] lg:max-h-[380px] object-contain rounded-xl sm:rounded-2xl transition-transform duration-500 group-hover:scale-[1.02] shadow-md"
                 />
                 {/* Urgent / Spotlight Badge on Image */}
-                <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-10 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-amber-500/40 text-amber-300 text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-amber-500/50 text-amber-300 text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg">
                   <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-amber-400 animate-ping" />
                   <span>{current.badge || "Live Campaign"}</span>
                 </div>
@@ -176,12 +208,10 @@ export default function SpotlightCampaign() {
               <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-1">
                   <Link
-                    href={(!current.donate_url || current.donate_url === "/causes")
-                      ? `/donate?title=${encodeURIComponent(current.title)}&category=${encodeURIComponent(current.badge || "Spotlight Campaign")}&amount=1000`
-                      : current.donate_url}
+                    href={getRedirectUrl(current)}
                     className="w-full sm:w-auto px-5 sm:px-7 py-2.5 sm:py-3.5 bg-[#F3A61E] hover:bg-[#d68f12] active:bg-[#bf7e0c] text-black text-xs sm:text-sm font-black uppercase tracking-wider rounded-xl sm:rounded-full shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer text-center"
                   >
-                    <span>Donate To This Campaign</span>
+                    <span>Support This Cause</span>
                     <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>

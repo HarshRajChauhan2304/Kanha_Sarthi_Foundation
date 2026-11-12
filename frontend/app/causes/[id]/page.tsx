@@ -205,7 +205,7 @@ export default function CauseDetailPage({ params }: { params: Promise<{ id: stri
   const otherCauses = causesData.filter(c => c.id !== cause.id).slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#07100b] py-16 px-4 md:px-8 font-sans transition-all relative">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#07100b] pt-24 pb-16 md:pt-28 md:pb-20 px-4 md:px-8 font-sans transition-all relative">
       
       {/* Toast Alert Indicator */}
       <AnimatePresence>

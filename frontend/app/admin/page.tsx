@@ -4252,12 +4252,26 @@ export default function AdminPanelPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Donate Button Redirect Link</label>
+                    <select
+                      value={festivalPopup?.donate_url || ""}
+                      onChange={(e) => setFestivalPopup({ ...festivalPopup, donate_url: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E] mb-2 cursor-pointer"
+                    >
+                      <option value="">-- Choose Target Link or Particular Cause --</option>
+                      <option value="/donate">💳 Direct Donation Form (/donate)</option>
+                      <option value="/causes/6">📚 Study Kit: Sponsor Study Kit for Underprivileged Children (/causes/6)</option>
+                      <option value="/causes/1">🍲 Food Packet: Sponsor a Food Packet for Underprivileged Children (/causes/1)</option>
+                      <option value="/causes/3">🌸 Menstrual Kit: Sponsor Menstrual Hygiene Kit for Girls (/causes/3)</option>
+                      <option value="/causes/2">🍛 Wholesome Thali for Underprivileged Children (/causes/2)</option>
+                      <option value="/causes/4">🎂 Birthday Celebration with Slum Kids (/causes/4)</option>
+                      <option value="/causes">🌟 All Causes (/causes)</option>
+                    </select>
                     <input
                       type="text"
                       value={festivalPopup?.donate_url || ""}
                       onChange={(e) => setFestivalPopup({ ...festivalPopup, donate_url: e.target.value })}
                       placeholder="/donate (Donation Form)"
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                      className="w-full px-4 py-2 bg-zinc-950/60 border border-zinc-800/80 rounded-lg text-xs text-zinc-300 focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
                     />
                   </div>
 
@@ -4307,8 +4321,8 @@ export default function AdminPanelPage() {
                       {festivalPopup?.badge || "🎉 Special Festival Appeal"}
                     </span>
                     {festivalPopup?.image && (
-                      <div className="mx-auto aspect-[3/4] max-h-48 w-auto rounded-xl overflow-hidden mb-3 border border-amber-500/20 bg-black/40 flex items-center justify-center">
-                        <img src={festivalPopup.image} alt="preview" className="h-full w-full object-contain" />
+                      <div className="mx-auto max-h-52 w-auto rounded-xl overflow-hidden mb-3 border border-amber-500/20 bg-black/40 p-1 flex items-center justify-center">
+                        <img src={festivalPopup.image} alt="preview" className="max-h-48 w-auto max-w-full object-contain" />
                       </div>
                     )}
                     <h4 className="text-sm font-black text-white mb-1.5 px-1">{festivalPopup?.title || "Festival Announcement"}</h4>
@@ -4408,13 +4422,29 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Donate Button Target Link</label>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Redirect To Particular Cause Page</label>
+                    <select
+                      value={editingCampaign.donate_url || ""}
+                      onChange={(e) => setEditingCampaign({ ...editingCampaign, donate_url: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E] mb-2 cursor-pointer"
+                    >
+                      <option value="">-- Choose Particular Cause Page --</option>
+                      <option value="/causes/6">📚 Study Kit: Sponsor Study Kit for Underprivileged Children (/causes/6)</option>
+                      <option value="/causes/1">🍲 Food Packet: Sponsor a Food Packet for Underprivileged Children (/causes/1)</option>
+                      <option value="/causes/3">🌸 Menstrual Kit: Sponsor Menstrual Hygiene Kit for Girls (/causes/3)</option>
+                      <option value="/causes/2">🍛 Wholesome Thali for Underprivileged Children (/causes/2)</option>
+                      <option value="/causes/4">🎂 Birthday Celebration with Slum Kids (/causes/4)</option>
+                      <option value="/causes/5">🎉 Birthday Celebration With Slum Kids (/causes/5)</option>
+                      <option value="/causes/7">🌱 Planting Tree for Pollution free Environment (/causes/7)</option>
+                      <option value="/causes/8">🐄 Feeding Street Cows and Dogs (/causes/8)</option>
+                      <option value="/donate">💳 Direct Donation Form (/donate)</option>
+                    </select>
                     <input
                       type="text"
                       value={editingCampaign.donate_url || ""}
                       onChange={(e) => setEditingCampaign({ ...editingCampaign, donate_url: e.target.value })}
-                      placeholder="/donate (Donation Form)"
-                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                      placeholder="/causes/6 or custom URL"
+                      className="w-full px-4 py-2 bg-zinc-950/60 border border-zinc-800/80 rounded-lg text-xs text-zinc-300 focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
                     />
                   </div>
 
@@ -4481,8 +4511,8 @@ export default function AdminPanelPage() {
                     <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider">Campaign Photo</label>
                     <div className="flex items-center gap-4">
                       {editingCampaign.image && (
-                        <div className="h-16 w-24 rounded-lg overflow-hidden border border-zinc-800 shrink-0 bg-zinc-950">
-                          <img src={editingCampaign.image} alt="preview" className="h-full w-full object-cover" />
+                        <div className="h-16 w-24 rounded-lg overflow-hidden border border-zinc-800 shrink-0 bg-zinc-950 p-1 flex items-center justify-center">
+                          <img src={editingCampaign.image} alt="preview" className="h-full w-full object-contain" />
                         </div>
                       )}
                       <div className="flex-1 space-y-2">

@@ -100,15 +100,14 @@ export default function FestivalPopupModal() {
             <span>{config.badge || "🎉 Special Festival Drive"}</span>
           </div>
 
-          {/* Poster / Banner Image (3:4 Aspect Ratio, Portable & Clean) */}
+          {/* Poster / Banner Image Frame (Adapts naturally to the uploaded poster size so the entire poster is visible) */}
           {config.image && (
-            <div className="relative mx-auto aspect-[3/4] max-h-[250px] sm:max-h-[300px] w-auto rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-amber-500/30 shadow-xl bg-black/40 flex items-center justify-center group">
+            <div className="relative mx-auto w-full max-w-sm rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 border border-amber-500/30 shadow-xl bg-black/50 p-1 sm:p-1.5 flex items-center justify-center group">
               <img
                 src={config.image}
                 alt={config.title}
-                className="w-full h-full object-contain group-hover:scale-102 transition-transform duration-500"
+                className="w-auto h-auto max-w-full max-h-[260px] sm:max-h-[320px] object-contain rounded-lg sm:rounded-xl shadow-md transition-transform duration-500 group-hover:scale-[1.02]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
             </div>
           )}
 
