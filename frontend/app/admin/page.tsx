@@ -1688,6 +1688,9 @@ export default function AdminPanelPage() {
       const result = await res.json();
       if (result.success) {
         triggerAlert("Record deleted successfully!");
+        if (isTasks) {
+          setTasks(prev => prev.filter(t => String(t.id) !== String(idOrKey)));
+        }
         fetchData();
       } else {
         triggerAlert(result.error || "Failed to delete record.");
@@ -2748,7 +2751,7 @@ export default function AdminPanelPage() {
                 </thead>
                 <tbody className="divide-y divide-zinc-900 text-left">
                   {Array.isArray(tasks) && tasks.map((task) => {
-                    const volunteer = volApps.find(a => a.id === task.volunteer_id);
+                    const volunteer = volApps.find(a => String(a.id) === String(task.volunteer_id));
                     return (
                       <tr key={task.id} className="hover:bg-zinc-900/30 transition-colors">
                         <td className="px-6 py-4">

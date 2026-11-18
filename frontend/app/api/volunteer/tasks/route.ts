@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
-import path from 'path';
 import { getFallbackPath } from '@/lib/db-fallback';
 
 const getLocalTasks = (): any[] => {
@@ -26,6 +25,26 @@ const saveLocalTasks = (tasks: any[]) => {
   }
 };
 
+// Helper to decode metadata from task_description
+const parseTaskMeta = (task: any) => {
+  if (!task || !task.task_description) return task;
+  const desc = task.task_description;
+  if (typeof desc === 'string' && desc.includes('__META__:')) {
+    const [cleanDesc, metaStr] = desc.split('__META__:');
+    try {
+      const meta = JSON.parse(metaStr.trim());
+      return {
+        ...task,
+        task_description: cleanDesc.trim(),
+        ...meta
+      };
+    } catch (e) {
+      return task;
+    }
+  }
+  return task;
+};
+
 // GET tasks
 export async function GET(request: Request) {
   try {
@@ -35,36 +54,45 @@ export async function GET(request: Request) {
     const volunteerEmail = searchParams.get('email') ? searchParams.get('email')!.toLowerCase() : null;
 
     let tasks: any[] = [];
+    let supabaseSucceeded = false;
 
-    // 1. Try Supabase
+    // 1. Try Supabase via admin client (bypasses RLS)
     try {
-      let query = supabase.from('volunteer_tasks').select('*');
-      if (volunteerId !== null) {
+      let query = supabaseAdmin.from('volunteer_tasks').select('*');
+      if (volunteerId !== null && !isNaN(volunteerId)) {
         query = query.eq('volunteer_id', volunteerId);
       }
       const { data, error } = await query.order('id', { ascending: false });
 
       if (!error && Array.isArray(data)) {
-        tasks = data;
+        tasks = data.map(parseTaskMeta);
+        supabaseSucceeded = true;
+      } else if (error) {
+        console.warn("Supabase tasks GET warning:", error.message);
       }
-    } catch (err) {}
+    } catch (err: any) {
+      console.warn("Supabase tasks GET error:", err.message);
+    }
 
-    // 2. Always merge local fallback tasks to ensure offline/local tasks aren't missed
+    // 2. Merge local fallback tasks
     const local = getLocalTasks();
     let filteredLocal = local;
-    if (volunteerId !== null) {
-      filteredLocal = local.filter(t => String(t.volunteer_id) === String(volunteerId) || (volunteerEmail && t.donor_email && t.donor_email.toLowerCase() === volunteerEmail));
+    if (volunteerId !== null && !isNaN(volunteerId)) {
+      filteredLocal = local.filter(t => 
+        String(t.volunteer_id) === String(volunteerId) || 
+        (volunteerEmail && t.donor_email && t.donor_email.toLowerCase() === volunteerEmail)
+      );
     }
-    
-    // Combine both sets uniquely by id
+
+    // Merge only unique tasks (by id)
     filteredLocal.forEach(lt => {
       if (!tasks.some(st => String(st.id) === String(lt.id))) {
-        tasks.push(lt);
+        tasks.push(parseTaskMeta(lt));
       }
     });
 
-    // Sort descending by id or date
-    tasks.sort((a, b) => (b.id || 0) - (a.id || 0));
+    // Sort descending by id
+    tasks.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
 
     return NextResponse.json({ success: true, tasks });
   } catch (err: any) {
@@ -85,68 +113,76 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
-    const newTask = {
-      id: Date.now(),
-      volunteer_id: parseInt(volunteer_id, 10),
-      task_title,
-      task_description: task_description || "",
-      task_date,
-      task_time,
-      status: "Pending",
-      assigned_money: parseFloat(assigned_money) || 0,
-      donor_name: donor_name || "",
-      donor_email: donor_email || "",
-      donation_id: donation_id || null,
-      cause: cause || "",
-      quantity: quantity || "",
-      donation_amount: donation_amount || "",
-      is_premium: !!is_premium,
-      premium_file: premium_file || "",
-      created_at: new Date().toISOString()
-    };
+    // Pack extra fields into metadata string
+    const meta: any = {};
+    if (donor_name) meta.donor_name = donor_name;
+    if (donor_email) meta.donor_email = donor_email;
+    if (donation_id) meta.donation_id = donation_id;
+    if (cause) meta.cause = cause;
+    if (quantity) meta.quantity = quantity;
+    if (donation_amount) meta.donation_amount = donation_amount;
+    if (is_premium !== undefined) meta.is_premium = !!is_premium;
+    if (premium_file) meta.premium_file = premium_file;
 
-    // 1. Save locally
-    const local = getLocalTasks();
-    local.push(newTask);
-    saveLocalTasks(local);
+    const baseDesc = (task_description || "").trim();
+    const fullDescription = Object.keys(meta).length > 0
+      ? (baseDesc ? `${baseDesc}\n__META__:${JSON.stringify(meta)}` : `__META__:${JSON.stringify(meta)}`)
+      : baseDesc;
 
-    // 2. Save in Supabase
+    const volIdNum = parseInt(String(volunteer_id), 10);
+    const assignedMoneyNum = parseFloat(String(assigned_money)) || 0;
+
+    let savedTask: any = null;
+
+    // 1. Insert in Supabase using valid columns only
     try {
       const { data, error } = await supabaseAdmin
         .from('volunteer_tasks')
         .insert([{
-          volunteer_id: parseInt(volunteer_id, 10),
-          task_title,
-          task_description: task_description || null,
-          task_date,
-          task_time,
+          volunteer_id: !isNaN(volIdNum) ? volIdNum : null,
+          task_title: task_title.trim(),
+          task_description: fullDescription || null,
+          task_date: String(task_date).trim(),
+          task_time: String(task_time).trim(),
           status: "Pending",
-          assigned_money: parseFloat(assigned_money) || 0,
-          donor_name: donor_name || null,
-          donor_email: donor_email || null,
-          donation_id: donation_id || null,
-          cause: cause || null,
-          quantity: quantity || null,
-          donation_amount: donation_amount || null,
-          is_premium: !!is_premium,
-          premium_file: premium_file || null
+          assigned_money: assignedMoneyNum,
+          money_received: 0,
+          money_spent: 0
         }])
         .select()
         .single();
 
       if (!error && data) {
-        // Replace temp id with Supabase id in local copy
-        const updatedLocal = local.map(t => t.id === newTask.id ? data : t);
-        saveLocalTasks(updatedLocal);
-        return NextResponse.json({ success: true, task: data });
-      } else {
-        console.warn("Supabase tasks table bypass: ", error?.message);
+        savedTask = parseTaskMeta(data);
+      } else if (error) {
+        console.warn("Supabase tasks insert warning:", error.message);
       }
     } catch (dbErr: any) {
-      console.warn("Supabase database insert bypassed: ", dbErr.message);
+      console.warn("Supabase tasks insert error:", dbErr.message);
     }
 
-    return NextResponse.json({ success: true, task: newTask, warning: "Saved to local fallback" });
+    // 2. If Supabase succeeded or fallback
+    if (!savedTask) {
+      savedTask = {
+        id: Date.now(),
+        volunteer_id: !isNaN(volIdNum) ? volIdNum : null,
+        task_title: task_title.trim(),
+        task_description: baseDesc,
+        task_date,
+        task_time,
+        status: "Pending",
+        assigned_money: assignedMoneyNum,
+        ...meta,
+        created_at: new Date().toISOString()
+      };
+    }
+
+    // Update local JSON fallback
+    const local = getLocalTasks();
+    local.unshift(savedTask);
+    saveLocalTasks(local);
+
+    return NextResponse.json({ success: true, task: savedTask });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -166,74 +202,85 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
     }
 
-    // 1. Update locally
+    const idNum = parseInt(String(id), 10);
+
+    // Pack extra fields into metadata
+    const meta: any = {};
+    if (donor_name !== undefined) meta.donor_name = donor_name;
+    if (donor_email !== undefined) meta.donor_email = donor_email;
+    if (donation_id !== undefined) meta.donation_id = donation_id;
+    if (cause !== undefined) meta.cause = cause;
+    if (quantity !== undefined) meta.quantity = quantity;
+    if (donation_amount !== undefined) meta.donation_amount = donation_amount;
+    if (is_premium !== undefined) meta.is_premium = !!is_premium;
+    if (premium_file !== undefined) meta.premium_file = premium_file;
+    if (beneficiary_name !== undefined) meta.beneficiary_name = beneficiary_name;
+    if (admin_verified !== undefined) meta.admin_verified = !!admin_verified;
+
+    let fullDescription: string | undefined = undefined;
+    if (task_description !== undefined) {
+      const baseDesc = (task_description || "").trim();
+      fullDescription = Object.keys(meta).length > 0
+        ? (baseDesc ? `${baseDesc}\n__META__:${JSON.stringify(meta)}` : `__META__:${JSON.stringify(meta)}`)
+        : baseDesc;
+    }
+
+    const updateFields: any = {};
+    if (volunteer_id !== undefined && !isNaN(parseInt(volunteer_id, 10))) {
+      updateFields.volunteer_id = parseInt(volunteer_id, 10);
+    }
+    if (task_title !== undefined) updateFields.task_title = task_title;
+    if (fullDescription !== undefined) updateFields.task_description = fullDescription;
+    if (task_date !== undefined) updateFields.task_date = task_date;
+    if (task_time !== undefined) updateFields.task_time = task_time;
+    if (status !== undefined) updateFields.status = status;
+    if (assigned_money !== undefined) updateFields.assigned_money = parseFloat(assigned_money) || 0;
+    if (money_received !== undefined) updateFields.money_received = parseFloat(money_received) || 0;
+    if (money_spent !== undefined) updateFields.money_spent = parseFloat(money_spent) || 0;
+    if (proof_media !== undefined) updateFields.proof_media = proof_media;
+    if (feedback !== undefined) updateFields.feedback = feedback;
+
+    let updatedResult: any = null;
+
+    // 1. Update in Supabase
+    try {
+      if (!isNaN(idNum) && Object.keys(updateFields).length > 0) {
+        const { data, error } = await supabaseAdmin
+          .from('volunteer_tasks')
+          .update(updateFields)
+          .eq('id', idNum)
+          .select()
+          .single();
+
+        if (!error && data) {
+          updatedResult = parseTaskMeta(data);
+        } else if (error) {
+          console.warn("Supabase tasks update warning:", error.message);
+        }
+      }
+    } catch (dbErr: any) {
+      console.warn("Supabase tasks update error:", dbErr.message);
+    }
+
+    // 2. Update locally
     const local = getLocalTasks();
-    const idx = local.findIndex(t => t.id === parseInt(id, 10));
-    let updatedTask = null;
+    const idx = local.findIndex(t => String(t.id) === String(id));
     if (idx !== -1) {
       local[idx] = {
         ...local[idx],
-        ...(volunteer_id && { volunteer_id: parseInt(volunteer_id, 10) }),
-        ...(task_title && { task_title }),
-        ...(task_description !== undefined && { task_description }),
-        ...(task_date && { task_date }),
-        ...(task_time && { task_time }),
-        ...(status && { status }),
-        ...(admin_verified !== undefined && { admin_verified }),
-        ...(assigned_money !== undefined && { assigned_money: parseFloat(assigned_money) || 0 }),
-        ...(money_received !== undefined && { money_received: parseFloat(money_received) || 0 }),
-        ...(money_spent !== undefined && { money_spent: parseFloat(money_spent) || 0 }),
-        ...(proof_media !== undefined && { proof_media }),
-        ...(feedback !== undefined && { feedback }),
-        ...(beneficiary_name !== undefined && { beneficiary_name }),
-        ...(donor_name !== undefined && { donor_name }),
-        ...(donor_email !== undefined && { donor_email }),
-        ...(donation_id !== undefined && { donation_id }),
-        ...(cause !== undefined && { cause }),
-        ...(quantity !== undefined && { quantity }),
-        ...(donation_amount !== undefined && { donation_amount }),
-        ...(is_premium !== undefined && { is_premium }),
-        ...(premium_file !== undefined && { premium_file })
+        ...updateFields,
+        ...(task_description !== undefined ? { task_description } : {}),
+        ...meta
       };
-      updatedTask = local[idx];
-      saveLocalTasks(local);
-    }
-
-    // 2. Update in Supabase
-    try {
-      const { data, error } = await supabaseAdmin
-        .from('volunteer_tasks')
-        .update({
-          ...(volunteer_id && { volunteer_id: parseInt(volunteer_id, 10) }),
-          ...(task_title && { task_title }),
-          ...(task_description !== undefined && { task_description }),
-          ...(task_date && { task_date }),
-          ...(task_time && { task_time }),
-          ...(status && { status }),
-          ...(admin_verified !== undefined && { admin_verified }),
-          ...(assigned_money !== undefined && { assigned_money: parseFloat(assigned_money) || 0 }),
-          ...(money_received !== undefined && { money_received: parseFloat(money_received) || 0 }),
-          ...(money_spent !== undefined && { money_spent: parseFloat(money_spent) || 0 }),
-          ...(proof_media !== undefined && { proof_media }),
-          ...(feedback !== undefined && { feedback })
-        })
-        .eq('id', parseInt(id, 10))
-        .select()
-        .single();
-
-      if (!error && data) {
-        return NextResponse.json({ success: true, task: data });
-      } else {
-        console.warn("Supabase update bypass: ", error?.message);
+      if (!updatedResult) {
+        updatedResult = local[idx];
       }
-    } catch (dbErr: any) {
-      console.warn("Supabase update bypassed: ", dbErr.message);
+      saveLocalTasks(local);
     }
 
     return NextResponse.json({ 
       success: true, 
-      task: updatedTask || body, 
-      warning: "Updated locally" 
+      task: updatedResult || body 
     });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
@@ -244,32 +291,44 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const idStr = searchParams.get('id');
+    let idStr = searchParams.get('id');
+
+    // Also check request body if not in query params
+    if (!idStr) {
+      try {
+        const body = await request.json();
+        idStr = body?.id;
+      } catch (e) {}
+    }
+
     if (!idStr) {
       return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
     }
-    const id = parseInt(idStr, 10);
 
-    // 1. Delete locally
-    const local = getLocalTasks();
-    const updatedLocal = local.filter(t => t.id !== id);
-    saveLocalTasks(updatedLocal);
+    const idNum = parseInt(String(idStr), 10);
 
-    // 2. Delete in Supabase
+    // 1. Delete in Supabase
     try {
-      const { error } = await supabaseAdmin
-        .from('volunteer_tasks')
-        .delete()
-        .eq('id', id);
+      if (!isNaN(idNum)) {
+        const { error } = await supabaseAdmin
+          .from('volunteer_tasks')
+          .delete()
+          .eq('id', idNum);
 
-      if (error) {
-        console.warn("Supabase task delete bypass: ", error.message);
+        if (error) {
+          console.warn("Supabase tasks delete warning:", error.message);
+        }
       }
     } catch (dbErr: any) {
-      console.warn("Supabase delete bypassed: ", dbErr.message);
+      console.warn("Supabase tasks delete error:", dbErr.message);
     }
 
-    return NextResponse.json({ success: true });
+    // 2. Delete locally
+    const local = getLocalTasks();
+    const updatedLocal = local.filter(t => String(t.id) !== String(idStr));
+    saveLocalTasks(updatedLocal);
+
+    return NextResponse.json({ success: true, message: "Task deleted successfully" });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
