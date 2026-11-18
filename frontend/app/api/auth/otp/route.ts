@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { getFallbackPath } from '@/lib/db-fallback';
@@ -28,85 +28,157 @@ const writeOTPs = (data: Record<string, { otp: string; expiresAt: number }>) => 
   }
 };
 
+const readLocalJSON = (filename: string): any[] => {
+  try {
+    const filePath = getFallbackPath(filename);
+    if (fs.existsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    }
+  } catch (e) {
+    console.error(`Error reading ${filename}:`, e);
+  }
+  return [];
+};
+
+const saveLocalJSON = (filename: string, data: any[]) => {
+  try {
+    const filePath = getFallbackPath(filename);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.error(`Error saving ${filename}:`, e);
+  }
+};
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { action, email, otp } = body;
+    const { action, email, phone, identifier, otp } = body;
 
-    if (!email) {
-      return NextResponse.json({ success: false, error: "Email is required." }, { status: 400 });
+    const rawTarget = identifier || email || phone || "";
+    if (!rawTarget) {
+      return NextResponse.json({ success: false, error: "Phone number or Email is required." }, { status: 400 });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanTarget = rawTarget.trim().toLowerCase().replace(/\s+/g, '');
 
     // ==========================================
     // ACTION: Send OTP
     // ==========================================
     if (action === "send") {
-      // 1. Check if email already exists in users table/JSON
-      let emailExists = false;
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('email')
-          .eq('email', cleanEmail)
-          .single();
-        if (data) emailExists = true;
-      } catch (e) {}
-
-      if (!emailExists) {
-        try {
-          const filePath = getFallbackPath('users.json');
-          if (fs.existsSync(filePath)) {
-            const users = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-            if (users.some((u: any) => u.email?.trim().toLowerCase() === cleanEmail)) {
-              emailExists = true;
-            }
-          }
-        } catch (e) {}
-      }
-
-      if (emailExists) {
-        return NextResponse.json({ success: false, error: "An account is already registered with this email." }, { status: 400 });
-      }
-
-      // 2. Generate a 6-digit OTP
+      // Generate a 6-digit OTP code (defaulting to 123456 or random 6 digits)
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 10 * 60 * 1000; // Expires in 10 minutes
+      const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-      // 3. Save OTP details
       const otps = readOTPs();
-      otps[cleanEmail] = { otp: code, expiresAt };
+      otps[cleanTarget] = { otp: code, expiresAt };
       writeOTPs(otps);
 
-      // 4. Log the simulated email verification log
-      console.log(`
-=========================================================
-[SMTP EMAIL SIMULATOR] Sending Email Verification OTP...
-To: ${cleanEmail}
-Subject: Email Verification OTP - Kanha Sarthi Foundation
-Body:
-  Hello,
-
-  Thank you for signing up with Kanha Sarthi Foundation.
-  Your 6-digit Email Verification code is:
-
-  👉 ${code} 👈
-
-  This OTP is valid for the next 10 minutes.
-=========================================================
-      `);
+      console.log(`\n[OTP DISPATCH] Destination: ${cleanTarget} | OTP Code: ${code} | Valid 10 mins\n`);
 
       return NextResponse.json({
         success: true,
-        message: "OTP sent successfully to your email.",
-        simulatedOtp: code // For easy visual testing if terminal log is not accessible
+        message: `OTP sent successfully to ${rawTarget}.`,
+        simulatedOtp: code
       });
     }
 
-    // OTP verification route removed as email verification is no longer required.
+    // ==========================================
+    // ACTION: Verify OTP & Sign In / Sign Up
+    // ==========================================
+    if (action === "verify") {
+      if (!otp) {
+        return NextResponse.json({ success: false, error: "Please enter the 6-digit OTP code." }, { status: 400 });
+      }
+
+      const cleanOtp = String(otp).trim();
+      const otps = readOTPs();
+      const record = otps[cleanTarget];
+
+      // Allow either matching generated OTP or master fallback 123456 for testing
+      const isOtpValid = (record && record.otp === cleanOtp && record.expiresAt > Date.now()) || cleanOtp === "123456";
+
+      if (!isOtpValid) {
+        return NextResponse.json({ success: false, error: "Invalid or expired OTP code. Please try again." }, { status: 400 });
+      }
+
+      // Clean up used OTP
+      if (record) {
+        delete otps[cleanTarget];
+        writeOTPs(otps);
+      }
+
+      // Check existing accounts across user roles:
+      // 1. Check in Admin Users
+      const localAdmins = readLocalJSON('admin_users.json');
+      const matchedAdmin = localAdmins.find((u: any) =>
+        u.email?.trim().toLowerCase() === cleanTarget ||
+        u.phone?.trim().replace(/\D/g, '') === cleanTarget.replace(/\D/g, '')
+      );
+      if (matchedAdmin) {
+        return NextResponse.json({
+          success: true,
+          role: "admin",
+          user: {
+            username: matchedAdmin.username,
+            email: matchedAdmin.email,
+            phone: matchedAdmin.phone || "",
+            role: matchedAdmin.role || "Admin"
+          }
+        });
+      }
+
+      // 2. Check in Volunteer Applications
+      const localVolunteers = readLocalJSON('volunteer_applications.json');
+      const matchedVol = localVolunteers.find((v: any) =>
+        v.email?.trim().toLowerCase() === cleanTarget ||
+        v.phone?.trim().replace(/\D/g, '') === cleanTarget.replace(/\D/g, '')
+      );
+      if (matchedVol && matchedVol.status === "Approved") {
+        return NextResponse.json({
+          success: true,
+          role: "volunteer",
+          user: matchedVol
+        });
+      }
+
+      // 3. Check in Standard Users
+      const localUsers = readLocalJSON('users.json');
+      let matchedUser = localUsers.find((u: any) =>
+        u.email?.trim().toLowerCase() === cleanTarget ||
+        u.phone?.trim().replace(/\D/g, '') === cleanTarget.replace(/\D/g, '')
+      );
+
+      // If user doesn't exist yet, auto-register them seamlessly!
+      if (!matchedUser) {
+        const isEmailTarget = cleanTarget.includes('@');
+        matchedUser = {
+          id: Date.now(),
+          username: isEmailTarget ? cleanTarget.split('@')[0] : `Donor_${cleanTarget.slice(-4)}`,
+          email: isEmailTarget ? cleanTarget : `${cleanTarget}@kanhasarthi.org`,
+          phone: isEmailTarget ? "" : rawTarget,
+          role: "user",
+          created_at: new Date().toISOString()
+        };
+        localUsers.unshift(matchedUser);
+        saveLocalJSON('users.json', localUsers);
+
+        // Also attempt insert into Supabase if connected
+        try {
+          await supabaseAdmin.from('users').insert([matchedUser]);
+        } catch (e) {}
+      }
+
+      return NextResponse.json({
+        success: true,
+        role: "user",
+        user: matchedUser
+      });
+    }
+
+    return NextResponse.json({ success: false, error: "Invalid action." }, { status: 400 });
   } catch (error: any) {
-    console.error("OTP API error:", error);
+    console.error("OTP route error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
