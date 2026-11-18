@@ -22,7 +22,7 @@ export default function CausesThatMatter() {
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
 
   useEffect(() => {
-    fetch('/api/causes')
+    fetch('/api/causes', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {

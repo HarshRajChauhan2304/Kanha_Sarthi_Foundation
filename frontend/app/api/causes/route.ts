@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
@@ -10,7 +10,7 @@ export async function GET() {
   let useFallback = false;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('causes')
       .select('*')
       .order('id', { ascending: true });
@@ -38,7 +38,7 @@ export async function GET() {
 
   return NextResponse.json(causes, {
     headers: {
-      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      'Cache-Control': 'no-store, max-age=0'
     }
   });
 }

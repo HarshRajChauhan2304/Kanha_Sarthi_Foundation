@@ -25,6 +25,7 @@ export default function CausesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Causes");
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [causesList, setCausesList] = useState<any[]>(causesData);
   const [mediaSettings, setMediaSettings] = useState<Record<string, string>>({
     causes_header: getFallbackMedia("causes_header", "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1600&auto=format&fit=crop&q=80")
   });
@@ -34,6 +35,16 @@ export default function CausesPage() {
   });
 
   React.useEffect(() => {
+    // Dynamically fetch all causes from database
+    fetch('/api/causes', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCausesList(data);
+        }
+      })
+      .catch(err => console.error("Error loading causes list:", err));
+
     fetch('/api/categories')
       .then(res => res.json())
       .then(data => {
@@ -76,7 +87,7 @@ export default function CausesPage() {
   }, []);
 
   // Filter logic based on query & tags
-  const filteredCauses = causesData.filter((cause) => {
+  const filteredCauses = causesList.filter((cause) => {
     const matchesCategory =
       selectedCategory === "All Causes" || cause.category === selectedCategory;
     const matchesSearch =

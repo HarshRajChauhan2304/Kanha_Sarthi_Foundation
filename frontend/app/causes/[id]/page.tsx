@@ -21,7 +21,8 @@ export default function CauseDetailPage({ params }: { params: Promise<{ id: stri
   const resolvedParams = React.use(params);
   const id = resolvedParams.id;
 
-  const cause = causesData.find(c => c.id.toString() === id);
+  const [cause, setCause] = useState<any>(() => causesData.find(c => c.id.toString() === id) || null);
+  const [isLoading, setIsLoading] = useState(!cause);
 
   // States
   const [quantity, setQuantity] = useState(1);
@@ -35,6 +36,20 @@ export default function CauseDetailPage({ params }: { params: Promise<{ id: stri
   const realDonorsRef = useRef<any[]>([]);
 
   useEffect(() => {
+    // Dynamically fetch cause details from database
+    fetch('/api/causes', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const matched = data.find((c: any) => c.id.toString() === id);
+          if (matched) {
+            setCause(matched);
+          }
+        }
+      })
+      .catch(err => console.error("Error loading cause detail:", err))
+      .finally(() => setIsLoading(false));
+
     fetch('/api/donations')
       .then(res => res.json())
       .then(data => {
@@ -104,6 +119,15 @@ export default function CauseDetailPage({ params }: { params: Promise<{ id: stri
     const numericAmt = parseFloat(cleanAmt) || 0;
     return `₹${numericAmt.toLocaleString('en-IN')}`;
   };
+
+  if (isLoading && !cause) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#07100b] flex flex-col items-center justify-center font-sans text-center px-4">
+        <div className="w-10 h-10 border-4 border-[#1E4D2B] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-bold text-gray-600 dark:text-zinc-300">Loading Cause...</p>
+      </div>
+    );
+  }
 
   if (!cause) {
     return (

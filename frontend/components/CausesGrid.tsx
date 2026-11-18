@@ -9,7 +9,7 @@ export default function CausesGrid() {
   const [causesList, setCausesList] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/causes')
+    fetch('/api/causes', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
