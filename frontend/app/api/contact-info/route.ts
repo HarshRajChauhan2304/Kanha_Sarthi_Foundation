@@ -6,9 +6,9 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const defaultContactInfo = [
-  { id: 1, title: "Registered Address", value: "Kanha Sarthi Foundation Office,\nRanchi, Jharkhand, 834001, India", type: "address", icon: "map-pin" },
-  { id: 2, title: "Email Inquiry", value: "kanhasathifoundation223@gmail.com", type: "email", icon: "mail" },
-  { id: 3, title: "WhatsApp Support", value: "+91 74881 64529", type: "whatsapp", icon: "whatsapp" }
+  { id: 1, title: "Registered Address", value: "Kanha Sarthi Foundation Head Office,\nG 96, Block G, Gamma 2, Greater Noida, U.P., India", type: "address", icon: "map-pin" },
+  { id: 2, title: "Email Inquiry", value: "kanhasarthifoundation223@gmail.com", type: "email", icon: "mail" },
+  { id: 3, title: "WhatsApp Support", value: "+91 82587765159", type: "whatsapp", icon: "whatsapp" }
 ];
 
 // GET all contact details

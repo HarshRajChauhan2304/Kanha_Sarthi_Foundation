@@ -189,8 +189,8 @@ function ReceiptPageContent() {
                   <p className="text-[9px] text-gray-500 font-mono mt-1.5">{donation.receipt_id}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] text-gray-500 font-mono">+91 7488164529</p>
-                  <p className="text-[9px] text-gray-500 font-mono">kanhasathifoundation223@gmail.com</p>
+                  <p className="text-[9px] text-gray-500 font-mono">+91 82587765159</p>
+                  <p className="text-[9px] text-gray-500 font-mono">kanhasarthifoundation223@gmail.com</p>
                 </div>
               </div>
             </div>

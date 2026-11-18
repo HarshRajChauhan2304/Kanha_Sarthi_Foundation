@@ -19,7 +19,7 @@ const defaultFooter = {
     { label: "Return & Refund Policy", href: "/refund" }
   ],
   contact: {
-    email: "kanhasathifoundation223@gmail.com",
+    email: "kanhasarthifoundation223@gmail.com",
     ctaText: "Need help fast? Fill out our form or email"
   },
   social: [

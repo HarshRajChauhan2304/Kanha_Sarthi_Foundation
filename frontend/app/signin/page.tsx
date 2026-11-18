@@ -94,7 +94,7 @@ export default function SignIn() {
     }
 
     if (otpChannel === "phone" && target.replace(/\D/g, "").length < 10) {
-      setError("Please enter a valid 10-digit mobile number.");
+      setError("Please enter a valid mobile number.");
       return;
     }
 
@@ -225,9 +225,9 @@ export default function SignIn() {
           </div>
         )}
 
-        {/* Top Heart Badge (Exact mockup replica) */}
-        <div className="w-20 h-20 rounded-full bg-[#e8f5fd] dark:bg-sky-950/40 flex items-center justify-center mx-auto mb-4 border border-sky-100/70 dark:border-sky-800/30">
-          <div className="w-14 h-14 rounded-full bg-[#1da1f2] flex items-center justify-center shadow-md">
+        {/* Top Heart Badge (Exact green brand replica) */}
+        <div className="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center mx-auto mb-4 border border-emerald-100/80 dark:border-emerald-800/40">
+          <div className="w-14 h-14 rounded-full bg-[#1E4D2B] dark:bg-emerald-600 flex items-center justify-center shadow-md">
             <svg className="w-7 h-7 fill-white drop-shadow-xs" viewBox="0 0 24 24">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
@@ -253,7 +253,7 @@ export default function SignIn() {
             <p>{successMsg}</p>
             {simulatedOtp && (
               <p className="font-mono text-xs font-black text-gray-900 dark:text-white bg-white dark:bg-zinc-900 py-1 rounded-lg">
-                Your OTP: <span className="text-[#1da1f2]">{simulatedOtp}</span>
+                Your OTP: <span className="text-[#1E4D2B] dark:text-emerald-400">{simulatedOtp}</span>
               </p>
             )}
           </div>
@@ -303,7 +303,7 @@ export default function SignIn() {
                       setOtpSent(false);
                       setError("");
                     }}
-                    className="w-4 h-4 text-sky-500 focus:ring-0 cursor-pointer accent-[#1da1f2]"
+                    className="w-4 h-4 text-emerald-600 focus:ring-0 cursor-pointer accent-[#1E4D2B] dark:accent-emerald-500"
                   />
                   <span className={`text-xs font-bold ${otpChannel === "phone" ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-zinc-400"}`}>
                     Phone Number
@@ -321,7 +321,7 @@ export default function SignIn() {
                       setOtpSent(false);
                       setError("");
                     }}
-                    className="w-4 h-4 text-sky-500 focus:ring-0 cursor-pointer accent-[#1da1f2]"
+                    className="w-4 h-4 text-emerald-600 focus:ring-0 cursor-pointer accent-[#1E4D2B] dark:accent-emerald-500"
                   />
                   <span className={`text-xs font-bold ${otpChannel === "email" ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-zinc-400"}`}>
                     Email
@@ -333,7 +333,7 @@ export default function SignIn() {
                 /* Step 1: Input Phone or Email */
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   {otpChannel === "phone" ? (
-                    <div className="flex rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 overflow-hidden focus-within:ring-2 focus-within:ring-[#1da1f2] focus-within:border-transparent transition-all">
+                    <div className="flex rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 overflow-hidden focus-within:ring-2 focus-within:ring-[#1E4D2B] dark:focus-within:ring-emerald-500 focus-within:border-transparent transition-all">
                       <div className="flex items-center gap-1.5 px-3.5 py-3 bg-gray-50 dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 text-xs font-bold text-gray-800 dark:text-zinc-200 shrink-0">
                         <span className="text-base">🇮🇳</span>
                         <span>+91</span>
@@ -346,13 +346,13 @@ export default function SignIn() {
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
                         placeholder="Enter phone number"
-                        maxLength={10}
+                        maxLength={12}
                         required
                         className="w-full px-3.5 py-3 text-sm text-gray-900 dark:text-white bg-transparent focus:outline-none placeholder-gray-400"
                       />
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 overflow-hidden focus-within:ring-2 focus-within:ring-[#1da1f2] focus-within:border-transparent transition-all">
+                    <div className="rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 overflow-hidden focus-within:ring-2 focus-within:ring-[#1E4D2B] dark:focus-within:ring-emerald-500 focus-within:border-transparent transition-all">
                       <input
                         type="email"
                         value={email}
@@ -367,7 +367,7 @@ export default function SignIn() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 px-4 rounded-xl bg-[#1da1f2] hover:bg-[#1a91da] active:scale-[0.99] text-white font-bold text-sm shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 rounded-xl bg-[#1E4D2B] hover:bg-[#153e22] dark:bg-emerald-600 dark:hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm shadow-md shadow-emerald-900/20 transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>
@@ -395,7 +395,7 @@ export default function SignIn() {
                           setOtpCode("");
                           setError("");
                         }}
-                        className="text-[#1da1f2] hover:underline font-bold"
+                        className="text-[#1E4D2B] dark:text-emerald-400 hover:underline font-bold"
                       >
                         Change {otpChannel === "phone" ? "Number" : "Email"}
                       </button>
@@ -409,14 +409,14 @@ export default function SignIn() {
                       maxLength={6}
                       autoFocus
                       required
-                      className="w-full text-center text-2xl font-mono tracking-widest px-4 py-2.5 rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1da1f2]"
+                      className="w-full text-center text-2xl font-mono tracking-widest px-4 py-2.5 rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 px-4 rounded-xl bg-[#1da1f2] hover:bg-[#1a91da] active:scale-[0.99] text-white font-bold text-sm shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 rounded-xl bg-[#1E4D2B] hover:bg-[#153e22] dark:bg-emerald-600 dark:hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm shadow-md shadow-emerald-900/20 transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>
@@ -439,7 +439,7 @@ export default function SignIn() {
                       <button
                         type="button"
                         onClick={() => handleSendOtp()}
-                        className="text-[#1da1f2] hover:underline font-bold"
+                        className="text-[#1E4D2B] dark:text-emerald-400 hover:underline font-bold"
                       >
                         Resend OTP Code
                       </button>
@@ -457,7 +457,7 @@ export default function SignIn() {
                   setAuthMode("password");
                   setError("");
                 }}
-                className="text-[11px] font-bold text-gray-400 hover:text-[#1da1f2] transition-colors"
+                className="text-[11px] font-bold text-gray-400 hover:text-[#1E4D2B] dark:hover:text-emerald-400 transition-colors"
               >
                 Sign in with Password instead →
               </button>
@@ -476,7 +476,7 @@ export default function SignIn() {
                 value={passwordEmail}
                 onChange={(e) => setPasswordEmail(e.target.value)}
                 placeholder="Enter email or username"
-                className="w-full px-4 py-3 rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1da1f2]"
+                className="w-full px-4 py-3 rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500"
               />
             </div>
 
@@ -491,7 +491,7 @@ export default function SignIn() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1da1f2]"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500"
                 />
                 <button
                   type="button"
@@ -506,7 +506,7 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl bg-[#1da1f2] hover:bg-[#1a91da] text-white font-bold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-4 rounded-xl bg-[#1E4D2B] hover:bg-[#153e22] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               {loading ? "Signing in..." : "Sign In with Password"}
             </button>
@@ -518,7 +518,7 @@ export default function SignIn() {
                   setAuthMode("otp");
                   setError("");
                 }}
-                className="text-xs font-bold text-[#1da1f2] hover:underline"
+                className="text-xs font-bold text-[#1E4D2B] dark:text-emerald-400 hover:underline"
               >
                 ← Back to OTP Sign In
               </button>
@@ -526,7 +526,7 @@ export default function SignIn() {
           </form>
         )}
 
-        {/* Need Help? Section (Exact Mockup Match) */}
+        {/* Need Help? Section (Exact Branded Match) */}
         <div className="mt-8 pt-5 border-t border-gray-150 dark:border-zinc-800">
           <p className="text-xs font-bold text-gray-800 dark:text-zinc-200 mb-3">
             Need Help?
@@ -535,10 +535,10 @@ export default function SignIn() {
           <div className="flex items-center justify-center gap-6 text-xs font-semibold">
             {/* WhatsApp */}
             <a
-              href="https://wa.me/917488164529"
+              href="https://wa.me/9182587765159"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[#1da1f2] hover:underline transition-all"
+              className="flex items-center gap-1.5 text-[#1E4D2B] dark:text-emerald-400 hover:underline transition-all"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none">
                 <path
@@ -555,8 +555,8 @@ export default function SignIn() {
 
             {/* Email */}
             <a
-              href="mailto:kanhasathifoundation223@gmail.com"
-              className="flex items-center gap-1.5 text-[#1da1f2] hover:underline transition-all"
+              href="mailto:kanhasarthifoundation223@gmail.com"
+              className="flex items-center gap-1.5 text-[#1E4D2B] dark:text-emerald-400 hover:underline transition-all"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="#EA4335">
                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
@@ -566,10 +566,10 @@ export default function SignIn() {
 
             {/* Call */}
             <a
-              href="tel:+917488164529"
-              className="flex items-center gap-1.5 text-[#1da1f2] hover:underline transition-all"
+              href="tel:+9182587765159"
+              className="flex items-center gap-1.5 text-[#1E4D2B] dark:text-emerald-400 hover:underline transition-all"
             >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="#1da1f2">
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="#16a34a">
                 <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.44-5.15-3.75-6.59-6.59l1.97-1.57c.27-.27.36-.66.25-1.01A11.36 11.36 0 018.57 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-.99-1z" />
               </svg>
               <span>Call</span>

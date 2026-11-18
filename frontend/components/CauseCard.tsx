@@ -69,7 +69,7 @@ export default function CauseCard({ cause }: CauseCardProps) {
 
         {/* Live Green Badge (Top-Right matching screenshot) - Linked to WhatsApp */}
         <a
-          href={`https://wa.me/917488164529?text=Hello,%20I%20want%20to%20know%20more%20about%20the%20cause:%20${encodeURIComponent(cause.title)}`}
+          href={`https://wa.me/9182587765159?text=Hello,%20I%20want%20to%20know%20more%20about%20the%20cause:%20${encodeURIComponent(cause.title)}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}

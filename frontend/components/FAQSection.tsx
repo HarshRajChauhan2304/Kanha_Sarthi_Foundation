@@ -16,7 +16,7 @@ const FAQS = [
   {
     id: 3,
     question: "What if I don't receive my pictures or videos on time?",
-    answer: "While we make every effort to send proofs within the estimated timeframe, minor delays can occur due to weather or logistics. You can reach out to us on WhatsApp anytime at +91 74881 64529 for an instant status check."
+    answer: "While we make every effort to send proofs within the estimated timeframe, minor delays can occur due to weather or logistics. You can reach out to us on WhatsApp anytime at +91 82587765159 for an instant status check."
   },
   {
     id: 4,
