@@ -174,6 +174,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, user: newUser, warning: "Saved to local fallback" });
     }
 
+    if (action === "google_sync") {
+      const cleanEmail = (email || "").trim().toLowerCase();
+      if (!cleanEmail) {
+        return NextResponse.json({ success: false, error: "Email is required." }, { status: 400 });
+      }
+
+      let matched = localUsers.find((u: any) => u.email?.trim().toLowerCase() === cleanEmail);
+      if (!matched) {
+        matched = {
+          id: Date.now(),
+          username: username || cleanEmail.split('@')[0],
+          email: cleanEmail,
+          phone: phone || "",
+          avatar: body.avatar || "",
+          role: "Donor & Supporter",
+          auth_provider: "google",
+          created_at: new Date().toISOString()
+        };
+        localUsers.unshift(matched);
+        saveLocalUsers(localUsers);
+
+        try {
+          await supabaseAdmin.from('users').insert([{
+            username: matched.username,
+            email: matched.email,
+            phone: matched.phone || "",
+            avatar: matched.avatar || ""
+          }]);
+        } catch (e) {}
+      } else {
+        // Update avatar or name if provided
+        if (body.avatar && !matched.avatar) matched.avatar = body.avatar;
+        if (username && matched.username === cleanEmail.split('@')[0]) matched.username = username;
+        saveLocalUsers(localUsers);
+      }
+
+      return NextResponse.json({
+        success: true,
+        user: matched
+      });
+    }
+
     if (action === "update") {
       const { currentEmail, username: newUsername, email: newEmail, phone: newPhone, avatar: newAvatar, gender: newGender, bio: newBio, dob: newDob } = body;
       if (!currentEmail) {

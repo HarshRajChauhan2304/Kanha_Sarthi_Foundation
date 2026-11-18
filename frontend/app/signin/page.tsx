@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { createSession, clearAllSessions } from "@/lib/session";
+import { supabase } from "@/lib/supabase";
 
 export default function SignIn() {
   const router = useRouter();
@@ -195,19 +196,30 @@ export default function SignIn() {
     }
   };
 
-  // ONE-CLICK GOOGLE SIGN IN
-  const handleGoogleSignIn = () => {
-    // Seamless user authentication with Google
-    const sampleGoogleUser = {
-      username: "Google Supporter",
-      email: "supporter@gmail.com",
-      role: "user",
-    };
-    createSession("user", sampleGoogleUser);
-    if (redirectPath && (redirectPath.startsWith("/donate") || redirectPath.startsWith("/causes"))) {
-      router.push(redirectPath);
-    } else {
-      router.push("/profile");
+  // REAL GOOGLE SIGN IN
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const redirectUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath || "/profile")}`;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
+
+      if (error) {
+        setLoading(false);
+        if (error.message?.includes("provider is not enabled")) {
+          setError("Google Sign-In is not yet enabled in your Supabase project. To enable real Google authentication: open Supabase Dashboard -> Authentication -> Providers -> Google, paste your Google Cloud Client ID & Secret, and turn it ON.");
+        } else {
+          setError(error.message || "Google Sign-in failed. Please try again.");
+        }
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setError(err?.message || "Google Sign-in failed. Please try again.");
     }
   };
 

@@ -76,10 +76,109 @@ export async function POST(request: Request) {
 
       console.log(`\n[OTP DISPATCH] Destination: ${cleanTarget} | OTP Code: ${code} | Valid 10 mins\n`);
 
+      let realDeliverySuccess = false;
+      let deliveryNotice = "";
+
+      // 1. If Target is an Email -> Dispatch via Supabase / Nodemailer
+      if (cleanTarget.includes('@')) {
+        // Try Supabase Auth Email OTP
+        try {
+          const { error: sbError } = await supabase.auth.signInWithOtp({
+            email: cleanTarget,
+          });
+          if (!sbError) {
+            realDeliverySuccess = true;
+          }
+        } catch (e) {}
+
+        // Try Nodemailer if SMTP credentials are provided
+        const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+        const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+        if (smtpUser && smtpPass) {
+          try {
+            const nodemailer = require('nodemailer');
+            const transporter = nodemailer.createTransport({
+              host: process.env.SMTP_HOST || 'smtp.gmail.com',
+              port: parseInt(process.env.SMTP_PORT || '587', 10),
+              secure: process.env.SMTP_PORT === '465',
+              auth: { user: smtpUser, pass: smtpPass },
+            });
+
+            await transporter.sendMail({
+              from: `"Kanha Sarthi Foundation" <${smtpUser}>`,
+              to: cleanTarget,
+              subject: `${code} is your Kanha Sarthi Foundation Verification Code`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 16px;">
+                  <h2 style="color: #1E4D2B; margin-top: 0;">Kanha Sarthi Foundation</h2>
+                  <p style="color: #374151; font-size: 14px;">Use the following verification code to sign in to your donor account:</p>
+                  <div style="background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 12px; padding: 16px; text-align: center; margin: 24px 0;">
+                    <span style="font-size: 32px; font-weight: 900; letter-spacing: 6px; color: #1E4D2B; font-family: monospace;">${code}</span>
+                  </div>
+                  <p style="color: #6b7280; font-size: 12px;">This code is valid for 10 minutes. Please do not share it with anyone.</p>
+                </div>
+              `
+            });
+            realDeliverySuccess = true;
+          } catch (mailErr: any) {
+            console.error("Nodemailer SMTP dispatch error:", mailErr?.message);
+          }
+        }
+      }
+
+      // 2. If Target is a Phone Number -> Dispatch via SMS Gateway if configured
+      if (!cleanTarget.includes('@')) {
+        const cleanPhone = cleanTarget.replace(/\D/g, '').slice(-10);
+
+        // Fast2SMS integration (popular in India)
+        const fast2smsKey = process.env.FAST2SMS_API_KEY;
+        if (fast2smsKey) {
+          try {
+            const fastRes = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${fast2smsKey}&variables_values=${code}&route=otp&numbers=${cleanPhone}`);
+            const fastData = await fastRes.json();
+            if (fastData?.return) {
+              realDeliverySuccess = true;
+            }
+          } catch (e) {
+            console.error("Fast2SMS dispatch error:", e);
+          }
+        }
+
+        // Twilio integration
+        const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+        const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+        const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+        if (twilioSid && twilioToken && twilioFrom) {
+          try {
+            const authHeader = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
+            const twilioRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Basic ${authHeader}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: new URLSearchParams({
+                To: `+91${cleanPhone}`,
+                From: twilioFrom,
+                Body: `Your Kanha Sarthi Foundation verification code is: ${code}. Valid for 10 minutes.`
+              }).toString()
+            });
+            if (twilioRes.ok) realDeliverySuccess = true;
+          } catch (e) {
+            console.error("Twilio dispatch error:", e);
+          }
+        }
+
+        if (!fast2smsKey && !twilioSid) {
+          deliveryNotice = "Note: Real SMS delivery to mobile carriers requires an SMS Gateway key (FAST2SMS_API_KEY or TWILIO) in .env.local.";
+        }
+      }
+
       return NextResponse.json({
         success: true,
-        message: `OTP sent successfully to ${rawTarget}.`,
-        simulatedOtp: code
+        message: realDeliverySuccess ? `OTP sent successfully to ${rawTarget}!` : `OTP code generated for ${rawTarget}.`,
+        simulatedOtp: code,
+        notice: deliveryNotice
       });
     }
 
