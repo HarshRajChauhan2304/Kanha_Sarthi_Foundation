@@ -46,7 +46,6 @@ const CAUSE_CONFIG: Record<CauseType, {
   primaryPlaceholder: string;
   ageRequired: boolean;
   parentsRequired: boolean;
-  aadharRequired: boolean;
   badgeBg: string;
   badgeBorder: string;
   badgeText: string;
@@ -54,11 +53,10 @@ const CAUSE_CONFIG: Record<CauseType, {
   women_care: {
     label: "Women Care",
     icon: "🌸",
-    primaryFieldLabel: "Women / Girl Name *",
+    primaryFieldLabel: "Women / Girl Name",
     primaryPlaceholder: "e.g. Pooja Kumari",
     ageRequired: true,
     parentsRequired: true,
-    aadharRequired: true,
     badgeBg: "bg-pink-50 dark:bg-pink-950/30",
     badgeBorder: "border-pink-200 dark:border-pink-900/30",
     badgeText: "text-pink-600 dark:text-pink-400"
@@ -66,11 +64,10 @@ const CAUSE_CONFIG: Record<CauseType, {
   birthday: {
     label: "Birthday Giving",
     icon: "🎂",
-    primaryFieldLabel: "Child Name *",
+    primaryFieldLabel: "Child Name",
     primaryPlaceholder: "e.g. Sonu Kumar",
     ageRequired: false,
     parentsRequired: false,
-    aadharRequired: false,
     badgeBg: "bg-amber-50 dark:bg-amber-950/30",
     badgeBorder: "border-amber-200 dark:border-amber-900/30",
     badgeText: "text-amber-600 dark:text-amber-400"
@@ -78,11 +75,10 @@ const CAUSE_CONFIG: Record<CauseType, {
   studykit: {
     label: "Study Kit / Education",
     icon: "📚",
-    primaryFieldLabel: "Student Name *",
+    primaryFieldLabel: "Student Name",
     primaryPlaceholder: "e.g. Rahul Sharma",
     ageRequired: true,
     parentsRequired: true,
-    aadharRequired: false,
     badgeBg: "bg-blue-50 dark:bg-blue-950/30",
     badgeBorder: "border-blue-200 dark:border-blue-900/30",
     badgeText: "text-blue-600 dark:text-blue-400"
@@ -90,11 +86,10 @@ const CAUSE_CONFIG: Record<CauseType, {
   food: {
     label: "Food Packets / Needy",
     icon: "🍲",
-    primaryFieldLabel: "Beneficiary Name *",
+    primaryFieldLabel: "Beneficiary Name",
     primaryPlaceholder: "e.g. Ramesh Singh",
     ageRequired: false,
     parentsRequired: false,
-    aadharRequired: false,
     badgeBg: "bg-emerald-50 dark:bg-emerald-950/30",
     badgeBorder: "border-emerald-200 dark:border-emerald-900/30",
     badgeText: "text-emerald-600 dark:text-emerald-400"
@@ -102,11 +97,10 @@ const CAUSE_CONFIG: Record<CauseType, {
   other: {
     label: "Other Causes",
     icon: "🌿",
-    primaryFieldLabel: "Beneficiary Name *",
+    primaryFieldLabel: "Beneficiary Name",
     primaryPlaceholder: "e.g. Anil Kumar",
     ageRequired: false,
     parentsRequired: false,
-    aadharRequired: false,
     badgeBg: "bg-purple-50 dark:bg-purple-950/30",
     badgeBorder: "border-purple-200 dark:border-purple-900/30",
     badgeText: "text-purple-600 dark:text-purple-400"
@@ -363,19 +357,19 @@ export default function AdminBeneficiariesPage() {
 
     // 1. Universal Mandatory Fields Validation (Phone, Email, Address, Pic Upload)
     if (!formPhone.trim()) {
-      alert("Phone Number is mandatory for all beneficiary forms.");
+      alert("Please fill Phone Number *");
       return;
     }
     if (!formEmail.trim()) {
-      alert("Email ID is mandatory for all beneficiary forms.");
+      alert("Please fill Email Address *");
       return;
     }
     if (!formAddress.trim()) {
-      alert("Physical Address is mandatory for all beneficiary forms.");
+      alert("Please fill Address *");
       return;
     }
     if (!formDonationPicUrl.trim()) {
-      alert("Handover / Beneficiary Picture Upload is mandatory for all beneficiary forms.");
+      alert("Please upload Beneficiary / Handover Photo *");
       return;
     }
 
@@ -384,28 +378,20 @@ export default function AdminBeneficiariesPage() {
 
     // Primary name field validation (Women Name / Child Name / Student Name / Beneficiary Name)
     if (!formBeneficiaryName.trim()) {
-      alert(`Please fill in ${config.primaryFieldLabel.replace('*', '').trim()} (Mandatory).`);
+      alert(`Please fill ${config.primaryFieldLabel} *`);
       return;
     }
 
     // Age validation
     if (config.ageRequired && !formAge.trim()) {
-      alert(`Age is mandatory for ${config.label}.`);
+      alert("Please fill Age *");
       return;
     }
 
     // Parents name validation
     if (config.parentsRequired && !formParentsName.trim()) {
-      alert(`Parents / Guardian Name is mandatory for ${config.label}.`);
+      alert("Please fill Parents / Guardian Name *");
       return;
-    }
-
-    // Aadhaar Card validation for Women Care
-    if (config.aadharRequired) {
-      if (!formAadharNumber.trim() && !formAadharUploadUrl.trim()) {
-        alert("Aadhaar Number or Aadhaar Card Document Upload is mandatory for Women Care.");
-        return;
-      }
     }
 
     setSubmitting(true);
@@ -1004,7 +990,7 @@ export default function AdminBeneficiariesPage() {
                       {/* Dynamic Primary Field */}
                       <div>
                         <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                          {currentConfig.primaryFieldLabel}
+                          {currentConfig.primaryFieldLabel} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -1019,7 +1005,7 @@ export default function AdminBeneficiariesPage() {
                       {/* Age Field */}
                       <div>
                         <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                          Age {currentConfig.ageRequired ? <span className="text-red-500">* (Mandatory)</span> : <span className="text-emerald-500 font-normal">(Optional)</span>}
+                          Age {currentConfig.ageRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>}
                         </label>
                         <input
                           type="text"
@@ -1034,7 +1020,7 @@ export default function AdminBeneficiariesPage() {
                       {/* Parents / Guardian Name Field */}
                       <div>
                         <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                          Parents / Guardian Name {currentConfig.parentsRequired ? <span className="text-red-500">* (Mandatory)</span> : <span className="text-emerald-500 font-normal">(Optional)</span>}
+                          Parents / Guardian Name {currentConfig.parentsRequired ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>}
                         </label>
                         <input
                           type="text"
@@ -1046,14 +1032,13 @@ export default function AdminBeneficiariesPage() {
                         />
                       </div>
 
-                      {/* Aadhaar Number Field */}
+                      {/* Aadhaar Number Field (Optional for all causes) */}
                       <div>
                         <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                          Aadhaar Number {currentConfig.aadharRequired ? <span className="text-red-500">* (Mandatory for Women Care)</span> : <span className="text-emerald-500 font-normal">(Optional)</span>}
+                          Aadhaar Number <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>
                         </label>
                         <input
                           type="text"
-                          required={currentConfig.aadharRequired}
                           value={formAadharNumber}
                           onChange={(e) => setFormAadharNumber(e.target.value)}
                           placeholder="12-digit Aadhaar number"
@@ -1063,10 +1048,10 @@ export default function AdminBeneficiariesPage() {
                       </div>
                     </div>
 
-                    {/* Aadhaar Document Upload */}
+                    {/* Aadhaar Document Upload (Optional for all causes) */}
                     <div className="pt-2">
                       <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                        Aadhaar Card Document Upload {currentConfig.aadharRequired ? <span className="text-red-500">* (Mandatory for Women Care)</span> : <span className="text-emerald-500 font-normal">(Optional)</span>}
+                        Aadhaar Card Document <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>
                       </label>
                       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                         <input
@@ -1092,15 +1077,12 @@ export default function AdminBeneficiariesPage() {
                     </div>
                   </div>
 
-                  {/* STEP 3: UNIVERSAL MANDATORY CONTACT & PICTURE DETAILS */}
+                  {/* STEP 3: UNIVERSAL CONTACT & PICTURE DETAILS */}
                   <div className="space-y-4 p-4 bg-emerald-50/30 dark:bg-[#101412] rounded-2xl border border-emerald-200/50 dark:border-zinc-850">
                     <div className="border-b border-emerald-200/40 dark:border-zinc-800/60 pb-2">
                       <h3 className="text-xs font-black uppercase tracking-wider text-[#1E4D2B] dark:text-[#52c47c]">
-                        3. Universal Contact & Verification Details <span className="text-red-500">* (Mandatory on all forms)</span>
+                        3. Contact & Verification Details <span className="text-red-500">*</span>
                       </h3>
-                      <p className="text-[10px] text-gray-500 dark:text-zinc-400">
-                        Phone number, address, email ID, and handover photo are mandatory for every beneficiary record.
-                      </p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
