@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import fallbackCauses from "@/data/causes.json";
 
+export type CauseType = "women_care" | "birthday" | "studykit" | "food" | "other";
+
 interface Child {
   name: string;
   dob: string;
@@ -15,18 +17,110 @@ interface Child {
 
 interface Beneficiary {
   id: number;
-  father_name: string;
-  mother_name: string;
+  cause_type?: CauseType;
+  cause_title?: string;
+  beneficiary_name?: string;
+  age?: string;
+  parents_name?: string;
+  father_name?: string;
+  mother_name?: string;
+  phone?: string;
+  email?: string;
   address: string;
-  father_aadhar_number: string;
-  father_aadhar_upload_url: string;
-  mother_aadhar_number: string;
-  mother_aadhar_upload_url: string;
-  children: Child[];
-  causes_donated: string[];
+  aadhar_number?: string;
+  aadhar_upload_url?: string;
+  father_aadhar_number?: string;
+  father_aadhar_upload_url?: string;
+  mother_aadhar_number?: string;
+  mother_aadhar_upload_url?: string;
+  children?: Child[];
+  causes_donated?: string[];
   donation_pic_url: string;
-  created_at: string;
+  created_at?: string;
 }
+
+const CAUSE_CONFIG: Record<CauseType, {
+  label: string;
+  icon: string;
+  primaryFieldLabel: string;
+  primaryPlaceholder: string;
+  ageRequired: boolean;
+  parentsRequired: boolean;
+  aadharRequired: boolean;
+  badgeBg: string;
+  badgeBorder: string;
+  badgeText: string;
+}> = {
+  women_care: {
+    label: "Women Care",
+    icon: "🌸",
+    primaryFieldLabel: "Women / Girl Name *",
+    primaryPlaceholder: "e.g. Pooja Kumari",
+    ageRequired: true,
+    parentsRequired: true,
+    aadharRequired: true,
+    badgeBg: "bg-pink-50 dark:bg-pink-950/30",
+    badgeBorder: "border-pink-200 dark:border-pink-900/30",
+    badgeText: "text-pink-600 dark:text-pink-400"
+  },
+  birthday: {
+    label: "Birthday Giving",
+    icon: "🎂",
+    primaryFieldLabel: "Child Name *",
+    primaryPlaceholder: "e.g. Sonu Kumar",
+    ageRequired: false,
+    parentsRequired: false,
+    aadharRequired: false,
+    badgeBg: "bg-amber-50 dark:bg-amber-950/30",
+    badgeBorder: "border-amber-200 dark:border-amber-900/30",
+    badgeText: "text-amber-600 dark:text-amber-400"
+  },
+  studykit: {
+    label: "Study Kit / Education",
+    icon: "📚",
+    primaryFieldLabel: "Student Name *",
+    primaryPlaceholder: "e.g. Rahul Sharma",
+    ageRequired: true,
+    parentsRequired: true,
+    aadharRequired: false,
+    badgeBg: "bg-blue-50 dark:bg-blue-950/30",
+    badgeBorder: "border-blue-200 dark:border-blue-900/30",
+    badgeText: "text-blue-600 dark:text-blue-400"
+  },
+  food: {
+    label: "Food Packets / Needy",
+    icon: "🍲",
+    primaryFieldLabel: "Beneficiary Name *",
+    primaryPlaceholder: "e.g. Ramesh Singh",
+    ageRequired: false,
+    parentsRequired: false,
+    aadharRequired: false,
+    badgeBg: "bg-emerald-50 dark:bg-emerald-950/30",
+    badgeBorder: "border-emerald-200 dark:border-emerald-900/30",
+    badgeText: "text-emerald-600 dark:text-emerald-400"
+  },
+  other: {
+    label: "Other Causes",
+    icon: "🌿",
+    primaryFieldLabel: "Beneficiary Name *",
+    primaryPlaceholder: "e.g. Anil Kumar",
+    ageRequired: false,
+    parentsRequired: false,
+    aadharRequired: false,
+    badgeBg: "bg-purple-50 dark:bg-purple-950/30",
+    badgeBorder: "border-purple-200 dark:border-purple-900/30",
+    badgeText: "text-purple-600 dark:text-purple-400"
+  }
+};
+
+const detectCauseType = (causeStr: string): CauseType => {
+  const s = (causeStr || "").toLowerCase();
+  if (s.includes("women") || s.includes("girl") || s.includes("menstrual") || s.includes("pad") || s.includes("sanitary")) return "women_care";
+  if (s.includes("birthday") || s.includes("cake")) return "birthday";
+  if (s.includes("study") || s.includes("kit") || s.includes("education") || s.includes("student") || s.includes("school")) return "studykit";
+  if (s.includes("food") || s.includes("thali") || s.includes("meal") || s.includes("ration") || s.includes("needy")) return "food";
+  return "other";
+};
 
 export default function AdminBeneficiariesPage() {
   const router = useRouter();
@@ -38,6 +132,7 @@ export default function AdminBeneficiariesPage() {
   const [causes, setCauses] = useState<any[]>(fallbackCauses);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTabFilter, setActiveTabFilter] = useState<string>("ALL");
   
   // Modal toggles
   const [showForm, setShowForm] = useState(false);
@@ -49,16 +144,19 @@ export default function AdminBeneficiariesPage() {
   const [uploadingField, setUploadingField] = useState<string | null>(null);
 
   // Form states
-  const [formFatherName, setFormFatherName] = useState("");
-  const [formMotherName, setFormMotherName] = useState("");
+  const [formCauseType, setFormCauseType] = useState<CauseType>("women_care");
+  const [formSelectedCauseTitle, setFormSelectedCauseTitle] = useState("");
+  const [formBeneficiaryName, setFormBeneficiaryName] = useState("");
+  const [formAge, setFormAge] = useState("");
+  const [formParentsName, setFormParentsName] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formEmail, setFormEmail] = useState("");
   const [formAddress, setFormAddress] = useState("");
-  const [formFatherAadharNumber, setFormFatherAadharNumber] = useState("");
-  const [formFatherAadharUploadUrl, setFormFatherAadharUploadUrl] = useState("");
-  const [formMotherAadharNumber, setFormMotherAadharNumber] = useState("");
-  const [formMotherAadharUploadUrl, setFormMotherAadharUploadUrl] = useState("");
-  const [formChildren, setFormChildren] = useState<Child[]>([]);
-  const [formCausesDonated, setFormCausesDonated] = useState<string[]>([]);
+  const [formAadharNumber, setFormAadharNumber] = useState("");
+  const [formAadharUploadUrl, setFormAadharUploadUrl] = useState("");
   const [formDonationPicUrl, setFormDonationPicUrl] = useState("");
+  const [formCausesDonated, setFormCausesDonated] = useState<string[]>([]);
+  const [formChildren, setFormChildren] = useState<Child[]>([]);
 
   // Authenticate session (admin or volunteer)
   useEffect(() => {
@@ -69,7 +167,7 @@ export default function AdminBeneficiariesPage() {
       setIsAdmin(true);
       setIsVolunteer(false);
     } else if (volunteerSession) {
-      setIsAdmin(true); // Treat as authorized for loading and editing data
+      setIsAdmin(true);
       setIsVolunteer(true);
     } else {
       router.push("/admin");
@@ -89,7 +187,7 @@ export default function AdminBeneficiariesPage() {
         }
       }
       
-      const resC = await fetch("/api/causes");
+      const resC = await fetch("/api/causes", { cache: "no-store" });
       if (resC.ok) {
         const dataC = await resC.json();
         if (Array.isArray(dataC) && dataC.length > 0) {
@@ -125,10 +223,8 @@ export default function AdminBeneficiariesPage() {
       });
       const data = await res.json();
       if (data.success && data.url) {
-        if (fieldKey === "father_aadhar") {
-          setFormFatherAadharUploadUrl(data.url);
-        } else if (fieldKey === "mother_aadhar") {
-          setFormMotherAadharUploadUrl(data.url);
+        if (fieldKey === "aadhar_file") {
+          setFormAadharUploadUrl(data.url);
         } else if (fieldKey === "donation_pic") {
           setFormDonationPicUrl(data.url);
         } else if (fieldKey === "child_aadhar" && childIndex !== undefined) {
@@ -147,7 +243,7 @@ export default function AdminBeneficiariesPage() {
     }
   };
 
-  // Handle uploading multiple handover pictures in parallel for a child
+  // Multiple handover pictures for child (if Birthday/Family logging)
   const handleMultipleUpload = async (e: React.ChangeEvent<HTMLInputElement>, childIndex: number) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -184,7 +280,6 @@ export default function AdminBeneficiariesPage() {
     }
   };
 
-  // Dynamic children management
   const addChild = () => {
     setFormChildren([...formChildren, { name: "", dob: "", aadhar_number: "", aadhar_upload_url: "", handover_pics: [] }]);
   };
@@ -199,7 +294,6 @@ export default function AdminBeneficiariesPage() {
     setFormChildren(updatedChildren);
   };
 
-  // Toggle cause selection
   const handleToggleCause = (causeTitle: string) => {
     if (formCausesDonated.includes(causeTitle)) {
       setFormCausesDonated(formCausesDonated.filter((c) => c !== causeTitle));
@@ -208,34 +302,53 @@ export default function AdminBeneficiariesPage() {
     }
   };
 
+  // When cause is selected from dropdown, auto-detect type
+  const handleSelectCauseDropdown = (causeTitle: string) => {
+    setFormSelectedCauseTitle(causeTitle);
+    if (causeTitle) {
+      const type = detectCauseType(causeTitle);
+      setFormCauseType(type);
+      if (!formCausesDonated.includes(causeTitle)) {
+        setFormCausesDonated([causeTitle]);
+      }
+    }
+  };
+
   // Add/Edit trigger
   const handleStartEdit = (b: Beneficiary) => {
     setEditing(b);
-    setFormFatherName(b.father_name);
-    setFormMotherName(b.mother_name);
-    setFormAddress(b.address);
-    setFormFatherAadharNumber(b.father_aadhar_number);
-    setFormFatherAadharUploadUrl(b.father_aadhar_upload_url);
-    setFormMotherAadharNumber(b.mother_aadhar_number);
-    setFormMotherAadharUploadUrl(b.mother_aadhar_upload_url);
-    setFormChildren(b.children || []);
-    setFormCausesDonated(b.causes_donated || []);
+    const resolvedType: CauseType = b.cause_type || (b.causes_donated?.[0] ? detectCauseType(b.causes_donated[0]) : "women_care");
+    setFormCauseType(resolvedType);
+    setFormSelectedCauseTitle(b.cause_title || b.causes_donated?.[0] || "");
+    setFormBeneficiaryName(b.beneficiary_name || b.children?.[0]?.name || b.father_name || "");
+    setFormAge(b.age || "");
+    setFormParentsName(b.parents_name || b.father_name || b.mother_name || "");
+    setFormPhone(b.phone || "");
+    setFormEmail(b.email || "");
+    setFormAddress(b.address || "");
+    setFormAadharNumber(b.aadhar_number || b.father_aadhar_number || "");
+    setFormAadharUploadUrl(b.aadhar_upload_url || b.father_aadhar_upload_url || "");
     setFormDonationPicUrl(b.donation_pic_url || "");
+    setFormCausesDonated(b.causes_donated || []);
+    setFormChildren(b.children || []);
     setShowForm(true);
   };
 
   const handleStartAdd = () => {
     setEditing(null);
-    setFormFatherName("");
-    setFormMotherName("");
+    setFormCauseType("women_care");
+    setFormSelectedCauseTitle("");
+    setFormBeneficiaryName("");
+    setFormAge("");
+    setFormParentsName("");
+    setFormPhone("");
+    setFormEmail("");
     setFormAddress("");
-    setFormFatherAadharNumber("");
-    setFormFatherAadharUploadUrl("");
-    setFormMotherAadharNumber("");
-    setFormMotherAadharUploadUrl("");
-    setFormChildren([]);
-    setFormCausesDonated([]);
+    setFormAadharNumber("");
+    setFormAadharUploadUrl("");
     setFormDonationPicUrl("");
+    setFormCausesDonated([]);
+    setFormChildren([]);
     setShowForm(true);
   };
 
@@ -244,22 +357,77 @@ export default function AdminBeneficiariesPage() {
     setEditing(null);
   };
 
-  // Submit Handler
+  // Submit Handler with dynamic validation according to user requirements
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Universal Mandatory Fields Validation (Phone, Email, Address, Pic Upload)
+    if (!formPhone.trim()) {
+      alert("Phone Number is mandatory for all beneficiary forms.");
+      return;
+    }
+    if (!formEmail.trim()) {
+      alert("Email ID is mandatory for all beneficiary forms.");
+      return;
+    }
+    if (!formAddress.trim()) {
+      alert("Physical Address is mandatory for all beneficiary forms.");
+      return;
+    }
+    if (!formDonationPicUrl.trim()) {
+      alert("Handover / Beneficiary Picture Upload is mandatory for all beneficiary forms.");
+      return;
+    }
+
+    // 2. Cause-Specific Validations
+    const config = CAUSE_CONFIG[formCauseType];
+
+    // Primary name field validation (Women Name / Child Name / Student Name / Beneficiary Name)
+    if (!formBeneficiaryName.trim()) {
+      alert(`Please fill in ${config.primaryFieldLabel.replace('*', '').trim()} (Mandatory).`);
+      return;
+    }
+
+    // Age validation
+    if (config.ageRequired && !formAge.trim()) {
+      alert(`Age is mandatory for ${config.label}.`);
+      return;
+    }
+
+    // Parents name validation
+    if (config.parentsRequired && !formParentsName.trim()) {
+      alert(`Parents / Guardian Name is mandatory for ${config.label}.`);
+      return;
+    }
+
+    // Aadhaar Card validation for Women Care
+    if (config.aadharRequired) {
+      if (!formAadharNumber.trim() && !formAadharUploadUrl.trim()) {
+        alert("Aadhaar Number or Aadhaar Card Document Upload is mandatory for Women Care.");
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     const payload = {
       id: editing?.id,
-      father_name: formFatherName,
-      mother_name: formMotherName,
-      address: formAddress,
-      father_aadhar_number: formFatherAadharNumber,
-      father_aadhar_upload_url: formFatherAadharUploadUrl,
-      mother_aadhar_number: formMotherAadharNumber,
-      mother_aadhar_upload_url: formMotherAadharUploadUrl,
+      cause_type: formCauseType,
+      cause_title: formSelectedCauseTitle || (formCausesDonated[0] || config.label),
+      beneficiary_name: formBeneficiaryName.trim(),
+      age: formAge.trim(),
+      parents_name: formParentsName.trim(),
+      father_name: formParentsName.trim(),
+      mother_name: "",
+      phone: formPhone.trim(),
+      email: formEmail.trim(),
+      address: formAddress.trim(),
+      aadhar_number: formAadharNumber.trim(),
+      aadhar_upload_url: formAadharUploadUrl,
+      father_aadhar_number: formAadharNumber.trim(),
+      father_aadhar_upload_url: formAadharUploadUrl,
       children: formChildren,
-      causes_donated: formCausesDonated,
+      causes_donated: formCausesDonated.length > 0 ? formCausesDonated : [formSelectedCauseTitle || config.label],
       donation_pic_url: formDonationPicUrl
     };
 
@@ -297,6 +465,7 @@ export default function AdminBeneficiariesPage() {
       });
 
       if (res.ok) {
+        setBeneficiaries(prev => prev.filter(b => b.id !== id));
         fetchData();
       } else {
         alert("Delete failed.");
@@ -309,32 +478,27 @@ export default function AdminBeneficiariesPage() {
   // Filtering
   const filteredBeneficiaries = beneficiaries.filter((b) => {
     const query = searchQuery.toLowerCase();
-    const matchesFather = b.father_name.toLowerCase().includes(query);
-    const matchesMother = b.mother_name.toLowerCase().includes(query);
-    const matchesAddress = b.address.toLowerCase().includes(query);
-    const matchesChildren = b.children?.some(
-      (c) => c.name.toLowerCase().includes(query) || c.aadhar_number.includes(query)
-    );
-    const matchesAadhar =
-      b.father_aadhar_number.includes(query) || b.mother_aadhar_number.includes(query);
-    return matchesFather || matchesMother || matchesAddress || matchesChildren || matchesAadhar;
+    const name = (b.beneficiary_name || b.father_name || b.children?.[0]?.name || "").toLowerCase();
+    const parents = (b.parents_name || b.father_name || b.mother_name || "").toLowerCase();
+    const address = (b.address || "").toLowerCase();
+    const phone = (b.phone || "").toLowerCase();
+    const email = (b.email || "").toLowerCase();
+    const aadhar = (b.aadhar_number || b.father_aadhar_number || "").toLowerCase();
+    const causeType = b.cause_type || (b.causes_donated?.[0] ? detectCauseType(b.causes_donated[0]) : "other");
+
+    const matchesQuery = name.includes(query) || parents.includes(query) || address.includes(query) || phone.includes(query) || email.includes(query) || aadhar.includes(query);
+    const matchesTab = activeTabFilter === "ALL" || causeType === activeTabFilter;
+
+    return matchesQuery && matchesTab;
   });
 
   // Calculate quick stats
-  const totalFamilies = beneficiaries.length;
-  const totalChildren = beneficiaries.reduce((acc, curr) => acc + (curr.children?.length || 0), 0);
-  const totalCauses = Array.from(
-    new Set(beneficiaries.reduce<string[]>((acc, curr) => [...acc, ...(curr.causes_donated || [])], []))
-  ).length;
-  const verifiedAadhars = beneficiaries.reduce((acc, curr) => {
-    let count = 0;
-    if (curr.father_aadhar_number) count++;
-    if (curr.mother_aadhar_number) count++;
-    curr.children?.forEach((c) => {
-      if (c.aadhar_number) count++;
-    });
-    return acc + count;
-  }, 0);
+  const totalCount = beneficiaries.length;
+  const womenCareCount = beneficiaries.filter(b => (b.cause_type === "women_care" || detectCauseType(b.causes_donated?.[0] || "") === "women_care")).length;
+  const birthdayCount = beneficiaries.filter(b => (b.cause_type === "birthday" || detectCauseType(b.causes_donated?.[0] || "") === "birthday")).length;
+  const studyKitCount = beneficiaries.filter(b => (b.cause_type === "studykit" || detectCauseType(b.causes_donated?.[0] || "") === "studykit")).length;
+  const foodCount = beneficiaries.filter(b => (b.cause_type === "food" || detectCauseType(b.causes_donated?.[0] || "") === "food")).length;
+  const aadharCount = beneficiaries.filter(b => !!(b.aadhar_number || b.aadhar_upload_url || b.father_aadhar_number || b.father_aadhar_upload_url)).length;
 
   if (!isAdmin) {
     return (
@@ -344,18 +508,25 @@ export default function AdminBeneficiariesPage() {
     );
   }
 
+  const currentConfig = CAUSE_CONFIG[formCauseType];
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#070b09] text-gray-900 dark:text-gray-100 py-12 px-4 sm:px-6 lg:px-8 text-left">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#070b09] text-gray-900 dark:text-gray-100 py-10 px-4 sm:px-6 lg:px-8 text-left">
+      <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 dark:border-zinc-800/80 pb-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#1E4D2B] dark:text-[#52c47c] tracking-tight">
+            <div className="flex items-center gap-2.5">
+              <span className="px-3 py-1 bg-emerald-500/10 text-[#1E4D2B] dark:text-[#52c47c] border border-emerald-500/20 text-xs font-black uppercase rounded-full">
+                Beneficiaries Management
+              </span>
+            </div>
+            <h1 className="text-3xl font-black text-[#1E4D2B] dark:text-[#52c47c] tracking-tight mt-2">
               Beneficiaries Registry Room
             </h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Manage underprivileged beneficiaries database, children details, Aadhaar credentials, and donation allocations.
+              Cause-specific registration forms for Women Care, Birthday Celebrations, Study Kits, Food Packets, and general relief.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 self-start">
@@ -367,41 +538,72 @@ export default function AdminBeneficiariesPage() {
             </a>
             <button
               onClick={handleStartAdd}
-              className="px-5 py-2.5 bg-[#1E4D2B] hover:bg-[#15381E] text-white font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-1"
+              className="px-5 py-2.5 bg-[#1E4D2B] hover:bg-[#15381E] text-white font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
             >
               <svg className="h-4 w-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              <span>Add Beneficiary</span>
+              <span>+ Add Beneficiary</span>
             </button>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-[#101412] p-5 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
-            <span className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block">Total Families</span>
-            <span className="text-2xl font-black text-[#1E4D2B] dark:text-[#52c47c] block mt-1">{totalFamilies}</span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          <div className="bg-white dark:bg-[#101412] p-4 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
+            <span className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block">Total</span>
+            <span className="text-2xl font-black text-[#1E4D2B] dark:text-[#52c47c] block mt-1">{totalCount}</span>
           </div>
-          <div className="bg-white dark:bg-[#101412] p-5 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
-            <span className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block">Children Registered</span>
-            <span className="text-2xl font-black text-gray-850 dark:text-white block mt-1">{totalChildren}</span>
+          <div className="bg-white dark:bg-[#101412] p-4 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
+            <span className="text-[10px] font-black text-pink-500 uppercase tracking-widest block">🌸 Women Care</span>
+            <span className="text-2xl font-black text-pink-600 dark:text-pink-400 block mt-1">{womenCareCount}</span>
           </div>
-          <div className="bg-white dark:bg-[#101412] p-5 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
-            <span className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block">Causes Supported</span>
-            <span className="text-2xl font-black text-blue-500 block mt-1">{totalCauses}</span>
+          <div className="bg-white dark:bg-[#101412] p-4 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
+            <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest block">📚 Study Kits</span>
+            <span className="text-2xl font-black text-blue-600 dark:text-blue-400 block mt-1">{studyKitCount}</span>
           </div>
-          <div className="bg-white dark:bg-[#101412] p-5 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
-            <span className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block">Aadhars Logged</span>
-            <span className="text-2xl font-black text-amber-500 block mt-1">{verifiedAadhars}</span>
+          <div className="bg-white dark:bg-[#101412] p-4 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
+            <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">🎂 Birthday</span>
+            <span className="text-2xl font-black text-amber-600 dark:text-amber-400 block mt-1">{birthdayCount}</span>
+          </div>
+          <div className="bg-white dark:bg-[#101412] p-4 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
+            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest block">🍲 Food Packets</span>
+            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 block mt-1">{foodCount}</span>
+          </div>
+          <div className="bg-white dark:bg-[#101412] p-4 rounded-2xl border border-gray-150/45 dark:border-zinc-850">
+            <span className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block">Aadhaar Verified</span>
+            <span className="text-2xl font-black text-amber-500 block mt-1">{aadharCount}</span>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex gap-4 items-center">
-          <div className="relative flex-1">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400 dark:text-zinc-650" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {/* Tab Filter & Search Bar */}
+        <div className="space-y-3">
+          <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none snap-x border-b border-gray-200 dark:border-zinc-800">
+            {[
+              { id: "ALL", label: "All Beneficiaries" },
+              { id: "women_care", label: "🌸 Women Care" },
+              { id: "studykit", label: "📚 Study Kits" },
+              { id: "birthday", label: "🎂 Birthday Celebration" },
+              { id: "food", label: "🍲 Food & Nutrition" },
+              { id: "other", label: "🌿 Other Causes" }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTabFilter(tab.id)}
+                className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTabFilter === tab.id
+                    ? "bg-[#1E4D2B] dark:bg-[#52c47c] text-white dark:text-black shadow"
+                    : "bg-white dark:bg-[#101412] text-gray-600 dark:text-zinc-400 border border-gray-200 dark:border-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-850"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </span>
@@ -409,8 +611,8 @@ export default function AdminBeneficiariesPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by father, mother, address, child names, or Aadhaar numbers..."
-              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#101412] border border-gray-200 dark:border-zinc-800 text-sm text-gray-900 dark:text-white rounded-2xl focus:outline-none focus:ring-1 focus:ring-[#52c47c] dark:focus:ring-[#52c47c]/30"
+              placeholder="Search by name, parents, phone, email, address, or Aadhaar..."
+              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#101412] border border-gray-200 dark:border-zinc-800 text-sm text-gray-900 dark:text-white rounded-2xl focus:outline-none focus:ring-1 focus:ring-[#52c47c]"
             />
           </div>
         </div>
@@ -430,7 +632,7 @@ export default function AdminBeneficiariesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             <h3 className="text-sm font-bold text-gray-700 dark:text-zinc-300">No records found</h3>
-            <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">Try modifying your keywords or register a new beneficiary family.</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">Click '+ Add Beneficiary' above to register a new beneficiary record.</p>
           </div>
         ) : (
           <div className="bg-white dark:bg-[#101412] rounded-2xl border border-gray-150/40 dark:border-zinc-850 overflow-hidden shadow">
@@ -438,86 +640,129 @@ export default function AdminBeneficiariesPage() {
               <table className="min-w-full divide-y divide-gray-150 dark:divide-zinc-800 text-left">
                 <thead>
                   <tr className="bg-gray-100 dark:bg-zinc-900/40 text-gray-500 dark:text-zinc-400 text-xs font-black uppercase tracking-wider">
-                    <th className="px-6 py-4">Parents Details</th>
-                    <th className="px-6 py-4">Address</th>
-                    <th className="px-6 py-4">Children Details</th>
-                    <th className="px-6 py-4">Causes Supported</th>
+                    <th className="px-6 py-4">Beneficiary & Cause</th>
+                    <th className="px-6 py-4">Parents / Guardian</th>
+                    <th className="px-6 py-4">Contact Details</th>
+                    <th className="px-6 py-4">Location / Address</th>
+                    <th className="px-6 py-4">Verification</th>
+                    <th className="px-6 py-4">Proof Photo</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-150 dark:divide-zinc-800/80 text-sm">
-                  {filteredBeneficiaries.map((b) => (
-                    <tr key={b.id} className="hover:bg-gray-50 dark:hover:bg-zinc-900/10 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-gray-900 dark:text-white flex flex-col">
-                          <span>👨‍👦 {b.father_name}</span>
-                          <span className="text-zinc-400 dark:text-zinc-500 text-xs font-normal mt-0.5">👩‍👧 {b.mother_name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="max-w-[200px] truncate text-gray-600 dark:text-zinc-400 text-xs" title={b.address}>
-                          {b.address}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-xs">
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 rounded font-black">
-                            {b.children?.length || 0} Children
-                          </span>
-                          <div className="mt-1 text-[10px] text-gray-500 dark:text-zinc-500 max-w-[180px] truncate">
-                            {b.children?.map((c) => c.name).join(", ")}
+                  {filteredBeneficiaries.map((b) => {
+                    const causeType = b.cause_type || (b.causes_donated?.[0] ? detectCauseType(b.causes_donated[0]) : "other");
+                    const cfg = CAUSE_CONFIG[causeType];
+                    const displayName = b.beneficiary_name || b.children?.[0]?.name || b.father_name || "Beneficiary";
+                    const displayParents = b.parents_name || b.father_name || b.mother_name || "N/A";
+                    const aadharVal = b.aadhar_number || b.father_aadhar_number;
+                    const aadharUrl = b.aadhar_upload_url || b.father_aadhar_upload_url;
+
+                    return (
+                      <tr key={b.id} className="hover:bg-gray-50 dark:hover:bg-zinc-900/10 transition-colors">
+                        <td className="px-6 py-4">
+                          <div>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${cfg.badgeBg} ${cfg.badgeBorder} ${cfg.badgeText}`}>
+                              {cfg.icon} {cfg.label}
+                            </span>
+                            <p className="font-bold text-gray-900 dark:text-white mt-1 text-sm">{displayName}</p>
+                            {b.age && (
+                              <p className="text-[11px] text-gray-500 dark:text-zinc-500">Age: <span className="font-semibold text-gray-700 dark:text-zinc-300">{b.age}</span></p>
+                            )}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {b.causes_donated && b.causes_donated.length > 0 ? (
-                            b.causes_donated.map((c, i) => (
-                              <span key={i} className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-[#1E4D2B] dark:text-[#52c47c] border border-emerald-150 dark:border-emerald-900/20 text-[9px] font-bold rounded">
-                                {c}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-zinc-500 text-[10px]">None logged</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-semibold text-xs text-gray-800 dark:text-zinc-300">{displayParents}</p>
+                          {b.mother_name && (
+                            <p className="text-[10px] text-gray-400">Mother: {b.mother_name}</p>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => setViewing(b)}
-                            className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-lg transition-colors cursor-pointer"
-                            title="View full record"
-                          >
-                            <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleStartEdit(b)}
-                            className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg transition-colors cursor-pointer"
-                            title="Edit record"
-                          >
-                            <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          {!isVolunteer && (
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-0.5 text-xs">
+                            {b.phone ? (
+                              <a href={`tel:${b.phone}`} className="block text-emerald-600 dark:text-emerald-450 hover:underline font-bold">
+                                📞 {b.phone}
+                              </a>
+                            ) : (
+                              <span className="text-gray-400 text-[11px]">No phone</span>
+                            )}
+                            {b.email ? (
+                              <a href={`mailto:${b.email}`} className="block text-gray-600 dark:text-zinc-400 text-[11px] hover:underline truncate max-w-[160px]">
+                                ✉️ {b.email}
+                              </a>
+                            ) : (
+                              <span className="text-gray-400 text-[11px] block">No email</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="max-w-[180px] text-gray-600 dark:text-zinc-400 text-xs line-clamp-2" title={b.address}>
+                            📍 {b.address}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          {aadharVal || aadharUrl ? (
+                            <div className="space-y-1">
+                              <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-black rounded block w-fit">
+                                ✓ Aadhaar Provided
+                              </span>
+                              {aadharVal && <span className="text-[10px] text-gray-500 dark:text-zinc-400 block font-mono">{aadharVal}</span>}
+                              {aadharUrl && (
+                                <a href={aadharUrl} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline block font-bold">
+                                  View Doc ↗
+                                </a>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-gray-400 italic">Optional / Not provided</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {b.donation_pic_url ? (
+                            <a href={b.donation_pic_url} target="_blank" rel="noreferrer" className="block relative h-12 w-16 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-xs hover:scale-105 transition-transform">
+                              <img src={b.donation_pic_url} alt="Proof" className="object-cover w-full h-full" />
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-red-400 font-bold">Missing</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
-                              onClick={() => handleDelete(b.id)}
-                              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer"
-                              title="Delete record"
+                              onClick={() => setViewing(b)}
+                              className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-lg transition-colors cursor-pointer"
+                              title="View full record"
                             >
                               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                               </svg>
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            <button
+                              onClick={() => handleStartEdit(b)}
+                              className="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg transition-colors cursor-pointer"
+                              title="Edit record"
+                            >
+                              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            {!isVolunteer && (
+                              <button
+                                onClick={() => handleDelete(b.id)}
+                                className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer"
+                                title="Delete record"
+                              >
+                                <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -543,148 +788,122 @@ export default function AdminBeneficiariesPage() {
                   </svg>
                 </button>
 
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white border-b border-gray-200 dark:border-zinc-850 pb-4 mb-6">
-                  Beneficiary Family Card
-                </h2>
+                {(() => {
+                  const causeType = viewing.cause_type || (viewing.causes_donated?.[0] ? detectCauseType(viewing.causes_donated[0]) : "other");
+                  const cfg = CAUSE_CONFIG[causeType];
+                  const displayName = viewing.beneficiary_name || viewing.children?.[0]?.name || viewing.father_name || "Beneficiary";
+                  const aadharVal = viewing.aadhar_number || viewing.father_aadhar_number;
+                  const aadharUrl = viewing.aadhar_upload_url || viewing.father_aadhar_upload_url;
 
-                <div className="space-y-6">
-                  
-                  {/* Parents Section */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 dark:bg-[#101412] rounded-2xl border border-gray-200/50 dark:border-zinc-850">
-                      <h4 className="text-[10px] font-black text-[#52c47c] uppercase tracking-wider">Father Details</h4>
-                      <p className="text-base font-bold text-gray-900 dark:text-white mt-1">{viewing.father_name}</p>
-                      <p className="text-xs text-gray-500 dark:text-zinc-500 mt-0.5">Aadhaar: {viewing.father_aadhar_number || "Not provided"}</p>
-                      {viewing.father_aadhar_upload_url && (
-                        <a
-                          href={viewing.father_aadhar_upload_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center text-xs font-bold text-emerald-600 dark:text-emerald-450 hover:underline mt-2.5"
-                        >
-                          View Father's Aadhaar Card ↗
-                        </a>
-                      )}
-                    </div>
-
-                    <div className="p-4 bg-gray-50 dark:bg-[#101412] rounded-2xl border border-gray-200/50 dark:border-zinc-850">
-                      <h4 className="text-[10px] font-black text-[#52c47c] uppercase tracking-wider">Mother Details</h4>
-                      <p className="text-base font-bold text-gray-900 dark:text-white mt-1">{viewing.mother_name}</p>
-                      <p className="text-xs text-gray-500 dark:text-zinc-500 mt-0.5">Aadhaar: {viewing.mother_aadhar_number || "Not provided"}</p>
-                      {viewing.mother_aadhar_upload_url && (
-                        <a
-                          href={viewing.mother_aadhar_upload_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center text-xs font-bold text-emerald-600 dark:text-emerald-450 hover:underline mt-2.5"
-                        >
-                          View Mother's Aadhaar Card ↗
-                        </a>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Address */}
-                  <div>
-                    <h4 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest">Residing Address</h4>
-                    <p className="text-sm text-gray-700 dark:text-zinc-300 mt-1 bg-gray-50 dark:bg-[#101412] p-3 rounded-xl border border-gray-200/50 dark:border-zinc-850 whitespace-pre-line">
-                      {viewing.address}
-                    </p>
-                  </div>
-
-                  {/* Children Details */}
-                  <div>
-                    <h4 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2">Children ({viewing.children?.length || 0})</h4>
-                    {viewing.children && viewing.children.length > 0 ? (
-                      <div className="space-y-3">
-                        {viewing.children.map((child, idx) => (
-                          <div key={idx} className="flex flex-col p-3.5 bg-gray-55/40 dark:bg-[#101412] border border-gray-200/60 dark:border-zinc-850 rounded-xl text-xs gap-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                              <div>
-                                <p className="font-bold text-gray-900 dark:text-white text-sm">🧒 {child.name}</p>
-                                <p className="text-gray-500 dark:text-zinc-500 mt-0.5">DOB: {child.dob || "N/A"} | Aadhaar: {child.aadhar_number || "N/A"}</p>
-                              </div>
-                              {child.aadhar_upload_url && (
-                                <a
-                                  href={child.aadhar_upload_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="px-3 py-1.5 bg-gray-100 dark:bg-zinc-850 hover:bg-gray-200 dark:hover:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-lg text-center font-semibold"
-                                >
-                                  View Aadhaar ↗
-                                </a>
-                              )}
-                            </div>
-                            
-                            {/* Donation Handover Pictures for this child */}
-                            {child.handover_pics && child.handover_pics.length > 0 && (
-                              <div className="mt-2.5 space-y-1.5 border-t border-gray-200/50 dark:border-zinc-800/50 pt-2.5">
-                                <span className="block text-[9px] font-bold text-gray-450 dark:text-zinc-500 uppercase tracking-wider">Donation Handover Pics ({child.handover_pics.length})</span>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                                  {child.handover_pics.map((picUrl, pIdx) => (
-                                    <a
-                                      key={pIdx}
-                                      href={picUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-sm hover:scale-[1.02] transition-transform"
-                                    >
-                                      <img src={picUrl} alt={`handover-${pIdx}`} className="object-cover w-full h-full" />
-                                    </a>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-500 dark:text-zinc-500 italic">No child logs saved for this family.</p>
-                    )}
-                  </div>
-
-                  {/* Causes & Donation Photo */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2">Disbursed Causes</h4>
-                      <div className="flex flex-wrap gap-1.5">
-                        {viewing.causes_donated && viewing.causes_donated.length > 0 ? (
-                          viewing.causes_donated.map((c, i) => (
-                            <span key={i} className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/20 text-[#1E4D2B] dark:text-[#52c47c] border border-emerald-150 dark:border-emerald-900/10 text-xs font-bold rounded-lg">
-                              {c}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-gray-500 dark:text-zinc-500 italic">No causes tagged.</span>
+                  return (
+                    <div className="space-y-6">
+                      <div className="border-b border-gray-200 dark:border-zinc-850 pb-4">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${cfg.badgeBg} ${cfg.badgeBorder} ${cfg.badgeText}`}>
+                          {cfg.icon} {cfg.label} Program
+                        </span>
+                        <h2 className="text-2xl font-black text-gray-900 dark:text-white mt-2">
+                          {displayName}
+                        </h2>
+                        {viewing.age && (
+                          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
+                            Age: <span className="font-bold text-gray-800 dark:text-zinc-200">{viewing.age}</span>
+                          </p>
                         )}
                       </div>
-                    </div>
 
-                    <div>
-                      <h4 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2">Donation Delivery Pic</h4>
-                      {viewing.donation_pic_url ? (
-                        <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-zinc-850 shadow-md">
-                          <img
-                            src={viewing.donation_pic_url}
-                            alt="Donation disbursement"
-                            className="object-cover w-full h-full"
-                          />
+                      {/* Details Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 bg-gray-50 dark:bg-[#101412] rounded-2xl border border-gray-200/50 dark:border-zinc-850 space-y-2">
+                          <h4 className="text-[10px] font-black text-[#52c47c] uppercase tracking-wider">Family / Guardian</h4>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">
+                            {viewing.parents_name || viewing.father_name || "Not provided"}
+                          </p>
+                          {viewing.mother_name && (
+                            <p className="text-xs text-gray-500">Mother: {viewing.mother_name}</p>
+                          )}
                         </div>
-                      ) : (
-                        <div className="h-20 bg-gray-50 dark:bg-[#101412] border border-dashed border-gray-200 dark:border-zinc-800 rounded-xl flex items-center justify-center text-xs text-gray-400 dark:text-zinc-600">
-                          No donation picture uploaded.
+
+                        <div className="p-4 bg-gray-50 dark:bg-[#101412] rounded-2xl border border-gray-200/50 dark:border-zinc-850 space-y-2">
+                          <h4 className="text-[10px] font-black text-[#52c47c] uppercase tracking-wider">Aadhaar Credentials</h4>
+                          <p className="text-sm font-mono font-bold text-gray-900 dark:text-white">
+                            {aadharVal || "Not provided"}
+                          </p>
+                          {aadharUrl && (
+                            <a
+                              href={aadharUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center text-xs font-bold text-blue-500 hover:underline"
+                            >
+                              Open Aadhaar Card Document ↗
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Contact Info (Universal) */}
+                      <div className="p-4 bg-gray-50 dark:bg-[#101412] rounded-2xl border border-gray-200/50 dark:border-zinc-850 space-y-3">
+                        <h4 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest">Contact Information</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-[10px] text-gray-400 block font-bold">Phone Number</span>
+                            <a href={`tel:${viewing.phone}`} className="font-bold text-emerald-600 dark:text-emerald-450 hover:underline">
+                              📞 {viewing.phone || "N/A"}
+                            </a>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-gray-400 block font-bold">Email ID</span>
+                            <a href={`mailto:${viewing.email}`} className="font-bold text-gray-800 dark:text-zinc-200 hover:underline">
+                              ✉️ {viewing.email || "N/A"}
+                            </a>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-400 block font-bold">Physical Address</span>
+                          <p className="text-xs text-gray-700 dark:text-zinc-300 mt-0.5 whitespace-pre-line">
+                            📍 {viewing.address}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Handover Proof Picture */}
+                      <div>
+                        <h4 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2">Handover / Distribution Picture</h4>
+                        {viewing.donation_pic_url ? (
+                          <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-zinc-850 shadow-md">
+                            <img
+                              src={viewing.donation_pic_url}
+                              alt="Handover proof"
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                        ) : (
+                          <p className="text-xs text-red-400 italic">No handover photo recorded.</p>
+                        )}
+                      </div>
+
+                      {/* Causes */}
+                      {viewing.causes_donated && viewing.causes_donated.length > 0 && (
+                        <div>
+                          <h4 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2">Associated Causes</h4>
+                          <div className="flex flex-wrap gap-1.5">
+                            {viewing.causes_donated.map((c, i) => (
+                              <span key={i} className="px-2.5 py-1 bg-gray-100 dark:bg-zinc-850 text-gray-800 dark:text-zinc-200 rounded-lg text-xs font-bold border border-gray-200 dark:border-zinc-800">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
-                  </div>
-
-                </div>
+                  );
+                })()}
               </motion.div>
             </div>
           )}
         </AnimatePresence>
 
-        {/* Add/Edit Modal Overlay */}
+        {/* Add/Edit Dynamic Modal Overlay */}
         <AnimatePresence>
           {showForm && (
             <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -703,293 +922,265 @@ export default function AdminBeneficiariesPage() {
                   </svg>
                 </button>
 
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white border-b border-gray-200 dark:border-zinc-850 pb-4 mb-6">
-                  {editing ? "Modify Beneficiary Record" : "Register Underprivileged Beneficiary"}
-                </h2>
+                <div className="border-b border-gray-200 dark:border-zinc-850 pb-4 mb-6">
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">
+                    {editing ? "Modify Beneficiary Record" : "Register Underprivileged Beneficiary"}
+                  </h2>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                    Fill in the form according to the cause category selected below.
+                  </p>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   
-                  {/* Section 1: Parents Details */}
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[#1E4D2B] dark:text-[#52c47c]">1. Parents Information</h3>
-                    
+                  {/* STEP 1: CAUSE SELECTION */}
+                  <div className="space-y-3 p-4 bg-gray-50 dark:bg-[#101412] rounded-2xl border border-gray-200 dark:border-zinc-850">
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-[#1E4D2B] dark:text-[#52c47c]">
+                      1. Select Cause / Program Type *
+                    </label>
+
+                    {/* Quick Cause Type Pills */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                      {(Object.keys(CAUSE_CONFIG) as CauseType[]).map((typeKey) => {
+                        const cfg = CAUSE_CONFIG[typeKey];
+                        const isSelected = formCauseType === typeKey;
+                        return (
+                          <button
+                            key={typeKey}
+                            type="button"
+                            onClick={() => {
+                              setFormCauseType(typeKey);
+                              const matchedCause = causes.find(c => detectCauseType(c.title || c.category) === typeKey);
+                              if (matchedCause) {
+                                setFormSelectedCauseTitle(matchedCause.title);
+                                setFormCausesDonated([matchedCause.title]);
+                              }
+                            }}
+                            className={`p-2.5 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                              isSelected
+                                ? "bg-[#1E4D2B] dark:bg-[#52c47c] text-white dark:text-black border-transparent shadow-md scale-[1.02]"
+                                : "bg-white dark:bg-zinc-950 text-gray-700 dark:text-zinc-300 border-gray-200 dark:border-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-850"
+                            }`}
+                          >
+                            <span className="text-lg">{cfg.icon}</span>
+                            <span className="leading-tight">{cfg.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Specific Cause Linker Dropdown */}
+                    <div className="pt-2">
+                      <label className="block text-[10px] font-bold text-gray-500 dark:text-zinc-400 mb-1">
+                        Select Specific Cause Campaign (Optional linkage):
+                      </label>
+                      <select
+                        value={formSelectedCauseTitle}
+                        onChange={(e) => handleSelectCauseDropdown(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-xs text-gray-900 dark:text-white focus:outline-none"
+                      >
+                        <option value="">-- Choose Campaign (Auto sets form type) --</option>
+                        {causes.map((c) => (
+                          <option key={c.id} value={c.title}>
+                            {c.title} ({c.category})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* STEP 2: CAUSE-SPECIFIC BENEFICIARY DETAILS */}
+                  <div className="space-y-4 p-4 bg-gray-50/50 dark:bg-[#101412] rounded-2xl border border-gray-200 dark:border-zinc-850">
+                    <div className="flex items-center justify-between border-b border-gray-200/60 dark:border-zinc-800/60 pb-2">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#1E4D2B] dark:text-[#52c47c]">
+                        2. {currentConfig.icon} {currentConfig.label} Beneficiary Information
+                      </h3>
+                      <span className="text-[10px] text-gray-400 font-bold">
+                        Form dynamically adjusted
+                      </span>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Father field */}
-                      <div className="p-4 bg-gray-50/50 dark:bg-[#101412] border border-gray-150 dark:border-zinc-850 rounded-2xl space-y-3">
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Father's Name *</label>
-                          <input
-                            type="text"
-                            required
-                            value={formFatherName}
-                            onChange={(e) => setFormFatherName(e.target.value)}
-                            placeholder="e.g. Ramesh Singh"
-                            className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Father's Aadhaar Number</label>
-                          <input
-                            type="text"
-                            value={formFatherAadharNumber}
-                            onChange={(e) => setFormFatherAadharNumber(e.target.value)}
-                            placeholder="12-digit number"
-                            maxLength={12}
-                            className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Aadhaar Card File Upload</label>
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf"
-                            onChange={(e) => handleUpload(e, "father_aadhar")}
-                            className="block w-full text-xs text-zinc-500 file:mr-3 file:py-1.5 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-100 dark:file:bg-zinc-900 file:text-gray-700 dark:file:text-zinc-300 hover:file:bg-gray-200 dark:hover:file:bg-zinc-800 cursor-pointer"
-                          />
-                          {uploadingField === "father_aadhar" && <span className="text-[10px] text-amber-500 mt-1 block">Uploading...</span>}
-                          {formFatherAadharUploadUrl && (
-                            <span className="text-[10px] text-[#52c47c] mt-1 block font-bold">✓ Aadhaar Card file ready</span>
-                          )}
-                        </div>
+                      {/* Dynamic Primary Field */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                          {currentConfig.primaryFieldLabel}
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formBeneficiaryName}
+                          onChange={(e) => setFormBeneficiaryName(e.target.value)}
+                          placeholder={currentConfig.primaryPlaceholder}
+                          className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#52c47c]"
+                        />
                       </div>
 
-                      {/* Mother field */}
-                      <div className="p-4 bg-gray-50/50 dark:bg-[#101412] border border-gray-150 dark:border-zinc-850 rounded-2xl space-y-3">
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Mother's Name *</label>
-                          <input
-                            type="text"
-                            required
-                            value={formMotherName}
-                            onChange={(e) => setFormMotherName(e.target.value)}
-                            placeholder="e.g. Geeta Devi"
-                            className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Mother's Aadhaar Number</label>
-                          <input
-                            type="text"
-                            value={formMotherAadharNumber}
-                            onChange={(e) => setFormMotherAadharNumber(e.target.value)}
-                            placeholder="12-digit number"
-                            maxLength={12}
-                            className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Aadhaar Card File Upload</label>
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf"
-                            onChange={(e) => handleUpload(e, "mother_aadhar")}
-                            className="block w-full text-xs text-zinc-500 file:mr-3 file:py-1.5 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-100 dark:file:bg-zinc-900 file:text-gray-700 dark:file:text-zinc-300 hover:file:bg-gray-200 dark:hover:file:bg-zinc-800 cursor-pointer"
-                          />
-                          {uploadingField === "mother_aadhar" && <span className="text-[10px] text-amber-500 mt-1 block">Uploading...</span>}
-                          {formMotherAadharUploadUrl && (
-                            <span className="text-[10px] text-[#52c47c] mt-1 block font-bold">✓ Aadhaar Card file ready</span>
-                          )}
-                        </div>
+                      {/* Age Field */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                          Age {currentConfig.ageRequired ? <span className="text-red-500">* (Mandatory)</span> : <span className="text-emerald-500 font-normal">(Optional)</span>}
+                        </label>
+                        <input
+                          type="text"
+                          required={currentConfig.ageRequired}
+                          value={formAge}
+                          onChange={(e) => setFormAge(e.target.value)}
+                          placeholder="e.g. 14 Years"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#52c47c]"
+                        />
+                      </div>
+
+                      {/* Parents / Guardian Name Field */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                          Parents / Guardian Name {currentConfig.parentsRequired ? <span className="text-red-500">* (Mandatory)</span> : <span className="text-emerald-500 font-normal">(Optional)</span>}
+                        </label>
+                        <input
+                          type="text"
+                          required={currentConfig.parentsRequired}
+                          value={formParentsName}
+                          onChange={(e) => setFormParentsName(e.target.value)}
+                          placeholder="e.g. Ramesh Kumar / Geeta Devi"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#52c47c]"
+                        />
+                      </div>
+
+                      {/* Aadhaar Number Field */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                          Aadhaar Number {currentConfig.aadharRequired ? <span className="text-red-500">* (Mandatory for Women Care)</span> : <span className="text-emerald-500 font-normal">(Optional)</span>}
+                        </label>
+                        <input
+                          type="text"
+                          required={currentConfig.aadharRequired}
+                          value={formAadharNumber}
+                          onChange={(e) => setFormAadharNumber(e.target.value)}
+                          placeholder="12-digit Aadhaar number"
+                          maxLength={12}
+                          className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#52c47c]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Aadhaar Document Upload */}
+                    <div className="pt-2">
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                        Aadhaar Card Document Upload {currentConfig.aadharRequired ? <span className="text-red-500">* (Mandatory for Women Care)</span> : <span className="text-emerald-500 font-normal">(Optional)</span>}
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => handleUpload(e, "aadhar_file")}
+                          className="block w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-150 dark:file:bg-zinc-900 file:text-gray-700 dark:file:text-zinc-300 hover:file:bg-gray-200 dark:hover:file:bg-zinc-800 cursor-pointer"
+                        />
+                        {uploadingField === "aadhar_file" && (
+                          <span className="text-xs text-amber-500 font-bold animate-pulse shrink-0">Uploading...</span>
+                        )}
+                        {formAadharUploadUrl && (
+                          <a
+                            href={formAadharUploadUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-bold text-[#52c47c] shrink-0 hover:underline flex items-center gap-1"
+                          >
+                            ✓ Document uploaded (View)
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Section 2: Address */}
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[#1E4D2B] dark:text-[#52c47c]">2. Physical Address</h3>
+                  {/* STEP 3: UNIVERSAL MANDATORY CONTACT & PICTURE DETAILS */}
+                  <div className="space-y-4 p-4 bg-emerald-50/30 dark:bg-[#101412] rounded-2xl border border-emerald-200/50 dark:border-zinc-850">
+                    <div className="border-b border-emerald-200/40 dark:border-zinc-800/60 pb-2">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#1E4D2B] dark:text-[#52c47c]">
+                        3. Universal Contact & Verification Details <span className="text-red-500">* (Mandatory on all forms)</span>
+                      </h3>
+                      <p className="text-[10px] text-gray-500 dark:text-zinc-400">
+                        Phone number, address, email ID, and handover photo are mandatory for every beneficiary record.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Phone Number (Universal Mandatory) */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                          Phone Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={formPhone}
+                          onChange={(e) => setFormPhone(e.target.value)}
+                          placeholder="e.g. +91 9876543210"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#52c47c]"
+                        />
+                      </div>
+
+                      {/* Email ID (Universal Mandatory) */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                          Email Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={formEmail}
+                          onChange={(e) => setFormEmail(e.target.value)}
+                          placeholder="e.g. beneficiary@example.com"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#52c47c]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Full Address (Universal Mandatory) */}
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Full Address *</label>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                        Physical Residing Address <span className="text-red-500">*</span>
+                      </label>
                       <textarea
                         required
                         value={formAddress}
                         onChange={(e) => setFormAddress(e.target.value)}
-                        placeholder="House no, Area, Village/Town, District, State, Pincode..."
-                        className="w-full h-20 px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none resize-none"
+                        placeholder="House no, Slum/Area, Village/Town, District, State, Pincode..."
+                        className="w-full h-20 px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none resize-none focus:ring-1 focus:ring-[#52c47c]"
                       />
                     </div>
-                  </div>
 
-                  {/* Section 3: Children */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black uppercase tracking-wider text-[#1E4D2B] dark:text-[#52c47c]">3. Children Details</h3>
-                      <button
-                        type="button"
-                        onClick={addChild}
-                        className="px-3.5 py-1.5 bg-[#1E4D2B]/10 hover:bg-[#1E4D2B]/20 text-[#1E4D2B] dark:text-[#52c47c] text-xs font-bold rounded-xl border border-[#1E4D2B]/20 transition-all flex items-center gap-1 cursor-pointer"
-                      >
-                        + Add Child Record
-                      </button>
-                    </div>
-
-                    {formChildren.length === 0 ? (
-                      <p className="text-xs text-gray-500 dark:text-zinc-500 italic bg-gray-50 dark:bg-[#101412] p-4 rounded-2xl border border-dashed border-gray-250 dark:border-zinc-800 text-center">
-                        No children logged yet. Click 'Add Child Record' to include children.
-                      </p>
-                    ) : (
-                      <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
-                        {formChildren.map((child, idx) => (
-                          <div key={idx} className="p-4 bg-gray-50 dark:bg-[#101412] border border-gray-200 dark:border-zinc-850 rounded-2xl space-y-3 relative">
-                            <button
-                              type="button"
-                              onClick={() => removeChild(idx)}
-                              className="absolute top-3 right-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 p-1.5 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Child Name *</label>
-                                <input
-                                  type="text"
-                                  required
-                                  value={child.name}
-                                  onChange={(e) => updateChildField(idx, "name", e.target.value)}
-                                  placeholder="e.g. Pappu Kumar"
-                                  className="w-full px-3.5 py-2 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Child Date of Birth</label>
-                                <input
-                                  type="date"
-                                  value={child.dob}
-                                  onChange={(e) => updateChildField(idx, "dob", e.target.value)}
-                                  className="w-full px-3.5 py-2 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none text-zinc-500"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
-                              <div>
-                                <label className="block text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Child Aadhaar Number</label>
-                                <input
-                                  type="text"
-                                  value={child.aadhar_number}
-                                  onChange={(e) => updateChildField(idx, "aadhar_number", e.target.value)}
-                                  placeholder="12-digit number"
-                                  maxLength={12}
-                                  className="w-full px-3.5 py-2 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs text-gray-900 dark:text-white focus:outline-none"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Child Aadhaar Card</label>
-                                <input
-                                  type="file"
-                                  accept="image/*,application/pdf"
-                                  onChange={(e) => handleUpload(e, "child_aadhar", idx)}
-                                  className="block w-full text-[10px] text-zinc-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-gray-150 dark:file:bg-zinc-900 file:text-gray-700 dark:file:text-zinc-300 hover:file:bg-gray-200 dark:hover:file:bg-zinc-800 cursor-pointer"
-                                />
-                                {uploadingField === `child_aadhar_${idx}` && <span className="text-[9px] text-amber-500 mt-1 block">Uploading...</span>}
-                                {child.aadhar_upload_url && (
-                                  <span className="text-[9px] text-[#52c47c] mt-1 block font-bold">✓ Aadhaar file ready</span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Donation Handover Multiple Photo Upload */}
-                            <div className="border-t border-gray-200/50 dark:border-zinc-800/50 pt-3 mt-1.5 space-y-2">
-                              <label className="block text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Donation Handover Pictures (Multiple Upload)</label>
-                              <div className="flex flex-col sm:flex-row gap-3 items-start">
-                                <div className="relative shrink-0">
-                                  <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={(e) => handleMultipleUpload(e, idx)}
-                                    className="hidden"
-                                    id={`child-handover-input-${idx}`}
-                                  />
-                                  <label
-                                    htmlFor={`child-handover-input-${idx}`}
-                                    className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/20 text-[#1E4D2B] dark:text-[#52c47c] border border-emerald-150 dark:border-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-[10px] font-bold rounded-xl flex items-center gap-1 cursor-pointer transition-all shadow-sm"
-                                  >
-                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    Upload Pics (Multi)
-                                  </label>
-                                </div>
-                                {uploadingField === `child_handover_${idx}` && (
-                                  <span className="text-[10px] text-amber-500 font-bold self-center animate-pulse">Uploading files...</span>
-                                )}
-                              </div>
-
-                              {/* Thumbnail Previews with Delete option */}
-                              {child.handover_pics && child.handover_pics.length > 0 && (
-                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 bg-white dark:bg-zinc-950 p-2.5 rounded-xl border border-gray-150 dark:border-zinc-850">
-                                  {child.handover_pics.map((picUrl, pIdx) => (
-                                    <div key={pIdx} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-800 group shadow-inner">
-                                      <img src={picUrl} alt="handover preview" className="object-cover w-full h-full" />
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const updatedChildren = [...formChildren];
-                                          updatedChildren[idx].handover_pics = updatedChildren[idx].handover_pics?.filter((_, itemIdx) => itemIdx !== pIdx);
-                                          setFormChildren(updatedChildren);
-                                        }}
-                                        className="absolute inset-0 bg-red-650/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-black uppercase cursor-pointer"
-                                      >
-                                        Delete
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Section 4: Donation & Causes */}
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[#1E4D2B] dark:text-[#52c47c]">4. Allocation & Donation Details</h3>
-                    
-                    <div className="p-4 bg-gray-50/50 dark:bg-[#101412] border border-gray-150 dark:border-zinc-850 rounded-2xl space-y-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Allocate Associated Causes</label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
-                          {causes.map((cause) => {
-                            const isChecked = formCausesDonated.includes(cause.title);
-                            return (
-                              <label key={cause.id} className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-xs cursor-pointer select-none">
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() => handleToggleCause(cause.title)}
-                                  className="h-4 w-4 rounded bg-zinc-900 border-zinc-700 text-[#52c47c] focus:ring-0"
-                                />
-                                <span className="truncate text-gray-800 dark:text-zinc-300">{cause.title}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                    {/* Handover Photo Upload (Universal Mandatory) */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
+                        Beneficiary Handover Photo <span className="text-red-500">*</span>
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                         <div>
-                          <label className="block text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Donation Hand-over Picture</label>
                           <input
                             type="file"
                             accept="image/*"
                             onChange={(e) => handleUpload(e, "donation_pic")}
-                            className="block w-full text-xs text-zinc-500 file:mr-3 file:py-1.5 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-100 dark:file:bg-zinc-900 file:text-gray-700 dark:file:text-zinc-300 hover:file:bg-gray-200 dark:hover:file:bg-zinc-800 cursor-pointer"
+                            className="block w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-150 dark:file:bg-zinc-900 file:text-gray-700 dark:file:text-zinc-300 hover:file:bg-gray-200 dark:hover:file:bg-zinc-800 cursor-pointer"
                           />
-                          {uploadingField === "donation_pic" && <span className="text-[10px] text-amber-500 mt-1 block">Uploading...</span>}
+                          {uploadingField === "donation_pic" && (
+                            <span className="text-xs text-amber-500 font-bold block mt-1 animate-pulse">Uploading photo...</span>
+                          )}
                         </div>
-                        {formDonationPicUrl && (
+
+                        {formDonationPicUrl ? (
                           <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-800 shadow">
                             <img
                               src={formDonationPicUrl}
-                              alt="Donation thumbnail preview"
+                              alt="Handover preview"
                               className="object-cover w-full h-full"
                             />
+                            <span className="absolute bottom-1 right-1 px-2 py-0.5 bg-black/70 text-[#52c47c] text-[10px] font-bold rounded">
+                              ✓ Photo Ready
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="h-16 bg-white dark:bg-zinc-950 border border-dashed border-gray-300 dark:border-zinc-800 rounded-xl flex items-center justify-center text-xs text-gray-400">
+                            Please upload handover photo *
                           </div>
                         )}
                       </div>
@@ -1009,7 +1200,7 @@ export default function AdminBeneficiariesPage() {
                     <button
                       type="submit"
                       disabled={submitting || uploadingField !== null}
-                      className="px-6 py-2.5 bg-[#1E4D2B] hover:bg-[#15381E] disabled:bg-zinc-800 text-white text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5"
+                      className="px-6 py-2.5 bg-[#1E4D2B] hover:bg-[#15381E] disabled:bg-zinc-800 text-white text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 shadow-md"
                     >
                       {submitting ? (
                         <>
@@ -1017,10 +1208,10 @@ export default function AdminBeneficiariesPage() {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
-                          <span>Saving...</span>
+                          <span>Saving Record...</span>
                         </>
                       ) : (
-                        <span>Save Record</span>
+                        <span>Save Beneficiary Record</span>
                       )}
                     </button>
                   </div>
