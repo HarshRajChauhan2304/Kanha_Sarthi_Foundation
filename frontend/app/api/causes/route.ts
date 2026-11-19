@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getFallbackPath, getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+
+export const dynamic = 'force-dynamic';
 
 // GET all causes
 export async function GET() {
   let causes: any[] = [];
   let useFallback = false;
+
+  // Retrieve persistent custom order if set
+  const orderedIds: any[] = await getResilientData('causes_order.json', []);
 
   try {
     const { data, error } = await supabaseAdmin
@@ -17,13 +22,7 @@ export async function GET() {
     if (error || !data || data.length === 0) {
       useFallback = true;
     } else {
-      // Sort by order_index if available, otherwise by id
-      causes = [...data].sort((a: any, b: any) => {
-        if (typeof a.order_index === 'number' && typeof b.order_index === 'number') {
-          return a.order_index - b.order_index;
-        }
-        return (a.id || 0) - (b.id || 0);
-      });
+      causes = data;
     }
   } catch (err) {
     useFallback = true;
@@ -31,14 +30,36 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const fallbackPath = getFallbackPath('causes.json');
-      if (fs.existsSync(fallbackPath)) {
-        const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
-        causes = JSON.parse(fileContent);
+      const fallbackCauses = await getResilientData('causes.json', []);
+      if (Array.isArray(fallbackCauses) && fallbackCauses.length > 0) {
+        causes = fallbackCauses;
       }
     } catch (e) {
       console.error("Failed to read causes fallback JSON:", e);
     }
+  }
+
+  // Sort by orderedIds if present
+  if (Array.isArray(orderedIds) && orderedIds.length > 0) {
+    const orderMap = new Map<string, number>();
+    orderedIds.forEach((id: any, index: number) => {
+      orderMap.set(String(id), index);
+    });
+
+    causes.sort((a: any, b: any) => {
+      const orderA = orderMap.has(String(a.id)) ? orderMap.get(String(a.id))! : 9999;
+      const orderB = orderMap.has(String(b.id)) ? orderMap.get(String(b.id))! : 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      return (a.id || 0) - (b.id || 0);
+    });
+  } else {
+    // Fallback: sort by order_index if available, otherwise by id
+    causes.sort((a: any, b: any) => {
+      if (typeof a.order_index === 'number' && typeof b.order_index === 'number') {
+        return a.order_index - b.order_index;
+      }
+      return (a.id || 0) - (b.id || 0);
+    });
   }
 
   return NextResponse.json(causes, {

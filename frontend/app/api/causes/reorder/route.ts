@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
-import { getFallbackPath } from '@/lib/db-fallback';
+import { getFallbackPath, saveResilientFallback } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'orderedIds array is required' }, { status: 400 });
     }
 
-    // 1. Update local causes.json fallback
+    // 1. Persist orderedIds to resilient fallback causes_order.json (Cloud Storage + Memory + Disk)
+    await saveResilientFallback('causes_order.json', orderedIds);
+
+    // 2. Update local causes.json fallback
     const fallbackPath = getFallbackPath('causes.json');
     let updatedCauses: any[] = [];
     if (fs.existsSync(fallbackPath)) {
@@ -41,14 +44,14 @@ export async function POST(request: Request) {
             updatedCauses.push(item);
           });
 
-          fs.writeFileSync(fallbackPath, JSON.stringify(updatedCauses, null, 2), 'utf-8');
+          await saveResilientFallback('causes.json', updatedCauses);
         }
       } catch (err) {
         console.error("Failed to update causes.json reorder:", err);
       }
     }
 
-    // 2. Update Supabase causes table if possible
+    // 3. Update Supabase causes table if order_index column exists
     try {
       for (let i = 0; i < orderedIds.length; i++) {
         const id = orderedIds[i];
@@ -64,6 +67,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Causes reordered successfully',
+      orderedIds,
       causes: updatedCauses
     });
   } catch (error: any) {

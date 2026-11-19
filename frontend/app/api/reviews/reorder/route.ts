@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
-import { getFallbackPath } from '@/lib/db-fallback';
+import { getFallbackPath, saveResilientFallback } from '@/lib/db-fallback';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'orderedIds array is required' }, { status: 400 });
     }
 
-    // 1. Update local reviews.json fallback
+    // 1. Persist orderedIds to resilient fallback reviews_order.json
+    await saveResilientFallback('reviews_order.json', orderedIds);
+
+    // 2. Update local reviews.json fallback
     const fallbackPath = getFallbackPath('reviews.json');
     let updatedReviews: any[] = [];
     if (fs.existsSync(fallbackPath)) {
@@ -40,14 +43,14 @@ export async function POST(request: Request) {
             updatedReviews.push(item);
           });
 
-          fs.writeFileSync(fallbackPath, JSON.stringify(updatedReviews, null, 2), 'utf-8');
+          await saveResilientFallback('reviews.json', updatedReviews);
         }
       } catch (err) {
         console.error("Failed to update reviews.json reorder:", err);
       }
     }
 
-    // 2. Update Supabase reviews table if possible
+    // 3. Update Supabase reviews table if possible
     try {
       for (let i = 0; i < orderedIds.length; i++) {
         const id = orderedIds[i];
@@ -63,6 +66,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Reviews reordered successfully',
+      orderedIds,
       reviews: updatedReviews
     });
   } catch (error: any) {

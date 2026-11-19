@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { getFallbackPath, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+import { getFallbackPath, getResilientData, resilientDelete, resilientPost, resilientPut } from '@/lib/db-fallback';
+
+export const dynamic = 'force-dynamic';
 
 // GET all reviews
 export async function GET() {
   let reviews: any[] = [];
   let useFallback = false;
+
+  const orderedIds: any[] = await getResilientData('reviews_order.json', []);
 
   try {
     const { data, error } = await supabase
@@ -17,14 +21,7 @@ export async function GET() {
     if (error || !data || data.length === 0) {
       useFallback = true;
     } else {
-      const sorted = [...data].sort((a: any, b: any) => {
-        if (typeof a.order_index === 'number' && typeof b.order_index === 'number') {
-          return a.order_index - b.order_index;
-        }
-        return (a.id || 0) - (b.id || 0);
-      });
-
-      reviews = sorted.map(item => ({
+      reviews = data.map(item => ({
         id: item.id,
         title: item.title,
         desc: item.desc_text,
@@ -39,19 +36,40 @@ export async function GET() {
 
   if (useFallback) {
     try {
-      const fallbackPath = getFallbackPath('reviews.json');
-      if (fs.existsSync(fallbackPath)) {
-        const fileContent = fs.readFileSync(fallbackPath, 'utf-8');
-        reviews = JSON.parse(fileContent);
+      const fallbackReviews = await getResilientData('reviews.json', []);
+      if (Array.isArray(fallbackReviews) && fallbackReviews.length > 0) {
+        reviews = fallbackReviews;
       }
     } catch (e) {
       console.error("Failed to read reviews fallback JSON:", e);
     }
   }
 
+  // Sort by orderedIds if present
+  if (Array.isArray(orderedIds) && orderedIds.length > 0) {
+    const orderMap = new Map<string, number>();
+    orderedIds.forEach((id: any, index: number) => {
+      orderMap.set(String(id), index);
+    });
+
+    reviews.sort((a: any, b: any) => {
+      const orderA = orderMap.has(String(a.id)) ? orderMap.get(String(a.id))! : 9999;
+      const orderB = orderMap.has(String(b.id)) ? orderMap.get(String(b.id))! : 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      return (a.id || 0) - (b.id || 0);
+    });
+  } else {
+    reviews.sort((a: any, b: any) => {
+      if (typeof a.order_index === 'number' && typeof b.order_index === 'number') {
+        return a.order_index - b.order_index;
+      }
+      return (a.id || 0) - (b.id || 0);
+    });
+  }
+
   return NextResponse.json(reviews, {
     headers: {
-      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      'Cache-Control': 'no-store, max-age=0'
     }
   });
 }
