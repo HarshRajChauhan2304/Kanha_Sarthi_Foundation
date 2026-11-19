@@ -21,13 +21,14 @@ const readLocalJSON = (filename: string): any[] => {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, username, identifier, password } = body;
 
-    if (!email || !password) {
-      return NextResponse.json({ success: false, error: "Please enter both email and password." }, { status: 400 });
+    const rawIdentifier = identifier || username || email || "";
+    if (!rawIdentifier || !password) {
+      return NextResponse.json({ success: false, error: "Please enter your username/email and password." }, { status: 400 });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanIdentifier = rawIdentifier.trim().toLowerCase();
 
     // ==========================================
     // 1. Search in Admin Users
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
       const { data, error } = await supabaseAdmin
         .from('admin_users')
         .select('*')
-        .or(`username.eq.${cleanEmail},email.eq.${cleanEmail}`)
+        .or(`username.eq.${cleanIdentifier},email.eq.${cleanIdentifier}`)
         .single();
       
       if (!error && data) {
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     if (!admin) {
       const localAdmins = readLocalJSON('admin_users.json');
       admin = localAdmins.find((u: any) => 
-        u.email?.trim().toLowerCase() === cleanEmail || u.username?.trim().toLowerCase() === cleanEmail
+        u.email?.trim().toLowerCase() === cleanIdentifier || u.username?.trim().toLowerCase() === cleanIdentifier
       );
     }
 
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
       const { data, error } = await supabaseAdmin
         .from('volunteer_applications')
         .select('*')
-        .eq('email', cleanEmail)
+        .or(`email.eq.${cleanIdentifier},name.eq.${cleanIdentifier}`)
         .single();
 
       if (!error && data) {
@@ -102,7 +103,9 @@ export async function POST(request: Request) {
 
     if (!volunteer) {
       const localVolunteers = readLocalJSON('volunteer_applications.json');
-      volunteer = localVolunteers.find((u: any) => u.email?.trim().toLowerCase() === cleanEmail);
+      volunteer = localVolunteers.find((u: any) => 
+        u.email?.trim().toLowerCase() === cleanIdentifier || u.name?.trim().toLowerCase() === cleanIdentifier
+      );
     }
 
     if (volunteer) {
@@ -142,8 +145,8 @@ export async function POST(request: Request) {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('email', cleanEmail)
-        .single();
+        .or(`email.eq.${cleanIdentifier},username.eq.${cleanIdentifier}`)
+        .maybeSingle();
 
       if (!error && data) {
         user = data;
@@ -154,7 +157,9 @@ export async function POST(request: Request) {
 
     if (!user) {
       const localUsers = readLocalJSON('users.json');
-      user = localUsers.find((u: any) => u.email?.trim().toLowerCase() === cleanEmail);
+      user = localUsers.find((u: any) => 
+        u.email?.trim().toLowerCase() === cleanIdentifier || u.username?.trim().toLowerCase() === cleanIdentifier
+      );
     }
 
     if (user) {
@@ -186,7 +191,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: false, error: "No account registered with this email ID." }, { status: 404 });
+    return NextResponse.json({ success: false, error: "No account registered with this username or email ID." }, { status: 404 });
   } catch (error: any) {
     console.error("Unified login error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

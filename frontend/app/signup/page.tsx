@@ -6,7 +6,7 @@ export default function SignUpPage({
   searchParams?: { redirect?: string };
 }) {
   const redirectQuery = searchParams?.redirect
-    ? `?redirect=${encodeURIComponent(searchParams.redirect)}`
+    ? `&redirect=${encodeURIComponent(searchParams.redirect)}`
     : "";
-  redirect(`/signin${redirectQuery}`);
+  redirect(`/signin?mode=signup${redirectQuery}`);
 }

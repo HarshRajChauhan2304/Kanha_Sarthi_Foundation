@@ -11,7 +11,7 @@ interface MonthlyCategory {
   title: string;
   tagline: string;
   image: string;
-  presets: number[];
+  defaultMonthly: number;
   impactNotes: { [amount: number]: string; default: string };
 }
 
@@ -21,13 +21,13 @@ const CATEGORIES: MonthlyCategory[] = [
     name: "Education",
     tabLabel: "Education",
     title: "Educate, Empower, Transform.",
-    tagline: "Provide school uniforms, textbooks, digital learning, and tuition to underprivileged slum children.",
+    tagline: "Provide school uniforms, textbooks, digital learning, and tuition to underprivileged children.",
     image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1000&auto=format&fit=crop&q=80",
-    presets: [1000, 5000, 10000, 20000],
+    defaultMonthly: 1000,
     impactNotes: {
       1000: "₹1,000 / month sponsors school kit, books, uniform & mid-day nutrition for 1 child.",
-      5000: "₹5,000 / month supports full academic sponsorship and remedial evening coaching for 5 children.",
-      10000: "₹10,000 / month funds digital classroom access and annual fees for an entire slum learning center.",
+      5000: "₹5,000 / month supports full academic sponsorship and evening coaching for 5 children.",
+      10000: "₹10,000 / month funds digital classroom access and annual fees for an entire learning center.",
       20000: "₹20,000 / month sponsors comprehensive yearly schooling, health care, and nutrition for 20 children.",
       default: "Every monthly rupee helps provide quality education and a brighter tomorrow for underprivileged children."
     }
@@ -39,7 +39,7 @@ const CATEGORIES: MonthlyCategory[] = [
     title: "Healing Lives, Restoring Dignity.",
     tagline: "Deliver critical medicines, mobile clinic checkups, diagnostic tests, and emergency medical aid to vulnerable families.",
     image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1000&auto=format&fit=crop&q=80",
-    presets: [1000, 5000, 10000, 20000],
+    defaultMonthly: 1000,
     impactNotes: {
       1000: "₹1,000 / month provides essential chronic medicines and physician checkups for 1 destitute patient.",
       5000: "₹5,000 / month sponsors specialized diagnostic blood panels, dialysis support, and pediatric consultations.",
@@ -55,7 +55,7 @@ const CATEGORIES: MonthlyCategory[] = [
     title: "No One Sleeps Hungry.",
     tagline: "Supply wholesome 15-item monthly dry grocery ration kits and daily hot cooked nutritious meals to daily wage workers and children.",
     image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1000&auto=format&fit=crop&q=80",
-    presets: [1000, 5000, 10000, 20000],
+    defaultMonthly: 1000,
     impactNotes: {
       1000: "₹1,000 / month delivers a complete 15-item dry ration grocery kit feeding a needy family for 1 whole month.",
       5000: "₹5,000 / month serves 125+ freshly cooked hot nutritious meals to street children and daily wage laborers.",
@@ -70,8 +70,13 @@ export default function DonateMonthlyPage() {
   const router = useRouter();
 
   const [activeCategory, setActiveCategory] = useState<MonthlyCategory>(CATEGORIES[0]);
-  const [selectedPreset, setSelectedPreset] = useState<number>(1000);
-  const [customAmount, setCustomAmount] = useState<string>("1000");
+  
+  // Duration: 1, 6, or 12 Months (Requested by user)
+  const [durationMonths, setDurationMonths] = useState<number>(1);
+
+  // Monthly base amount (customizable with +/- steppers or direct typing)
+  const [monthlyAmount, setMonthlyAmount] = useState<number>(1000);
+  const [monthlyAmountInput, setMonthlyAmountInput] = useState<string>("1000");
 
   // Donor Details
   const [donorName, setDonorName] = useState<string>("");
@@ -96,28 +101,46 @@ export default function DonateMonthlyPage() {
     }
   }, []);
 
-  const handlePresetClick = (amount: number) => {
-    setSelectedPreset(amount);
-    setCustomAmount(String(amount));
-  };
-
-  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    setCustomAmount(val);
-    const num = parseInt(val, 10);
-    if (activeCategory.presets.includes(num)) {
-      setSelectedPreset(num);
+  // Update monthly amount directly from text input
+  const handleMonthlyAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^0-9]/g, "");
+    setMonthlyAmountInput(raw);
+    const parsed = parseInt(raw, 10);
+    if (!isNaN(parsed)) {
+      setMonthlyAmount(parsed);
     } else {
-      setSelectedPreset(0);
+      setMonthlyAmount(0);
     }
   };
+
+  // Increase amount via stepper button (+)
+  const handleIncreaseAmount = () => {
+    let step = 500;
+    if (monthlyAmount < 1000) step = 100;
+    else if (monthlyAmount >= 5000) step = 1000;
+    const nextVal = (monthlyAmount || 0) + step;
+    setMonthlyAmount(nextVal);
+    setMonthlyAmountInput(String(nextVal));
+  };
+
+  // Decrease amount via stepper button (-)
+  const handleDecreaseAmount = () => {
+    let step = 500;
+    if (monthlyAmount <= 1000) step = 100;
+    else if (monthlyAmount > 5000) step = 1000;
+    const nextVal = Math.max(100, (monthlyAmount || 0) - step);
+    setMonthlyAmount(nextVal);
+    setMonthlyAmountInput(String(nextVal));
+  };
+
+  // Total calculated amount based on duration: monthlyAmount * durationMonths
+  const totalAmount = (monthlyAmount || 0) * durationMonths;
 
   const handleDonateNow = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
 
-    const amountNum = parseInt(customAmount, 10);
-    if (!amountNum || amountNum < 100) {
+    if (!monthlyAmount || monthlyAmount < 100) {
       setErrorMessage("Please enter a valid monthly donation amount of at least ₹100.");
       return;
     }
@@ -127,10 +150,12 @@ export default function DonateMonthlyPage() {
       return;
     }
 
-    // Requirement 2: Redirect directly to the donation checkout form (/donate)
+    // Redirect to checkout with total calculated amount and duration
     const query = new URLSearchParams({
-      title: `${activeCategory.name} Monthly Subscription`,
-      amount: String(amountNum),
+      title: `${activeCategory.name} Monthly Subscription (${durationMonths} ${durationMonths === 1 ? "Month" : "Months"})`,
+      amount: String(totalAmount),
+      monthly_rate: String(monthlyAmount),
+      months: String(durationMonths),
       category: activeCategory.name,
       type: "monthly",
       name: donorName.trim(),
@@ -158,21 +183,21 @@ export default function DonateMonthlyPage() {
   };
 
   const currentImpactNote = 
-    activeCategory.impactNotes[parseInt(customAmount, 10)] || 
+    activeCategory.impactNotes[monthlyAmount] || 
     activeCategory.impactNotes.default;
 
   return (
     <div className="min-h-screen bg-gray-100/90 dark:bg-[#07100b] text-zinc-900 dark:text-white pt-24 pb-16 sm:pt-32 sm:pb-24 px-3 sm:px-4 font-sans">
       <div className="max-w-xl mx-auto">
         
-        {/* Main Card Container (Matches User Screenshot Image 2 & Mobile Portable) */}
+        {/* Main Card Container */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
           className="bg-white dark:bg-[#121614] text-zinc-900 dark:text-white rounded-2xl sm:rounded-3xl shadow-2xl border border-zinc-200/80 dark:border-zinc-800 overflow-hidden"
         >
-          {/* Card Top Header: Matches Image 2 */}
+          {/* Card Top Header */}
           <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-zinc-100 dark:border-zinc-800/80">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 flex-1">
@@ -184,7 +209,7 @@ export default function DonateMonthlyPage() {
                 </p>
               </div>
 
-              {/* Tax Benefits Button & Close Cross Button side-by-side like Image 2 */}
+              {/* Tax Benefits Button & Close Button */}
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
@@ -196,7 +221,6 @@ export default function DonateMonthlyPage() {
                   <span className="xs:hidden">Tax 80G</span>
                 </button>
 
-                {/* Close Button linking back (Always works with href="/" fallback) */}
                 <a
                   href="/"
                   onClick={handleClose}
@@ -223,12 +247,12 @@ export default function DonateMonthlyPage() {
                     type="button"
                     onClick={() => {
                       setActiveCategory(cat);
-                      setSelectedPreset(1000);
-                      setCustomAmount("1000");
+                      setMonthlyAmount(cat.defaultMonthly);
+                      setMonthlyAmountInput(String(cat.defaultMonthly));
                     }}
                     className={`py-2 sm:py-3 px-1 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-1 ${
                       isActive
-                        ? "bg-[#7C3AED] text-white shadow-md shadow-purple-500/30 scale-100"
+                        ? "bg-[#1E4D2B] text-white shadow-md shadow-emerald-900/30 scale-100"
                         : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                     }`}
                   >
@@ -255,14 +279,14 @@ export default function DonateMonthlyPage() {
 
           {/* Category Banner with Image and Headline */}
           <div className="px-4 sm:px-7 pt-4">
-            <div className="relative w-full h-36 sm:h-48 rounded-2xl overflow-hidden border border-purple-500/30 shadow-lg group">
+            <div className="relative w-full h-36 sm:h-48 rounded-2xl overflow-hidden border border-emerald-500/30 shadow-lg group">
               <img
                 src={activeCategory.image}
                 alt={activeCategory.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end p-3 sm:p-5 text-left">
-                <span className="text-[10px] font-black tracking-wider uppercase text-purple-300">
+                <span className="text-[10px] font-black tracking-wider uppercase text-emerald-400">
                   Kanha Sarthi Monthly Drive
                 </span>
                 <h3 className="text-base sm:text-xl font-black text-white leading-tight mt-0.5">
@@ -277,57 +301,130 @@ export default function DonateMonthlyPage() {
 
           <form onSubmit={handleDonateNow} className="p-4 sm:p-7 space-y-4 sm:space-y-6">
             
-            {/* Preset Amount Buttons (Matches user screenshot: ₹1000, ₹5000, ₹10000, ₹20000) */}
+            {/* ======================================================== */}
+            {/* REQUIREMENT 2.1: DURATION SELECTION (1, 6, 12 MONTHS) */}
+            {/* ======================================================== */}
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
-                Select Monthly Contribution
-              </label>
-              <div className="grid grid-cols-4 gap-2.5">
-                {activeCategory.presets.map((amt) => {
-                  const isSelected = selectedPreset === amt;
+              <div className="flex items-center justify-between mb-2.5">
+                <label className="text-xs font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  Select Duration (Months)
+                </label>
+                <span className="text-[11px] font-black text-[#1E4D2B] dark:text-emerald-400">
+                  {durationMonths} {durationMonths === 1 ? "Month" : "Months"} Plan
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                {[
+                  { months: 1, label: "1 Month", badge: "Flexible" },
+                  { months: 6, label: "6 Months", badge: "Sustained" },
+                  { months: 12, label: "12 Months", badge: "1 Year Impact" }
+                ].map((item) => {
+                  const isSelected = durationMonths === item.months;
                   return (
                     <button
-                      key={amt}
+                      key={item.months}
                       type="button"
-                      onClick={() => handlePresetClick(amt)}
-                      className={`py-2 sm:py-3 px-1 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer ${
+                      onClick={() => setDurationMonths(item.months)}
+                      className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer relative flex flex-col items-center justify-center gap-0.5 ${
                         isSelected
-                          ? "bg-purple-50 dark:bg-purple-950/40 border-[#7C3AED] text-[#7C3AED] dark:text-purple-300 ring-2 ring-[#7C3AED]/30 scale-102"
-                          : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-purple-300"
+                          ? "bg-emerald-50 dark:bg-emerald-950/40 border-[#1E4D2B] dark:border-emerald-500 text-[#1E4D2B] dark:text-emerald-300 ring-2 ring-[#1E4D2B]/30 scale-[1.02] shadow-sm"
+                          : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-emerald-400"
                       }`}
                     >
-                      ₹{amt.toLocaleString("en-IN")}
+                      <span className="text-sm sm:text-base font-black">{item.label}</span>
+                      <span className={`text-[10px] font-bold ${isSelected ? "text-[#1E4D2B] dark:text-emerald-400" : "text-zinc-400"}`}>
+                        {item.badge}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Total Amount Input Field */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                ₹ Total amount (Monthly)
-              </label>
-              <div className="relative flex items-center">
-                <span className="absolute left-4 text-base font-black text-zinc-400">₹</span>
-                <input
-                  type="text"
-                  value={customAmount}
-                  onChange={handleCustomAmountChange}
-                  placeholder="Enter amount"
-                  className="w-full pl-9 pr-4 py-2.5 sm:py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-base font-black text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent"
-                  required
-                />
+            {/* ======================================================== */}
+            {/* REQUIREMENT 2.2: MONTHLY AMOUNT INPUT & +/- STEPPERS */}
+            {/* ======================================================== */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  Monthly Contribution (Per Month)
+                </label>
+                <span className="text-[11px] font-bold text-zinc-400">
+                  Minimum: ₹100
+                </span>
+              </div>
+
+              {/* Stepper with [-] and [+] buttons beside the input */}
+              <div className="flex items-center gap-2">
+                {/* Decrease Button */}
+                <button
+                  type="button"
+                  onClick={handleDecreaseAmount}
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-100 flex items-center justify-center text-xl font-black transition-all active:scale-90 cursor-pointer shadow-xs border border-zinc-200/80 dark:border-zinc-750 select-none shrink-0"
+                  title="Decrease amount"
+                  aria-label="Decrease amount"
+                >
+                  −
+                </button>
+
+                {/* Direct Custom Amount Input Field */}
+                <div className="relative flex-1">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-black text-zinc-400 select-none">
+                    ₹
+                  </span>
+                  <input
+                    type="text"
+                    value={monthlyAmountInput}
+                    onChange={handleMonthlyAmountChange}
+                    placeholder="Enter monthly amount"
+                    className="w-full pl-8 pr-14 py-2.5 sm:py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-base sm:text-lg font-black text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500"
+                    required
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-zinc-400 select-none uppercase">
+                    /mo
+                  </span>
+                </div>
+
+                {/* Increase Button */}
+                <button
+                  type="button"
+                  onClick={handleIncreaseAmount}
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-100 flex items-center justify-center text-xl font-black transition-all active:scale-90 cursor-pointer shadow-xs border border-zinc-200/80 dark:border-zinc-750 select-none shrink-0"
+                  title="Increase amount"
+                  aria-label="Increase amount"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* ======================================================== */}
+              {/* REQUIREMENT 2.3: ACCORDING TO MONTHS AMOUNT DISPLAY */}
+              {/* ======================================================== */}
+              <div className="p-3.5 sm:p-4 bg-emerald-50/90 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl flex items-center justify-between shadow-xs">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-400 block">
+                    Total Amount ({durationMonths} {durationMonths === 1 ? "Month" : "Months"})
+                  </span>
+                  <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                    ₹{monthlyAmount.toLocaleString("en-IN")} × {durationMonths} {durationMonths === 1 ? "month" : "months"}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl sm:text-2xl font-black text-[#1E4D2B] dark:text-emerald-400">
+                    ₹{totalAmount.toLocaleString("en-IN")}
+                  </span>
+                </div>
               </div>
 
               {/* Dynamic Impact Note */}
-              <div className="p-2.5 sm:p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-[11px] font-bold text-purple-700 dark:text-purple-300 flex items-center gap-2">
+              <div className="p-2.5 sm:p-3 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-xl text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
                 <span>✨</span>
                 <span>{currentImpactNote}</span>
               </div>
             </div>
 
-            {/* Donor Information Input Fields (Clean underline style from user screenshot) */}
+            {/* Donor Information Input Fields */}
             <div className="space-y-3 sm:space-y-4 pt-1 sm:pt-2">
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
@@ -339,7 +436,7 @@ export default function DonateMonthlyPage() {
                   onChange={(e) => setDonorName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
                   required
-                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
+                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#1E4D2B] transition-colors"
                 />
               </div>
 
@@ -352,7 +449,7 @@ export default function DonateMonthlyPage() {
                   value={donorPhone}
                   onChange={(e) => setDonorPhone(e.target.value)}
                   placeholder="e.g. +91 98765 43210"
-                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
+                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#1E4D2B] transition-colors"
                 />
               </div>
 
@@ -365,7 +462,7 @@ export default function DonateMonthlyPage() {
                   value={donorEmail}
                   onChange={(e) => setDonorEmail(e.target.value)}
                   placeholder="e.g. rahul@example.com"
-                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#7C3AED] transition-colors"
+                  className="w-full px-2 sm:px-3 py-2 sm:py-2.5 bg-transparent border-b-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-[#1E4D2B] transition-colors"
                 />
               </div>
             </div>
@@ -377,10 +474,10 @@ export default function DonateMonthlyPage() {
                 type="checkbox"
                 checked={claimTax}
                 onChange={(e) => setClaimTax(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-[#7C3AED] focus:ring-[#7C3AED]"
+                className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-[#1E4D2B] focus:ring-[#1E4D2B]"
               />
               <label htmlFor="claimTaxCheckbox" className="text-[11px] sm:text-xs text-zinc-600 dark:text-zinc-400 font-medium select-none cursor-pointer">
-                I would like an <strong className="text-zinc-900 dark:text-white">80G 50% Tax Exemption Certificate</strong> sent to my registered email address for this monthly contribution.
+                I would like an <strong className="text-zinc-900 dark:text-white">80G 50% Tax Exemption Certificate</strong> sent to my registered email address for this contribution.
               </label>
             </div>
 
@@ -391,12 +488,12 @@ export default function DonateMonthlyPage() {
               </div>
             )}
 
-            {/* Big Action Button (Matches User Screenshot: DONATE NOW) */}
+            {/* Big Action Button */}
             <button
               type="submit"
-              className="w-full py-3.5 sm:py-4 bg-[#7C3AED] hover:bg-[#6D28D9] active:bg-[#5B21B6] text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-500/30 hover:scale-[1.01] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3.5 sm:py-4 bg-[#1E4D2B] hover:bg-[#153e22] active:bg-[#0f2d18] text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-950/20 hover:scale-[1.01] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>DONATE NOW</span>
+              <span>DONATE ₹{totalAmount.toLocaleString("en-IN")} NOW</span>
               <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
               </svg>
@@ -466,4 +563,3 @@ export default function DonateMonthlyPage() {
     </div>
   );
 }
-
