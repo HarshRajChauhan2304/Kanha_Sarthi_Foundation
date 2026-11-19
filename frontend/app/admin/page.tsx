@@ -117,7 +117,7 @@ interface VolunteerTask {
   admin_verified?: boolean;
 }
 
-type TabType = "Causes" | "SpotlightCampaign" | "FestivalPopup" | "Reviews" | "Blogs" | "Stories" | "DetailedStories" | "SuccessStories" | "Donations" | "Beneficiaries" | "Highlights" | "Applications" | "Tasks" | "AssignTask" | "PageMedia" | "PageTexts" | "StatsCards" | "Categories" | "RoleManagement" | "Navbar" | "Footer" | "AdminProfile" | "StarVolunteers" | "ContactInfo" | "ContactSubmissions" | "WhatsAppCommunity" | "DonateMonthly" | "Reminders";
+type TabType = "Causes" | "SpotlightCampaign" | "FestivalPopup" | "Reviews" | "Blogs" | "Stories" | "DetailedStories" | "SuccessStories" | "Donations" | "Beneficiaries" | "Highlights" | "Users" | "Applications" | "Tasks" | "AssignTask" | "PageMedia" | "PageTexts" | "StatsCards" | "Categories" | "RoleManagement" | "Navbar" | "Footer" | "AdminProfile" | "StarVolunteers" | "ContactInfo" | "ContactSubmissions" | "WhatsAppCommunity" | "DonateMonthly" | "Reminders";
 type AuthMode = "signin" | "signup" | "forgot";
 
 const KEY_MAP: Record<string, { title: string; type: string }> = {
@@ -216,6 +216,7 @@ export default function AdminPanelPage() {
   const [pageTexts, setPageTexts] = useState<PageTextConfig[]>([]);
   const [statsCards, setStatsCards] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
   const [navbarConfig, setNavbarConfig] = useState<any>({
     logo: "",
     name: "",
@@ -560,6 +561,17 @@ export default function AdminPanelPage() {
         console.error("Error loading volunteer applications for notification check:", volErr);
       }
 
+      // Fetch users always for badge count & fast tab access
+      try {
+        const userRes = await fetch('/api/admin/users', { cache: 'no-store' });
+        const userData = await userRes.json();
+        if (userData.success && Array.isArray(userData.users)) {
+          setUsersList(userData.users);
+        }
+      } catch (userErr) {
+        console.error("Error pre-loading users list:", userErr);
+      }
+
       if (activeTab === "Causes") {
         const res = await fetch('/api/causes', { cache: 'no-store' });
         const data = await res.json();
@@ -669,7 +681,7 @@ export default function AdminPanelPage() {
         const res = await fetch('/api/stats-cards', { cache: 'no-store' });
         const data = await res.json();
         setStatsCards(Array.isArray(data) ? data : []);
-      } else if (activeTab === "RoleManagement") {
+      } else if (activeTab === "RoleManagement" || activeTab === "Users") {
         try {
           const userRes = await fetch('/api/admin/users', { cache: 'no-store' });
           const userData = await userRes.json();
@@ -1233,7 +1245,7 @@ export default function AdminPanelPage() {
       setFormCertificateIssueDate(item.certificate_issue_date || "");
       setFormStartDate(item.internship_start_date || "");
       setFormEndDate(item.internship_end_date || "");
-    } else if (activeTab === "RoleManagement") {
+    } else if (activeTab === "RoleManagement" || activeTab === "Users") {
       setFormTitle(item.name || "");
       setFormEmail(item.email || "");
       setFormPhone(item.phone || "");
@@ -1241,6 +1253,7 @@ export default function AdminPanelPage() {
       setFormGender(item.gender || "Male");
       setFormPassword(item.password || "");
       setFormRole(item.role || "user");
+      setFormProfilePhoto(item.avatar || "");
     } else if (activeTab === "Tasks") {
       setTaskFormVolunteerId(item.volunteer_id?.toString() || "");
       setTaskFormTitle(item.task_title);
@@ -1314,7 +1327,7 @@ export default function AdminPanelPage() {
                     ? "/api/stories/detailed"
                     : activeTab === "SuccessStories"
                       ? "/api/success-stories"
-                      : activeTab === "RoleManagement"
+                      : (activeTab === "RoleManagement" || activeTab === "Users")
                         ? "/api/admin/users"
                         : activeTab === "ContactInfo"
                           ? "/api/contact-info"
@@ -1519,9 +1532,9 @@ export default function AdminPanelPage() {
         tasks_completed: parseInt(formTasksCompleted, 10) || 0,
         volunteer_id: formVolunteerId ? parseInt(formVolunteerId, 10) : null
       };
-    } else if (activeTab === "RoleManagement") {
-      if (!formTitle.trim() || !formEmail.trim() || !formPassword.trim()) {
-        triggerAlert("Username, email, and password are required.");
+    } else if (activeTab === "RoleManagement" || activeTab === "Users") {
+      if (!formTitle.trim() || !formEmail.trim() || (!editingItem && !formPassword.trim())) {
+        triggerAlert("Full Name and email are required.");
         return;
       }
       bodyPayload = {
@@ -1530,9 +1543,10 @@ export default function AdminPanelPage() {
         email: formEmail,
         phone: formPhone,
         dob: formDob,
-        gender: formGender,
-        password: formPassword,
-        role: formRole
+        gender: formGender || "Male",
+        password: formPassword || "User@123",
+        avatar: formProfilePhoto,
+        role: activeTab === "Users" ? "user" : formRole
       };
     }
 
@@ -1698,7 +1712,7 @@ export default function AdminPanelPage() {
       ? highlightSubTab.substring(0, highlightSubTab.length - 1)
       : activeTab === "Categories"
         ? "Category"
-        : activeTab === "RoleManagement"
+        : (activeTab === "RoleManagement" || activeTab === "Users")
           ? "User Account"
           : isApp ? "Volunteer Application" : isMedia ? "Media Section Banner" : isTexts ? "Text Setting" : isTasks ? "Volunteer Task" : isStar ? "Star Volunteer" : isDetStories ? "Detailed Story" : isSuccessStories ? "Success Story" : isContactInfo ? "Contact Info Card" : isContactSub ? "Contact Message" : activeTab.substring(0, activeTab.length - 1);
 
@@ -1726,7 +1740,7 @@ export default function AdminPanelPage() {
                         ? `/api/stories/detailed?id=${idOrKey}`
                         : activeTab === "SuccessStories"
                           ? `/api/success-stories?id=${idOrKey}`
-                          : activeTab === "RoleManagement"
+                          : (activeTab === "RoleManagement" || activeTab === "Users")
                             ? `/api/admin/users?id=${idOrKey}`
                             : `/api/${activeTab.toLowerCase()}?id=${idOrKey}`;
 
@@ -2139,7 +2153,7 @@ export default function AdminPanelPage() {
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                Add {activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Tasks" ? "Volunteer Task" : activeTab === "StarVolunteers" ? "Star Volunteer" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "Categories" ? "Category" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "RoleManagement" ? "User Account" : activeTab.substring(0, activeTab.length - 1)}
+                Add {activeTab === "Users" ? "User" : activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Tasks" ? "Volunteer Task" : activeTab === "StarVolunteers" ? "Star Volunteer" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "Categories" ? "Category" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "RoleManagement" ? "User Account" : activeTab.substring(0, activeTab.length - 1)}
               </button>
             )}
             <button
@@ -2176,9 +2190,10 @@ export default function AdminPanelPage() {
 
         {/* Tab Selection Row */}
         <div className="flex border-b border-zinc-900 gap-1.5 mb-10 overflow-x-auto pb-2 scrollbar-none">
-          {(["Causes", "SpotlightCampaign", "FestivalPopup", "DonateMonthly", "Reminders", "Reviews", "Blogs", "Stories", "DetailedStories", "SuccessStories", "Donations", "Beneficiaries", "Highlights", "Applications", "Tasks", "StarVolunteers", "ContactInfo", "ContactSubmissions", "PageMedia", "PageTexts", "StatsCards", "Categories", "RoleManagement", "Navbar", "Footer", "WhatsAppCommunity", "AdminProfile"] as TabType[]).map((tab) => {
+          {(["Causes", "SpotlightCampaign", "FestivalPopup", "DonateMonthly", "Reminders", "Users", "Applications", "Tasks", "StarVolunteers", "Reviews", "Blogs", "Stories", "DetailedStories", "SuccessStories", "Donations", "Beneficiaries", "Highlights", "ContactInfo", "ContactSubmissions", "PageMedia", "PageTexts", "StatsCards", "Categories", "RoleManagement", "Navbar", "Footer", "WhatsAppCommunity", "AdminProfile"] as TabType[]).map((tab) => {
             const isTabActive = activeTab === tab;
             const pendingCount = tab === "Applications" ? volApps.filter(a => a.status === "Pending" || !a.status).length : 0;
+            const usersCount = tab === "Users" ? usersList.filter(u => u.role === "user" || !u.role).length : 0;
             return (
               <button
                 key={tab}
@@ -2189,11 +2204,16 @@ export default function AdminPanelPage() {
                   }`}
               >
                 <span>
-                  {tab === "SpotlightCampaign" ? "⭐ Spotlight Campaign" : tab === "FestivalPopup" ? "🎉 Festival Popup" : tab === "DonateMonthly" ? "💳 Donate Monthly" : tab === "Reminders" ? "🎂 Birthdays & Renewals" : tab === "StarVolunteers" ? "Star Volunteers" : tab === "Applications" ? "Volunteer Apps" : tab === "PageMedia" ? "Page Banners & Media" : tab === "PageTexts" ? "Page Layout Texts" : tab === "StatsCards" ? "Stats Ribbon" : tab === "RoleManagement" ? "Role Manager" : tab === "Navbar" ? "Navbar Config" : tab === "Footer" ? "Footer Config" : tab === "AdminProfile" ? "My Profile" : tab === "DetailedStories" ? "Detailed Stories" : tab === "SuccessStories" ? "Success Stories" : tab === "ContactInfo" ? "Contact Info Cards" : tab === "ContactSubmissions" ? "Contact Messages" : tab === "WhatsAppCommunity" ? "WhatsApp Community" : tab === "Beneficiaries" ? "Beneficiaries (Underprivileged)" : tab}
+                  {tab === "Users" ? "👤 Registered Users" : tab === "SpotlightCampaign" ? "⭐ Spotlight Campaign" : tab === "FestivalPopup" ? "🎉 Festival Popup" : tab === "DonateMonthly" ? "💳 Donate Monthly" : tab === "Reminders" ? "🎂 Birthdays & Renewals" : tab === "StarVolunteers" ? "Star Volunteers" : tab === "Applications" ? "Volunteer Apps" : tab === "PageMedia" ? "Page Banners & Media" : tab === "PageTexts" ? "Page Layout Texts" : tab === "StatsCards" ? "Stats Ribbon" : tab === "RoleManagement" ? "Role Manager" : tab === "Navbar" ? "Navbar Config" : tab === "Footer" ? "Footer Config" : tab === "AdminProfile" ? "My Profile" : tab === "DetailedStories" ? "Detailed Stories" : tab === "SuccessStories" ? "Success Stories" : tab === "ContactInfo" ? "Contact Info Cards" : tab === "ContactSubmissions" ? "Contact Messages" : tab === "WhatsAppCommunity" ? "WhatsApp Community" : tab === "Beneficiaries" ? "Beneficiaries (Underprivileged)" : tab}
                 </span>
                 {pendingCount > 0 && (
                   <span className="px-2 py-0.5 bg-red-650 text-white text-[9px] font-black rounded-full shadow-sm animate-bounce">
                     {pendingCount}
+                  </span>
+                )}
+                {tab === "Users" && usersCount > 0 && (
+                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-black rounded-full">
+                    {usersCount}
                   </span>
                 )}
               </button>
@@ -2787,6 +2807,183 @@ export default function AdminPanelPage() {
                   })()}
                 </tbody>
               </table>
+            )}
+
+            {activeTab === "Users" && (
+              <div className="p-6 space-y-6">
+                {/* Search & Action Toolbar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-950/60 p-4 rounded-2xl border border-zinc-850">
+                  <div className="flex-1 max-w-md relative">
+                    <input
+                      type="text"
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      placeholder="Search users by name, email, phone..."
+                      className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                    />
+                    <svg className="h-4 w-4 text-zinc-500 absolute left-3.5 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    {userSearchQuery && (
+                      <button
+                        onClick={() => setUserSearchQuery("")}
+                        className="absolute right-3 top-2.5 text-zinc-500 hover:text-white text-xs cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="px-3.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-300">
+                      Total: <span className="text-[#F3A61E] font-black">{usersList.filter(u => u.role === "user" || !u.role).length}</span> Users
+                    </span>
+                    <button
+                      onClick={openAddModal}
+                      className="px-4 py-2 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 border border-emerald-700/50"
+                    >
+                      <span>+</span> Add User
+                    </button>
+                  </div>
+                </div>
+
+                {/* Users Table */}
+                <div className="overflow-x-auto border border-zinc-850 rounded-2xl">
+                  <table className="min-w-full divide-y divide-zinc-800 text-left">
+                    <thead>
+                      <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider">
+                        <th className="px-6 py-4">User</th>
+                        <th className="px-6 py-4">Contact</th>
+                        <th className="px-6 py-4">DOB & Gender</th>
+                        <th className="px-6 py-4">Password</th>
+                        <th className="px-6 py-4">Role</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-900 text-left">
+                      {(() => {
+                        const filtered = usersList.filter((u) => {
+                          const isGeneral = !u.role || u.role === "user";
+                          if (!isGeneral) return false;
+                          if (!userSearchQuery.trim()) return true;
+                          const q = userSearchQuery.toLowerCase();
+                          return (
+                            (u.name && u.name.toLowerCase().includes(q)) ||
+                            (u.email && u.email.toLowerCase().includes(q)) ||
+                            (u.phone && u.phone.toLowerCase().includes(q))
+                          );
+                        });
+
+                        if (filtered.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 text-sm">
+                                {userSearchQuery ? `No users matching "${userSearchQuery}"` : "No registered users found. Click '+ Add User' to register one."}
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        return filtered.map((u) => {
+                          let isBday = false;
+                          if (u.dob) {
+                            try {
+                              const bDate = new Date(u.dob);
+                              const today = new Date();
+                              if (bDate.getDate() === today.getDate() && bDate.getMonth() === today.getMonth()) {
+                                isBday = true;
+                              }
+                            } catch { }
+                          }
+
+                          return (
+                            <tr key={u.id} className="hover:bg-zinc-900/30 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={u.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"}
+                                    alt={u.name}
+                                    className="h-10 w-10 object-cover rounded-full border border-zinc-800 shadow-sm shrink-0"
+                                  />
+                                  <div>
+                                    <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                      {u.name || "Unnamed User"}
+                                      {isBday && (
+                                        <span className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-full text-[9px] font-black animate-pulse">
+                                          🎂 Birthday Today!
+                                        </span>
+                                      )}
+                                    </p>
+                                    <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                                      ID: {u.id?.toString().slice(0, 10) || "user"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="px-6 py-4">
+                                <p className="text-xs text-zinc-300 font-medium">{u.email}</p>
+                                {u.phone ? (
+                                  <button
+                                    onClick={() => window.open(`https://wa.me/${u.phone.replace(/[^0-9]/g, "")}`, "_blank")}
+                                    className="text-[11px] text-emerald-450 hover:underline font-bold mt-1 inline-flex items-center gap-1 cursor-pointer"
+                                  >
+                                    📞 {u.phone}
+                                  </button>
+                                ) : (
+                                  <p className="text-[10px] text-zinc-600 italic mt-0.5">No phone added</p>
+                                )}
+                              </td>
+
+                              <td className="px-6 py-4">
+                                <div className="space-y-1">
+                                  <p className="text-xs font-semibold text-zinc-300 flex items-center gap-1">
+                                    🎂 {u.dob || "Not Provided"}
+                                  </p>
+                                  <span className="inline-block px-2 py-0.5 rounded bg-zinc-950 border border-zinc-850 text-zinc-400 text-[10px] font-bold">
+                                    {u.gender || "Not specified"}
+                                  </span>
+                                </div>
+                              </td>
+
+                              <td className="px-6 py-4">
+                                <span className="font-mono text-xs bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-850 text-zinc-400 select-all">
+                                  {u.password || "••••••••"}
+                                </span>
+                              </td>
+
+                              <td className="px-6 py-4">
+                                <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                                  👤 User
+                                </span>
+                              </td>
+
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => openEditModal(u)}
+                                    className="px-3.5 py-1.5 border border-zinc-700 hover:border-zinc-500 rounded-xl text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer flex items-center gap-1"
+                                    title="Edit User Info"
+                                  >
+                                    ✏️ Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(u.id)}
+                                    className="px-3.5 py-1.5 bg-red-650/15 hover:bg-red-650/30 border border-red-900/40 rounded-xl text-xs font-bold text-red-400 transition-all cursor-pointer flex items-center gap-1"
+                                    title="Delete User"
+                                  >
+                                    🗑️ Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
 
             {activeTab === "Applications" && (
@@ -5231,8 +5428,8 @@ export default function AdminPanelPage() {
             >
               <h2 className="text-xl sm:text-2xl font-black text-white mb-6">
                 {editingItem
-                  ? `Edit ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}`
-                  : `Add ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}`}
+                  ? `Edit ${activeTab === "Users" ? "User Account" : activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}`
+                  : `Add ${activeTab === "Users" ? "User Account" : activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}`}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4 text-left">
@@ -6366,7 +6563,7 @@ export default function AdminPanelPage() {
                   </div>
                 )}
 
-                {activeTab === "RoleManagement" && (
+                {(activeTab === "RoleManagement" || activeTab === "Users") && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -6385,11 +6582,17 @@ export default function AdminPanelPage() {
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Account Role</label>
-                        <select value={formRole} onChange={(e) => setFormRole(e.target.value)} className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none">
-                          <option value="user">User</option>
-                          <option value="volunteer">Volunteer</option>
-                          <option value="admin">Admin</option>
-                        </select>
+                        {activeTab === "Users" ? (
+                          <div className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-emerald-400 font-bold flex items-center gap-2">
+                            <span>👤</span> User
+                          </div>
+                        ) : (
+                          <select value={formRole} onChange={(e) => setFormRole(e.target.value)} className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none">
+                            <option value="user">User</option>
+                            <option value="volunteer">Volunteer</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        )}
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -6407,8 +6610,24 @@ export default function AdminPanelPage() {
                       </div>
                     </div>
                     <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Profile Photo (URL or Upload)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={formProfilePhoto}
+                          onChange={(e) => setFormProfilePhoto(e.target.value)}
+                          placeholder="Image URL or upload"
+                          className="flex-1 px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none"
+                        />
+                        <input type="file" ref={imageInputRef} accept="image/*" onChange={(e) => handleFileUpload(e, setFormProfilePhoto)} className="hidden" />
+                        <button type="button" onClick={() => imageInputRef.current?.click()} className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 border border-zinc-800 text-xs font-bold rounded-xl text-zinc-300 transition-all cursor-pointer">
+                          Upload
+                        </button>
+                      </div>
+                    </div>
+                    <div>
                       <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Account Password</label>
-                      <input type="text" required value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="Enter password (plain text)" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" />
+                      <input type="text" required={!editingItem} value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="Enter password (plain text)" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" />
                     </div>
                   </>
                 )}

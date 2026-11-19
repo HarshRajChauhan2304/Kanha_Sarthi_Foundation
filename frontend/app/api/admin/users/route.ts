@@ -122,6 +122,8 @@ export async function GET() {
           phone: u.phone || "",
           dob: u.dob || "",
           gender: u.gender || "",
+          avatar: u.avatar || "",
+          created_at: u.created_at || "",
           role: "user",
           password: u.password || ""
         });
@@ -139,6 +141,8 @@ export async function GET() {
           phone: v.phone || "",
           dob: v.dob || "",
           gender: v.gender || "",
+          avatar: v.profile_photo || "",
+          created_at: v.created_at || "",
           role: "volunteer",
           password: v.password || ""
         });
@@ -174,7 +178,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, email, phone, password, role, dob, gender } = body;
+    const { username, email, phone, password, role, dob, gender, avatar } = body;
 
     if (!username || !email || !password || !role) {
       return NextResponse.json({ success: false, error: "Username, email, password, and role are required." }, { status: 400 });
@@ -238,14 +242,14 @@ export async function POST(request: Request) {
       localVols.push({ id: newId, ...payload });
       writeLocalJSON('volunteer_applications.json', localVols);
     } else {
-      const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" };
+      const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "", avatar: avatar || "", created_at: new Date().toISOString() };
       try {
         const { data, error } = await supabaseAdmin.from('users').insert([payload]).select().single();
         if (!error && data) {
           dbSuccess = true;
           newId = data.id;
         } else {
-          const { data: d2, error: e2 } = await supabaseAdmin.from('users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
+          const { data: d2, error: e2 } = await supabaseAdmin.from('users').insert([{ username, email: cleanEmail, phone: phone || "", password, avatar: avatar || "" }]).select().single();
           if (!e2 && d2) {
             dbSuccess = true;
             newId = d2.id;
@@ -272,7 +276,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, username, email, phone, password, role, dob, gender } = body;
+    const { id, username, email, phone, password, role, dob, gender, avatar } = body;
 
     if (!id || !username || !email || !password || !role) {
       return NextResponse.json({ success: false, error: "ID, username, email, password, and role are required." }, { status: 400 });
@@ -409,13 +413,13 @@ export async function PUT(request: Request) {
         }
       } else {
         try {
-          const { error } = await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('id', cleanId);
+          const { error } = await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "", avatar: avatar !== undefined ? avatar : "" }).eq('id', cleanId);
           if (error) {
-            await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password }).eq('id', cleanId);
+            await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password, avatar: avatar !== undefined ? avatar : "" }).eq('id', cleanId);
           }
         } catch (e) {}
         let local = readLocalJSON('users.json');
-        local = local.map(u => String(u.id) === cleanId ? { ...u, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (u.dob || ""), gender: gender !== undefined ? gender : (u.gender || "") } : u);
+        local = local.map(u => String(u.id) === cleanId ? { ...u, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (u.dob || ""), gender: gender !== undefined ? gender : (u.gender || ""), avatar: avatar !== undefined ? avatar : (u.avatar || "") } : u);
         writeLocalJSON('users.json', local);
       }
     }
