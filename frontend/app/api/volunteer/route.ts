@@ -151,8 +151,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, phone, city, motivation, skills, password, profile_photo, gender, dob, terms_accepted, aadhar_number, aadhar_upload_url, internship_duration, certificate_url, certificate_issue_date, internship_start_date, internship_end_date, certificate_text, certificate_signature_name, certificate_signature_title, certificate_seal_text, certificate_signature_image_url, certificate_seal_image_url } = body;
 
-    if (!name || !email || !phone || !city || !skills || skills.length === 0) {
-      return NextResponse.json({ success: false, error: "Please fill all required profile fields." }, { status: 400 });
+    if (!name || !email || !phone || !city || !dob || !skills || skills.length === 0) {
+      return NextResponse.json({ success: false, error: "Please fill all required profile fields including Date of Birth." }, { status: 400 });
     }
 
     const result = await resilientPost({
@@ -201,7 +201,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, email, phone, city, motivation, skills, status, profile_photo, gender, dob, terms_accepted, aadhar_number, aadhar_upload_url, internship_duration, certificate_url, certificate_issue_date, internship_start_date, internship_end_date, certificate_text, certificate_signature_name, certificate_signature_title, certificate_seal_text, certificate_signature_image_url, certificate_seal_image_url } = body;
+    const { id, name, email, phone, city, motivation, skills, status, password, profile_photo, gender, dob, terms_accepted, aadhar_number, aadhar_upload_url, internship_duration, certificate_url, certificate_issue_date, internship_start_date, internship_end_date, certificate_text, certificate_signature_name, certificate_signature_title, certificate_seal_text, certificate_signature_image_url, certificate_seal_image_url } = body;
 
     if (!id || !name || !email || !phone || !city) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
@@ -219,6 +219,7 @@ export async function PUT(request: Request) {
         motivation: motivation || "",
         skills: skills || [],
         status: status || "Pending",
+        ...(password && password.trim() ? { password: password.trim() } : {}),
         profile_photo: profile_photo || "",
         gender: gender || "",
         dob: dob || "",

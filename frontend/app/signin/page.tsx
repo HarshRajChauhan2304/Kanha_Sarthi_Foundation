@@ -21,6 +21,7 @@ export default function SignIn() {
   const [signupUsername, setSignupUsername] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPhone, setSignupPhone] = useState("");
+  const [signupDob, setSignupDob] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [showSignupPassword, setShowSignupPassword] = useState(false);
@@ -110,8 +111,8 @@ export default function SignIn() {
     setError("");
     setSuccessMsg("");
 
-    if (!signupUsername.trim() || !signupEmail.trim() || !signupPhone.trim() || !signupPassword) {
-      setError("Please fill in all required fields.");
+    if (!signupUsername.trim() || !signupEmail.trim() || !signupPhone.trim() || !signupDob.trim() || !signupPassword) {
+      setError("Please fill in all required fields including Date of Birth.");
       return;
     }
 
@@ -135,6 +136,7 @@ export default function SignIn() {
           username: signupUsername.trim(),
           email: signupEmail.trim().toLowerCase(),
           phone: signupPhone.trim(),
+          dob: signupDob.trim(),
           password: signupPassword,
         }),
       });
@@ -145,6 +147,7 @@ export default function SignIn() {
         createSession("user", {
           ...data.user,
           phone: signupPhone.trim(),
+          dob: data.user.dob || signupDob.trim(),
         });
         if (redirectPath && (redirectPath.startsWith("/donate") || redirectPath.startsWith("/causes"))) {
           router.push(redirectPath);
@@ -388,19 +391,34 @@ export default function SignIn() {
               </div>
             </div>
 
-            {/* Row 2: Email Address */}
-            <div>
-              <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                required
-                value={signupEmail}
-                onChange={(e) => setSignupEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full px-2.5 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
-              />
+            {/* Row 2: Email Address & Date of Birth in 2-column grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={signupEmail}
+                  onChange={(e) => setSignupEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                  Date of Birth (DOB) *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={signupDob}
+                  onChange={(e) => setSignupDob(e.target.value)}
+                  className="w-full px-2 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500"
+                />
+              </div>
             </div>
 
             {/* Row 3: Password & Confirm Password */}

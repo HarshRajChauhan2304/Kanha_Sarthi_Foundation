@@ -92,8 +92,8 @@ export async function POST(request: Request) {
     }
 
     if (action === "signup") {
-      if (!username || !email || !password) {
-        return NextResponse.json({ success: false, error: "Please fill in all required fields." }, { status: 400 });
+      if (!username || !email || !password || !dob) {
+        return NextResponse.json({ success: false, error: "Please fill in all required fields including Date of Birth." }, { status: 400 });
       }
 
       // Enforce email verification token validation
@@ -217,7 +217,7 @@ export async function POST(request: Request) {
     }
 
     if (action === "update") {
-      const { currentEmail, username: newUsername, email: newEmail, phone: newPhone, avatar: newAvatar, gender: newGender, bio: newBio, dob: newDob } = body;
+      const { currentEmail, username: newUsername, email: newEmail, phone: newPhone, avatar: newAvatar, gender: newGender, bio: newBio, dob: newDob, password: newPassword } = body;
       if (!currentEmail) {
         return NextResponse.json({ success: false, error: "Missing currentEmail identifier." }, { status: 400 });
       }
@@ -236,6 +236,10 @@ export async function POST(request: Request) {
           bio: newBio,
           dob: newDob
         };
+
+        if (newPassword && newPassword.trim()) {
+          updatePayload.password = newPassword.trim();
+        }
 
         let { data, error } = await supabaseAdmin
           .from('users')
@@ -278,7 +282,8 @@ export async function POST(request: Request) {
             avatar: newAvatar !== undefined ? newAvatar : u.avatar,
             gender: newGender !== undefined ? newGender : u.gender,
             bio: newBio !== undefined ? newBio : u.bio,
-            dob: newDob !== undefined ? newDob : u.dob
+            dob: newDob !== undefined ? newDob : u.dob,
+            password: (newPassword && newPassword.trim()) ? newPassword.trim() : u.password
           };
         }
         return u;

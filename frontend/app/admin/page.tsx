@@ -70,6 +70,8 @@ interface VolunteerApplication {
   status?: string;
   profile_photo?: string;
   gender?: string;
+  dob?: string;
+  password?: string;
   aadhar_number?: string;
   aadhar_upload_url?: string;
   internship_duration?: string;
@@ -372,6 +374,7 @@ export default function AdminPanelPage() {
   const [formSkills, setFormSkills] = useState<string[]>([]);
   const [formStatus, setFormStatus] = useState("Pending");
   const [formGender, setFormGender] = useState("");
+  const [formDob, setFormDob] = useState("");
   const [formProfilePhoto, setFormProfilePhoto] = useState("");
   const [formTransactionDate, setFormTransactionDate] = useState("");
   const [formPassword, setFormPassword] = useState("");
@@ -1220,6 +1223,8 @@ export default function AdminPanelPage() {
       setFormSkills(item.skills || []);
       setFormStatus(item.status || "Pending");
       setFormGender(item.gender || "");
+      setFormDob(item.dob || "");
+      setFormPassword(item.password || "");
       setFormProfilePhoto(item.profile_photo || "");
       setFormAadharNumber(item.aadhar_number || "");
       setFormAadharUploadUrl(item.aadhar_upload_url || "");
@@ -1232,6 +1237,8 @@ export default function AdminPanelPage() {
       setFormTitle(item.name || "");
       setFormEmail(item.email || "");
       setFormPhone(item.phone || "");
+      setFormDob(item.dob || "");
+      setFormGender(item.gender || "Male");
       setFormPassword(item.password || "");
       setFormRole(item.role || "user");
     } else if (activeTab === "Tasks") {
@@ -1427,6 +1434,8 @@ export default function AdminPanelPage() {
         skills: formSkills, 
         status: formStatus,
         gender: formGender,
+        dob: formDob,
+        ...(formPassword && formPassword.trim() ? { password: formPassword.trim() } : {}),
         profile_photo: formProfilePhoto,
         aadhar_number: formAadharNumber,
         aadhar_upload_url: formAadharUploadUrl,
@@ -1520,6 +1529,8 @@ export default function AdminPanelPage() {
         username: formTitle,
         email: formEmail,
         phone: formPhone,
+        dob: formDob,
+        gender: formGender,
         password: formPassword,
         role: formRole
       };
@@ -2810,6 +2821,11 @@ export default function AdminPanelPage() {
                             <p className="text-[10px] text-emerald-450 font-black cursor-pointer inline-flex items-center gap-1" onClick={() => window.open(`https://wa.me/${app.phone.replace(/[^0-9]/g, "")}`, "_blank")}>
                               📞 {app.phone}
                             </p>
+                            {app.dob && (
+                              <p className="text-[9px] text-zinc-400 font-medium">
+                                🎂 DOB: {app.dob}
+                              </p>
+                            )}
                             {app.aadhar_number && (
                               <p className="text-[9px] text-zinc-500 font-bold">
                                 🪪 Aadhaar: {app.aadhar_number}
@@ -3163,6 +3179,7 @@ export default function AdminPanelPage() {
                           <th className="px-6 py-4">Name / Username</th>
                           <th className="px-6 py-4">Email Address</th>
                           <th className="px-6 py-4">Phone</th>
+                          <th className="px-6 py-4">DOB / Gender</th>
                           <th className="px-6 py-4">Password</th>
                           <th className="px-6 py-4">Role Designation</th>
                           <th className="px-6 py-4 text-right">Actions</th>
@@ -3179,6 +3196,10 @@ export default function AdminPanelPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <p className="text-xs text-zinc-400">{user.phone || "N/A"}</p>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <p className="text-xs text-zinc-300">🎂 {user.dob || "N/A"}</p>
+                              {user.gender && <p className="text-[10px] text-zinc-500 font-bold">{user.gender}</p>}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <p className="text-xs text-zinc-400">{user.password || "••••••••"}</p>
@@ -3220,7 +3241,7 @@ export default function AdminPanelPage() {
                         ))}
                         {usersList.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="py-8 text-center text-xs text-zinc-500 italic">No user accounts found.</td>
+                            <td colSpan={7} className="py-8 text-center text-xs text-zinc-500 italic">No user accounts found.</td>
                           </tr>
                         )}
                       </tbody>
@@ -5568,7 +5589,11 @@ export default function AdminPanelPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Date of Birth (DOB) *</label>
+                        <input type="date" required value={formDob} onChange={(e) => setFormDob(e.target.value)} className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none [color-scheme:dark]" />
+                      </div>
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Gender</label>
                         <select value={formGender} onChange={(e) => setFormGender(e.target.value)} className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white text-zinc-300">
@@ -5585,6 +5610,11 @@ export default function AdminPanelPage() {
                           <option value="Approved">Approved</option>
                         </select>
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Volunteer Password</label>
+                      <input type="text" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="Volunteer login password" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" />
                     </div>
 
                     {/* Profile Photo Edit Section inside Applications */}
@@ -6367,6 +6397,20 @@ export default function AdminPanelPage() {
                           <option value="user">User</option>
                           <option value="volunteer">Volunteer</option>
                           <option value="admin">Admin</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Date of Birth (DOB)</label>
+                        <input type="date" value={formDob} onChange={(e) => setFormDob(e.target.value)} className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none [color-scheme:dark]" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Gender</label>
+                        <select value={formGender} onChange={(e) => setFormGender(e.target.value)} className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none">
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
                         </select>
                       </div>
                     </div>

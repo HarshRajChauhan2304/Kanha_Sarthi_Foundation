@@ -93,6 +93,8 @@ export async function GET() {
           name: u.username || u.name || "User",
           email: u.email,
           phone: u.phone || "",
+          dob: u.dob || "",
+          gender: u.gender || "",
           role: "user",
           password: u.password || ""
         });
@@ -108,6 +110,8 @@ export async function GET() {
           name: v.name || "Volunteer",
           email: v.email,
           phone: v.phone || "",
+          dob: v.dob || "",
+          gender: v.gender || "",
           role: "volunteer",
           password: v.password || ""
         });
@@ -123,6 +127,8 @@ export async function GET() {
           name: a.username || "Admin",
           email: a.email,
           phone: a.phone || "",
+          dob: a.dob || "",
+          gender: a.gender || "",
           role: "admin",
           password: a.password || ""
         });
@@ -141,7 +147,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, email, phone, password, role } = body;
+    const { username, email, phone, password, role, dob, gender } = body;
 
     if (!username || !email || !password || !role) {
       return NextResponse.json({ success: false, error: "Username, email, password, and role are required." }, { status: 400 });
@@ -168,9 +174,9 @@ export async function POST(request: Request) {
 
     // 2. Insert into the target role
     if (targetRole === "admin") {
-      const payload = { username, email: cleanEmail, phone: phone || "", password };
+      const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" };
       try {
-        const { data, error } = await supabaseAdmin.from('admin_users').insert([payload]).select().single();
+        const { data, error } = await supabaseAdmin.from('admin_users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
         if (!error && data) {
           dbSuccess = true;
           newId = data.id;
@@ -189,7 +195,9 @@ export async function POST(request: Request) {
         motivation: "Created/Approved by Admin",
         skills: ["Food Distribution & Relief Work"],
         status: "Approved",
-        password
+        password,
+        dob: dob || "",
+        gender: gender || ""
       };
       try {
         const { data, error } = await supabaseAdmin.from('volunteer_applications').insert([payload]).select().single();
@@ -203,12 +211,18 @@ export async function POST(request: Request) {
       localVols.push({ id: newId, ...payload });
       writeLocalJSON('volunteer_applications.json', localVols);
     } else {
-      const payload = { username, email: cleanEmail, phone: phone || "", password };
+      const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" };
       try {
         const { data, error } = await supabaseAdmin.from('users').insert([payload]).select().single();
         if (!error && data) {
           dbSuccess = true;
           newId = data.id;
+        } else {
+          const { data: d2, error: e2 } = await supabaseAdmin.from('users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
+          if (!e2 && d2) {
+            dbSuccess = true;
+            newId = d2.id;
+          }
         }
       } catch (e) {
         console.warn("DB User insert failed:", e);
@@ -231,7 +245,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, username, email, phone, password, role } = body;
+    const { id, username, email, phone, password, role, dob, gender } = body;
 
     if (!id || !username || !email || !password || !role) {
       return NextResponse.json({ success: false, error: "ID, username, email, password, and role are required." }, { status: 400 });
@@ -281,9 +295,9 @@ export async function PUT(request: Request) {
       let dbSuccess = false;
       let newId: any = Date.now();
       if (targetRole === "admin") {
-        const payload = { username, email: cleanEmail, phone: phone || "", password };
+        const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" };
         try {
-          const { data } = await supabaseAdmin.from('admin_users').insert([payload]).select().single();
+          const { data } = await supabaseAdmin.from('admin_users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
           if (data) { dbSuccess = true; newId = data.id; }
         } catch (e) {}
         const local = readLocalJSON('admin_users.json');
@@ -298,7 +312,9 @@ export async function PUT(request: Request) {
           motivation: "Role updated by Admin",
           skills: ["Food Distribution & Relief Work"],
           status: "Approved",
-          password
+          password,
+          dob: dob || "",
+          gender: gender || ""
         };
         try {
           const { data } = await supabaseAdmin.from('volunteer_applications').insert([payload]).select().single();
@@ -320,10 +336,14 @@ export async function PUT(request: Request) {
           console.warn("Sync to highlights failed in admin users POST route:", e);
         }
       } else {
-        const payload = { username, email: cleanEmail, phone: phone || "", password };
+        const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" };
         try {
-          const { data } = await supabaseAdmin.from('users').insert([payload]).select().single();
-          if (data) { dbSuccess = true; newId = data.id; }
+          const { data, error } = await supabaseAdmin.from('users').insert([payload]).select().single();
+          if (!error && data) { dbSuccess = true; newId = data.id; }
+          else {
+            const { data: d2 } = await supabaseAdmin.from('users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
+            if (d2) { dbSuccess = true; newId = d2.id; }
+          }
         } catch (e) {}
         const local = readLocalJSON('users.json');
         local.push({ id: newId, ...payload });
@@ -336,14 +356,14 @@ export async function PUT(request: Request) {
           await supabaseAdmin.from('admin_users').update({ username, email: cleanEmail, phone: phone || "", password }).eq('id', cleanId);
         } catch (e) {}
         let local = readLocalJSON('admin_users.json');
-        local = local.map(a => String(a.id) === cleanId ? { ...a, username, email: cleanEmail, phone: phone || "", password } : a);
+        local = local.map(a => String(a.id) === cleanId ? { ...a, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (a.dob || ""), gender: gender !== undefined ? gender : (a.gender || "") } : a);
         writeLocalJSON('admin_users.json', local);
       } else if (targetRole === "volunteer") {
         try {
-          await supabaseAdmin.from('volunteer_applications').update({ name: username, email: cleanEmail, phone: phone || "", password }).eq('id', cleanId);
+          await supabaseAdmin.from('volunteer_applications').update({ name: username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('id', cleanId);
         } catch (e) {}
         let local = readLocalJSON('volunteer_applications.json');
-        local = local.map(v => String(v.id) === cleanId ? { ...v, name: username, email: cleanEmail, phone: phone || "", password } : v);
+        local = local.map(v => String(v.id) === cleanId ? { ...v, name: username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (v.dob || ""), gender: gender !== undefined ? gender : (v.gender || "") } : v);
         writeLocalJSON('volunteer_applications.json', local);
 
         // Sync updated volunteer to about highlights page
@@ -362,10 +382,13 @@ export async function PUT(request: Request) {
         }
       } else {
         try {
-          await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password }).eq('id', cleanId);
+          const { error } = await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('id', cleanId);
+          if (error) {
+            await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password }).eq('id', cleanId);
+          }
         } catch (e) {}
         let local = readLocalJSON('users.json');
-        local = local.map(u => String(u.id) === cleanId ? { ...u, username, email: cleanEmail, phone: phone || "", password } : u);
+        local = local.map(u => String(u.id) === cleanId ? { ...u, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (u.dob || ""), gender: gender !== undefined ? gender : (u.gender || "") } : u);
         writeLocalJSON('users.json', local);
       }
     }

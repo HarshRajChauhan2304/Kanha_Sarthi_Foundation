@@ -50,6 +50,7 @@ export default function UserProfilePage() {
   const [editGender, setEditGender] = useState("Male");
   const [editDob, setEditDob] = useState("");
   const [editBio, setEditBio] = useState("");
+  const [editPassword, setEditPassword] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -302,7 +303,8 @@ export default function UserProfilePage() {
           avatar: avatar,
           gender: editGender,
           dob: editDob,
-          bio: editBio
+          bio: editBio,
+          password: editPassword.trim() || undefined
         })
       });
       const data = await res.json();
@@ -597,9 +599,10 @@ export default function UserProfilePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Date of Birth (DOB)</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Date of Birth (DOB) *</label>
                     <input
                       type="date"
+                      required
                       value={editDob}
                       onChange={(e) => setEditDob(e.target.value)}
                       className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0c1510] border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none"
@@ -616,6 +619,16 @@ export default function UserProfilePage() {
                       <option value="Female">Female</option>
                       <option value="Other">Other</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">New Password (optional)</label>
+                    <input
+                      type="password"
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      placeholder="Leave blank to keep unchanged"
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0c1510] border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none"
+                    />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Short Bio</label>
@@ -635,7 +648,9 @@ export default function UserProfilePage() {
                         setEditEmail(email);
                         setEditPhone(phone);
                         setEditGender(gender);
+                        setEditDob(dob);
                         setEditBio(bio);
+                        setEditPassword("");
                       }}
                       className="flex-1 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-bold text-gray-500 dark:text-zinc-300 rounded-xl cursor-pointer"
                     >

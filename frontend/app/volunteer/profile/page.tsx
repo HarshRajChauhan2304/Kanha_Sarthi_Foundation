@@ -20,6 +20,7 @@ interface Volunteer {
   profile_photo?: string;
   gender?: string;
   dob?: string;
+  password?: string;
   terms_accepted?: boolean;
   aadhar_number?: string;
   aadhar_upload_url?: string;
@@ -88,6 +89,8 @@ export default function VolunteerProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [formName, setFormName] = useState("");
   const [formEmail, setFormEmail] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formPassword, setFormPassword] = useState("");
   const [formCity, setFormCity] = useState("");
   const [formMotivation, setFormMotivation] = useState("");
   const [formSkills, setFormSkills] = useState<string[]>([]);
@@ -378,6 +381,8 @@ export default function VolunteerProfilePage() {
     if (!volunteer) return;
     setFormName(volunteer.name);
     setFormEmail(volunteer.email);
+    setFormPhone(volunteer.phone || "");
+    setFormPassword("");
     setFormCity(volunteer.city);
     setFormMotivation(volunteer.motivation || "");
     setFormSkills(volunteer.skills || []);
@@ -407,7 +412,7 @@ export default function VolunteerProfilePage() {
           id: volunteer.id,
           name: formName,
           email: formEmail,
-          phone: volunteer.phone, // Phone acts as immutable unique key
+          phone: formPhone || volunteer.phone,
           city: formCity,
           motivation: formMotivation,
           skills: formSkills,
@@ -415,6 +420,7 @@ export default function VolunteerProfilePage() {
           profile_photo: formProfilePhoto,
           gender: formGender,
           dob: formDob,
+          ...(formPassword && formPassword.trim() ? { password: formPassword.trim() } : {}),
           aadhar_number: formAadharNumber,
           aadhar_upload_url: formAadharUploadUrl
         })
@@ -1008,12 +1014,14 @@ export default function VolunteerProfilePage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Phone Number (WhatsApp)</label>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Phone Number (WhatsApp) *</label>
                     <input
-                      type="text"
-                      disabled
-                      value={volunteer?.phone}
-                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-550 focus:outline-none disabled:opacity-60 cursor-not-allowed font-bold"
+                      type="tel"
+                      required
+                      value={formPhone}
+                      onChange={(e) => setFormPhone(e.target.value)}
+                      placeholder="+91 9876543210"
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1028,20 +1036,44 @@ export default function VolunteerProfilePage() {
                   </div>
                 </div>
 
-                {/* Gender select */}
+                {/* DOB & Gender */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Date of Birth (DOB) *</label>
+                    <input
+                      type="date"
+                      required
+                      value={formDob}
+                      onChange={(e) => setFormDob(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none [color-scheme:dark]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Gender *</label>
+                    <select
+                      required
+                      value={formGender}
+                      onChange={(e) => setFormGender(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-300"
+                    >
+                      <option value="" disabled>Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Change Password */}
                 <div>
-                  <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Gender</label>
-                  <select
-                    required
-                    value={formGender}
-                    onChange={(e) => setFormGender(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-300"
-                  >
-                    <option value="" disabled>Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">New Password (Optional)</label>
+                  <input
+                    type="password"
+                    value={formPassword}
+                    onChange={(e) => setFormPassword(e.target.value)}
+                    placeholder="Leave blank to keep existing password"
+                    className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
+                  />
                 </div>
 
                 {/* Aadhaar Card Number and Upload */}
