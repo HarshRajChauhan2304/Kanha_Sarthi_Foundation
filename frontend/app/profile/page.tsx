@@ -116,8 +116,18 @@ export default function UserProfilePage() {
       if (dobMMDD === todayMMDD) {
         setIsBirthdayToday(true);
         setShowBirthdayModal(true);
-        // Call cron API to process notifications
-        fetch('/api/cron/birthday', { method: 'POST' }).catch(() => {});
+        // Call cron API with user details to sync and notify
+        fetch('/api/cron/birthday', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: storedName || name,
+            email: storedEmail || email,
+            phone: storedPhone || phone,
+            dob: storedDob,
+            type: 'User'
+          })
+        }).catch(() => {});
       }
     }
 

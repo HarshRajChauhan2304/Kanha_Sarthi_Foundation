@@ -41,7 +41,7 @@ export async function GET() {
         } catch (e) {}
 
         // Merge from local fallback if available to ensure schema additions like certificate exist
-        const localMatch = localApps.find((la: any) => String(la.id) === String(item.id));
+        const localMatch = localApps.find((la: any) => String(la.id) === String(item.id) || (la.email && item.email && la.email.trim().toLowerCase() === item.email.trim().toLowerCase()));
         if (localMatch) {
           newItem = { ...newItem, ...localMatch };
         }

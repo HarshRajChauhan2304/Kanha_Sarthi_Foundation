@@ -145,22 +145,93 @@ WhatsApp Direct Link: ${waLink}
   return { phone, cleanPhone, waLink, text: messageText };
 }
 
-export async function GET() {
-  return handleBirthdayCheck();
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const targetDate = url.searchParams.get('date');
+  return handleBirthdayCheck(null, targetDate);
 }
 
-export async function POST() {
-  return handleBirthdayCheck();
-}
-
-async function handleBirthdayCheck() {
+export async function POST(request: Request) {
+  let body: any = null;
   try {
-    const today = new Date();
-    const todayMMDD = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    body = await request.json();
+  } catch (e) {}
+  return handleBirthdayCheck(body);
+}
+
+async function handleBirthdayCheck(postBody?: any, customDate?: string | null) {
+  try {
+    // 1. Timezone-aware date calculation: Indian Standard Time (Asia/Kolkata)
+    const istDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // e.g. "2026-11-20"
+    const istParts = istDateStr.split('-');
+    const istMMDD = `${istParts[1].padStart(2, '0')}-${istParts[2].padStart(2, '0')}`;
+
+    const localDate = new Date();
+    const localMMDD = `${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+
+    const targetMMDD = customDate ? getMonthDay(customDate) : null;
+
+    const isMatch = (dateStr: string | null | undefined): boolean => {
+      const mmdd = getMonthDay(dateStr);
+      if (!mmdd) return false;
+      if (targetMMDD) return mmdd === targetMMDD;
+      return mmdd === istMMDD || mmdd === localMMDD;
+    };
+
+    // If POST body has user/volunteer info with DOB, sync it into local JSON fallback
+    if (postBody && postBody.email && postBody.dob) {
+      const cleanEmail = postBody.email.trim().toLowerCase();
+      try {
+        if (postBody.type === 'Volunteer') {
+          const volJsonPath = getFallbackPath('volunteer_applications.json');
+          let localVols: any[] = [];
+          if (fs.existsSync(volJsonPath)) {
+            localVols = JSON.parse(fs.readFileSync(volJsonPath, 'utf-8'));
+          }
+          const vIdx = localVols.findIndex((v: any) => v.email?.trim().toLowerCase() === cleanEmail);
+          if (vIdx !== -1) {
+            localVols[vIdx].dob = postBody.dob;
+            if (postBody.phone) localVols[vIdx].phone = postBody.phone;
+          } else {
+            localVols.push({
+              id: Date.now(),
+              name: postBody.name || cleanEmail.split('@')[0],
+              email: cleanEmail,
+              phone: postBody.phone || '',
+              dob: postBody.dob,
+              status: 'Approved'
+            });
+          }
+          fs.writeFileSync(volJsonPath, JSON.stringify(localVols, null, 2), 'utf-8');
+        } else {
+          const usersJsonPath = getFallbackPath('users.json');
+          let localUsers: any[] = [];
+          if (fs.existsSync(usersJsonPath)) {
+            localUsers = JSON.parse(fs.readFileSync(usersJsonPath, 'utf-8'));
+          }
+          const uIdx = localUsers.findIndex((u: any) => u.email?.trim().toLowerCase() === cleanEmail);
+          if (uIdx !== -1) {
+            localUsers[uIdx].dob = postBody.dob;
+            if (postBody.phone) localUsers[uIdx].phone = postBody.phone;
+          } else {
+            localUsers.push({
+              id: Date.now(),
+              username: postBody.name || cleanEmail.split('@')[0],
+              email: cleanEmail,
+              phone: postBody.phone || '',
+              dob: postBody.dob
+            });
+          }
+          fs.writeFileSync(usersJsonPath, JSON.stringify(localUsers, null, 2), 'utf-8');
+        }
+      } catch (err) {
+        console.warn("Failed to sync postBody dob into fallback:", err);
+      }
+    }
 
     const birthdayRecords: Array<{ name: string; email: string; phone: string; type: string; dob: string }> = [];
 
-    // 1. Check Users (Supabase + Local JSON)
+    // 1. Check Users (Supabase + Local JSON with deep fallback merging)
     let users: any[] = [];
     try {
       const { data } = await supabaseAdmin.from('users').select('*');
@@ -172,9 +243,13 @@ async function handleBirthdayCheck() {
       if (fs.existsSync(usersJsonPath)) {
         const localUsers = JSON.parse(fs.readFileSync(usersJsonPath, 'utf-8'));
         if (Array.isArray(localUsers)) {
-          // Merge local users
           localUsers.forEach((lu: any) => {
-            if (!users.some(u => u.email?.trim().toLowerCase() === lu.email?.trim().toLowerCase())) {
+            const match = users.find(u => u.email?.trim().toLowerCase() === lu.email?.trim().toLowerCase());
+            if (match) {
+              if (!match.dob && lu.dob) match.dob = lu.dob;
+              if (!match.phone && lu.phone) match.phone = lu.phone;
+              if (!match.username && lu.username) match.username = lu.username;
+            } else {
               users.push(lu);
             }
           });
@@ -183,8 +258,7 @@ async function handleBirthdayCheck() {
     } catch (e) {}
 
     users.forEach((u: any) => {
-      const uMMDD = getMonthDay(u.dob);
-      if (uMMDD === todayMMDD) {
+      if (isMatch(u.dob)) {
         birthdayRecords.push({
           name: u.username || u.name || 'Valued Member',
           email: u.email || '',
@@ -195,7 +269,7 @@ async function handleBirthdayCheck() {
       }
     });
 
-    // 2. Check Volunteers (Supabase + Local JSON)
+    // 2. Check Volunteers (Supabase + Local JSON with deep fallback merging)
     let volunteers: any[] = [];
     try {
       const { data } = await supabaseAdmin.from('volunteer_applications').select('*');
@@ -208,7 +282,12 @@ async function handleBirthdayCheck() {
         const localVols = JSON.parse(fs.readFileSync(volJsonPath, 'utf-8'));
         if (Array.isArray(localVols)) {
           localVols.forEach((lv: any) => {
-            if (!volunteers.some(v => v.email?.trim().toLowerCase() === lv.email?.trim().toLowerCase())) {
+            const match = volunteers.find(v => v.email?.trim().toLowerCase() === lv.email?.trim().toLowerCase() || String(v.id) === String(lv.id));
+            if (match) {
+              if (!match.dob && lv.dob) match.dob = lv.dob;
+              if (!match.phone && lv.phone) match.phone = lv.phone;
+              if (!match.name && lv.name) match.name = lv.name;
+            } else {
               volunteers.push(lv);
             }
           });
@@ -217,8 +296,7 @@ async function handleBirthdayCheck() {
     } catch (e) {}
 
     volunteers.forEach((v: any) => {
-      const vMMDD = getMonthDay(v.dob);
-      if (vMMDD === todayMMDD) {
+      if (isMatch(v.dob)) {
         // Avoid duplicate if registered as both user and volunteer with same email
         if (!birthdayRecords.some(r => r.email?.trim().toLowerCase() === v.email?.trim().toLowerCase())) {
           birthdayRecords.push({
@@ -231,6 +309,20 @@ async function handleBirthdayCheck() {
         }
       }
     });
+
+    // If postBody was supplied and is today's birthday, ensure it is in the list
+    if (postBody && postBody.dob && isMatch(postBody.dob) && postBody.email) {
+      const cleanEmail = postBody.email.trim().toLowerCase();
+      if (!birthdayRecords.some(r => r.email?.trim().toLowerCase() === cleanEmail)) {
+        birthdayRecords.push({
+          name: postBody.name || 'Member',
+          email: postBody.email,
+          phone: postBody.phone || '',
+          type: postBody.type || 'User',
+          dob: postBody.dob
+        });
+      }
+    }
 
     // 3. Process Notifications (Email & WhatsApp)
     const results = [];
@@ -250,6 +342,7 @@ async function handleBirthdayCheck() {
         email: record.email,
         phone: record.phone,
         type: record.type,
+        dob: record.dob,
         emailStatus: emailRes,
         whatsapp: waRes
       });
@@ -257,7 +350,7 @@ async function handleBirthdayCheck() {
 
     return NextResponse.json({
       success: true,
-      today: todayMMDD,
+      today: istMMDD,
       totalBirthdaysToday: birthdayRecords.length,
       birthdaysProcessed: results
     });

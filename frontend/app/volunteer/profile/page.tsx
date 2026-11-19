@@ -20,7 +20,6 @@ interface Volunteer {
   profile_photo?: string;
   gender?: string;
   dob?: string;
-  password?: string;
   terms_accepted?: boolean;
   aadhar_number?: string;
   aadhar_upload_url?: string;
@@ -301,7 +300,18 @@ export default function VolunteerProfilePage() {
       if (dobMMDD === todayMMDD) {
         setIsBirthdayToday(true);
         setShowBirthdayModal(true);
-        fetch('/api/cron/birthday', { method: 'POST' }).catch(() => {});
+        // Call cron API with volunteer details to sync and notify
+        fetch('/api/cron/birthday', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: volunteer.name,
+            email: volunteer.email,
+            phone: volunteer.phone,
+            dob: volunteer.dob,
+            type: 'Volunteer'
+          })
+        }).catch(() => { });
       }
     }
   }, [volunteer]);
@@ -449,7 +459,7 @@ export default function VolunteerProfilePage() {
 
   return (
     <div className={`bg-zinc-950 text-white min-h-screen px-4 flex flex-col items-center justify-center font-sans relative overflow-hidden ${isLoggedIn ? "pt-28 pb-12" : "py-24"}`}>
-      
+
       {/* Birthday Celebration Wish Modal */}
       <BirthdayWishModal
         isOpen={showBirthdayModal}
@@ -467,7 +477,7 @@ export default function VolunteerProfilePage() {
 
       {/* Login Portal Interface */}
       {!isLoggedIn ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 15, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           className="w-full max-w-md bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_0_50px_-12px_rgba(30,77,43,0.25)] relative z-10"
@@ -571,9 +581,9 @@ export default function VolunteerProfilePage() {
 
         </motion.div>
       ) : (
-        
+
         /* Dashboard Interface */
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl text-left"
@@ -647,7 +657,7 @@ export default function VolunteerProfilePage() {
 
           <AnimatePresence mode="wait">
             {!isEditing ? (
-              
+
               /* View Mode card */
               <motion.div
                 key="view"
@@ -822,15 +832,14 @@ export default function VolunteerProfilePage() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="text-sm font-bold text-white">{task.task_title}</h4>
-                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${
-                                task.status === "Completed" 
-                                  ? 'bg-emerald-950/30 text-emerald-400 border-emerald-900/35' 
-                                  : task.status === "Processing"
+                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${task.status === "Completed"
+                                ? 'bg-emerald-950/30 text-emerald-400 border-emerald-900/35'
+                                : task.status === "Processing"
                                   ? 'bg-blue-950/30 text-blue-400 border-blue-900/35'
                                   : task.status === "Started"
-                                  ? 'bg-indigo-950/30 text-indigo-400 border-indigo-900/35'
-                                  : 'bg-amber-950/30 text-amber-400 border-amber-900/35'
-                              }`}>
+                                    ? 'bg-indigo-950/30 text-indigo-400 border-indigo-900/35'
+                                    : 'bg-amber-950/30 text-amber-400 border-amber-900/35'
+                                }`}>
                                 {task.status}
                               </span>
                             </div>
@@ -942,7 +951,7 @@ export default function VolunteerProfilePage() {
                 </div>
               </motion.div>
             ) : (
-              
+
               /* Edit Mode form */
               <motion.form
                 key="edit"
@@ -1497,7 +1506,7 @@ export default function VolunteerProfilePage() {
                   </button>
                 </div>
 
-                <div 
+                <div
                   ref={certContainerRef}
                   className="w-full flex items-center justify-center overflow-hidden"
                   style={{ height: `${565 * certScale}px` }}
@@ -1587,13 +1596,13 @@ export default function VolunteerProfilePage() {
                         <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Verification ID</p>
                         <p className="text-xs font-extrabold text-[#F3A61E]">KH-VOL-CERT-{volunteer.id}</p>
                       </div>
-                      
+
                       {/* Stamp Seal */}
                       <div className="h-16 w-16 flex items-center justify-center relative select-none">
                         {volunteer.certificate_seal_image_url ? (
-                          <img 
-                            src={volunteer.certificate_seal_image_url} 
-                            className="h-16 w-16 object-contain" 
+                          <img
+                            src={volunteer.certificate_seal_image_url}
+                            className="h-16 w-16 object-contain"
                             alt="Seal"
                           />
                         ) : (
@@ -1613,9 +1622,9 @@ export default function VolunteerProfilePage() {
 
                       <div className="text-right w-44">
                         {volunteer.certificate_signature_image_url ? (
-                          <img 
-                            src={volunteer.certificate_signature_image_url} 
-                            className="h-10 max-w-full object-contain mx-auto mb-1" 
+                          <img
+                            src={volunteer.certificate_signature_image_url}
+                            className="h-10 max-w-full object-contain mx-auto mb-1"
                             alt="Signature"
                           />
                         ) : volunteer.certificate_signature_name ? (
@@ -1654,7 +1663,7 @@ export default function VolunteerProfilePage() {
                   </button>
                 </div>
 
-                <div 
+                <div
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sm:p-8 flex flex-col items-center gap-6 shadow-2xl relative"
                   style={{ backgroundColor: "#141916" }}
                 >
@@ -1719,11 +1728,11 @@ export default function VolunteerProfilePage() {
             >
               {/* Confetti decoration */}
               <div className="text-4xl mb-4 animate-bounce">🎉 🥳 🎓</div>
-              
+
               <h2 className="text-xl sm:text-2xl font-black text-white mb-3">
                 Congratulations, {volunteer.name}!
               </h2>
-              
+
               <p className="text-sm text-zinc-350 leading-relaxed mb-6">
                 Your volunteering internship certificate has been officially issued by the Kanha Sarthi Foundation! Thank you for your incredible support and dedication.
               </p>
@@ -1767,11 +1776,11 @@ export default function VolunteerProfilePage() {
             >
               {/* Confetti decoration */}
               <div className="text-4xl mb-4 animate-bounce">🏆 🌟 🥳</div>
-              
+
               <h2 className="text-xl sm:text-2xl font-black text-amber-400 mb-3">
                 Star Volunteer of the Week!
               </h2>
-              
+
               <p className="text-sm text-zinc-350 leading-relaxed mb-6">
                 Congratulations, {volunteer.name}! You have been dynamically selected as the **Star Volunteer** for the <strong className="text-white">{starRecord.week_label}</strong> in recognition of your outstanding dedication!
               </p>
@@ -1895,7 +1904,7 @@ export default function VolunteerProfilePage() {
                 <h2 className="text-3xl font-black tracking-tight text-[#F3A61E] font-serif uppercase">
                   Star Volunteer Certificate
                 </h2>
-                
+
                 <div className="space-y-1.5 mt-2">
                   <p className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">This Weekly Award is proudly presented to</p>
                   <h3 className="text-2xl font-black text-[#1E4D2B] underline decoration-[#F3A61E] decoration-2 underline-offset-8">
@@ -1929,7 +1938,7 @@ export default function VolunteerProfilePage() {
                   <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Verification ID</p>
                   <p className="text-xs font-extrabold text-[#F3A61E]">{starRecord.id}</p>
                 </div>
-                
+
                 {/* Stamp Seal */}
                 <div className="h-16 w-16 border-2 border-dashed border-[#F3A61E]/40 rounded-full flex items-center justify-center text-[#F3A61E] opacity-60 relative select-none">
                   <div className="text-[8px] font-black uppercase text-center tracking-wider">

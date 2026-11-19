@@ -73,6 +73,7 @@
     "password": "Harsh@123",
     "profile_photo": "https://cwpfhfcxpeqiihiqxqtu.supabase.co/storage/v1/object/public/uploads/1785252237754_harsh_pic_removebg_preview.png",
     "gender": "Male",
+    "dob": "2000-11-20",
     "terms_accepted": true,
     "aadhar_number": "665589796701",
     "aadhar_upload_url": "https://cwpfhfcxpeqiihiqxqtu.supabase.co/storage/v1/object/public/uploads/1785252251641_HARSH_AADHAR_CARD.pdf",
@@ -88,5 +89,24 @@
     "certificate_signature_image_url": "",
     "certificate_seal_image_url": "",
     "id": 31
+  },
+  {
+    "name": "Harsh Raj Chauhan",
+    "email": "harshrajchauhan9419@gmail.com",
+    "phone": "+917488164529",
+    "city": "Greater Noida",
+    "motivation": "Core Active Volunteer",
+    "skills": [
+      "Food Distribution & Relief Work",
+      "Children Education & Mentoring"
+    ],
+    "status": "Approved",
+    "password": "Harsh@123",
+    "profile_photo": "https://cwpfhfcxpeqiihiqxqtu.supabase.co/storage/v1/object/public/uploads/1785252237754_harsh_pic_removebg_preview.png",
+    "gender": "Male",
+    "dob": "2000-11-20",
+    "terms_accepted": true,
+    "aadhar_number": "665589796701",
+    "id": 28
   }
 ]

@@ -39,8 +39,10 @@ export async function POST() {
 
 async function handleMonthlyReminders() {
   try {
-    const today = new Date();
-    const todayDay = today.getDate(); // 1 to 31
+    const istDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    const istDay = parseInt(istDateStr.split('-')[2], 10);
+    const localDay = new Date().getDate();
+    const todayDay = istDay;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kanha-foundation.org';
 
     // 1. Fetch donations
@@ -87,8 +89,8 @@ async function handleMonthlyReminders() {
         if (match) donationDay = parseInt(match[1], 10);
       }
 
-      // If renewal day matches today's day of month
-      if (donationDay === todayDay) {
+      // If renewal day matches today's day of month (in IST or local time)
+      if (donationDay === istDay || donationDay === localDay) {
         const donorKey = `${(d.email || '').toLowerCase()}_${(d.phone || '').replace(/[^0-9]/g, '')}`;
         if (!processedKeys.has(donorKey)) {
           processedKeys.add(donorKey);

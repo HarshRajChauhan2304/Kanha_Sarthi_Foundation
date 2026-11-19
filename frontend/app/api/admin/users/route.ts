@@ -37,9 +37,18 @@ export async function GET() {
     } catch (e) {
       console.warn("DB Admin fetch failed, using fallback:", e);
     }
-    if (admins.length === 0) {
-      admins = readLocalJSON('admin_users.json');
-    }
+    const localAdmins = readLocalJSON('admin_users.json');
+    localAdmins.forEach(la => {
+      const match = admins.find(a => a.email?.trim().toLowerCase() === la.email?.trim().toLowerCase());
+      if (match) {
+        if (!match.dob && la.dob) match.dob = la.dob;
+        if (!match.gender && la.gender) match.gender = la.gender;
+        if (!match.phone && la.phone) match.phone = la.phone;
+        if (!match.password && la.password) match.password = la.password;
+      } else {
+        admins.push(la);
+      }
+    });
 
     // 2. Fetch Approved Volunteers
     let volunteers: any[] = [];
@@ -65,9 +74,18 @@ export async function GET() {
     } catch (e) {
       console.warn("DB Volunteer fetch failed, using fallback:", e);
     }
-    if (volunteers.length === 0) {
-      volunteers = readLocalJSON('volunteer_applications.json').filter(v => v.status === "Approved");
-    }
+    const localVols = readLocalJSON('volunteer_applications.json').filter(v => v.status === "Approved");
+    localVols.forEach(lv => {
+      const match = volunteers.find(v => v.email?.trim().toLowerCase() === lv.email?.trim().toLowerCase() || String(v.id) === String(lv.id));
+      if (match) {
+        if (!match.dob && lv.dob) match.dob = lv.dob;
+        if (!match.gender && lv.gender) match.gender = lv.gender;
+        if (!match.phone && lv.phone) match.phone = lv.phone;
+        if (!match.password && lv.password) match.password = lv.password;
+      } else {
+        volunteers.push(lv);
+      }
+    });
 
     // 3. Fetch Regular Users
     let users: any[] = [];
@@ -77,9 +95,18 @@ export async function GET() {
     } catch (e) {
       console.warn("DB User fetch failed, using fallback:", e);
     }
-    if (users.length === 0) {
-      users = readLocalJSON('users.json');
-    }
+    const localUsers = readLocalJSON('users.json');
+    localUsers.forEach(lu => {
+      const match = users.find(u => u.email?.trim().toLowerCase() === lu.email?.trim().toLowerCase());
+      if (match) {
+        if (!match.dob && lu.dob) match.dob = lu.dob;
+        if (!match.gender && lu.gender) match.gender = lu.gender;
+        if (!match.phone && lu.phone) match.phone = lu.phone;
+        if (!match.password && lu.password) match.password = lu.password;
+      } else {
+        users.push(lu);
+      }
+    });
 
     // Combine by unique email ID
     const registryMap = new Map<string, any>();

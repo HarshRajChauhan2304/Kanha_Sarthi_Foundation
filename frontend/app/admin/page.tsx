@@ -184,7 +184,7 @@ export default function AdminPanelPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("signin");
-  
+
   // Auth Form Inputs
   const [authUsername, setAuthUsername] = useState("");
   const [authEmail, setAuthEmail] = useState("");
@@ -346,7 +346,7 @@ export default function AdminPanelPage() {
   const [formCategory, setFormCategory] = useState("Birthday Giving");
   const [formImage, setFormImage] = useState("");
   const [formVideo, setFormVideo] = useState("");
-  
+
   // Reviews/Donations/Highlights/Applications/Texts fields
   const [formDesc, setFormDesc] = useState("");
   const [formAuthor, setFormAuthor] = useState("");
@@ -360,11 +360,11 @@ export default function AdminPanelPage() {
   const [formTasksCompleted, setFormTasksCompleted] = useState("0");
   const [formVolunteerId, setFormVolunteerId] = useState("");
   const [starVolunteers, setStarVolunteers] = useState<any[]>([]);
-  
+
   // Blog fields
   const [formDate, setFormDate] = useState("");
   const [formExcerpt, setFormExcerpt] = useState("");
-  
+
   // Stories fields
   const [formAlt, setFormAlt] = useState("");
   const [formHonoree, setFormHonoree] = useState("");
@@ -617,7 +617,7 @@ export default function AdminPanelPage() {
         const res = await fetch('/api/volunteer/tasks', { cache: 'no-store' });
         const data = await res.json();
         setTasks(data.success && Array.isArray(data.tasks) ? data.tasks : []);
-        
+
         // Populate volApps list for selection dropdown
         const volRes = await fetch('/api/volunteer', { cache: 'no-store' });
         const volData = await volRes.json();
@@ -635,7 +635,7 @@ export default function AdminPanelPage() {
         const res = await fetch('/api/volunteer/star', { cache: 'no-store' });
         const data = await res.json();
         setStarVolunteers(data.success && Array.isArray(data.stars) ? data.stars : []);
-        
+
         const volRes = await fetch('/api/volunteer', { cache: 'no-store' });
         const volData = await volRes.json();
         setVolApps(Array.isArray(volData) ? volData.filter((a: any) => a.status === "Approved") : []);
@@ -796,8 +796,8 @@ export default function AdminPanelPage() {
         } else {
           setAuthError(data.error || "Authentication failed.");
         }
-      } 
-      
+      }
+
       else if (authMode === "signup") {
         if (authPassword !== authConfirmPassword) {
           setAuthError("Passwords do not match.");
@@ -820,8 +820,8 @@ export default function AdminPanelPage() {
         } else {
           setAuthError(data.error || "Signup failed.");
         }
-      } 
-      
+      }
+
       else if (authMode === "forgot") {
         const res = await fetch('/api/admin/auth', {
           method: 'POST',
@@ -1080,11 +1080,11 @@ export default function AdminPanelPage() {
   const openAddModal = () => {
     setEditingItem(null);
     setFormTitle(
-      activeTab === "PageMedia" 
-        ? "Home Page - Main Hero Background (Video/Image)" 
-        : activeTab === "PageTexts" 
-        ? "About Page - Top Banner Title Prefix Text" 
-        : ""
+      activeTab === "PageMedia"
+        ? "Home Page - Main Hero Background (Video/Image)"
+        : activeTab === "PageTexts"
+          ? "About Page - Top Banner Title Prefix Text"
+          : ""
     );
     setFormPrice("");
     setFormCategory(categoriesList[0]?.name || "Birthday Giving");
@@ -1092,11 +1092,11 @@ export default function AdminPanelPage() {
     setFormVideo("");
     setFormDesc("");
     setFormAuthor(
-      activeTab === "PageMedia" 
-        ? "home_hero" 
-        : activeTab === "PageTexts" 
-        ? "about_banner_title_prefix" 
-        : ""
+      activeTab === "PageMedia"
+        ? "home_hero"
+        : activeTab === "PageTexts"
+          ? "about_banner_title_prefix"
+          : ""
     );
     setFormDate("");
     setFormExcerpt("");
@@ -1116,7 +1116,7 @@ export default function AdminPanelPage() {
     setFormVolunteerId("");
     setFormPassword("");
     setFormRole("user");
-    
+
     if (activeTab === "StatsCards") {
       setFormImage("rupee");
       setFormStatus("none");
@@ -1126,17 +1126,17 @@ export default function AdminPanelPage() {
       setFormStatus("address");
       setFormImage("map-pin");
     }
-    
+
     if (activeTab === "Donations") {
       setFormExcerpt("General Support");
       setFormTransactionDate(getFormattedDate());
       setFormAddress("");
     }
-    
+
     if (activeTab === "DetailedStories") {
       setFormCategory("Food Relief");
     }
-    
+
     // Clear Tasks states
     setTaskFormVolunteerId("");
     setTaskFormTitle("");
@@ -1153,13 +1153,13 @@ export default function AdminPanelPage() {
     setTaskDonorAmount("");
     setTaskIsPremium(false);
     setTaskPremiumFile("");
-    
+
     setIsModalOpen(true);
   };
 
   const openEditModal = (item: any) => {
     setEditingItem(item);
-    
+
     // Fill states based on active tab
     if (activeTab === "Categories") {
       setFormTitle(item.name);
@@ -1251,12 +1251,12 @@ export default function AdminPanelPage() {
       setTaskFormAssignedMoney(item.assigned_money?.toString() || "0");
     } else if (activeTab === "PageMedia") {
       setFormTitle(item.title);
-      setFormAuthor(item.key); 
+      setFormAuthor(item.key);
       setFormImage(item.url);
       setSelectedMediaType(item.type);
     } else if (activeTab === "PageTexts") {
       setFormTitle(item.title);
-      setFormAuthor(item.key); 
+      setFormAuthor(item.key);
       setFormDesc(item.value);
     } else if (activeTab === "StarVolunteers") {
       setFormTitle(item.name);
@@ -1296,32 +1296,32 @@ export default function AdminPanelPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSaving) return;
-    const endpoint = activeTab === "Highlights" 
-      ? "/api/about-highlights" 
+    const endpoint = activeTab === "Highlights"
+      ? "/api/about-highlights"
       : activeTab === "Applications"
-      ? "/api/volunteer"
-      : activeTab === "Tasks"
-      ? "/api/volunteer/tasks"
-      : activeTab === "PageMedia"
-      ? "/api/page-media"
-      : activeTab === "PageTexts"
-      ? "/api/page-texts"
-      : activeTab === "StatsCards"
-      ? "/api/stats-cards"
-      : activeTab === "StarVolunteers"
-      ? "/api/volunteer/star"
-      : activeTab === "DetailedStories"
-      ? "/api/stories/detailed"
-      : activeTab === "SuccessStories"
-      ? "/api/success-stories"
-      : activeTab === "RoleManagement"
-      ? "/api/admin/users"
-      : activeTab === "ContactInfo"
-      ? "/api/contact-info"
-      : activeTab === "ContactSubmissions"
-      ? "/api/contact"
-      : `/api/${activeTab.toLowerCase()}`;
-    
+        ? "/api/volunteer"
+        : activeTab === "Tasks"
+          ? "/api/volunteer/tasks"
+          : activeTab === "PageMedia"
+            ? "/api/page-media"
+            : activeTab === "PageTexts"
+              ? "/api/page-texts"
+              : activeTab === "StatsCards"
+                ? "/api/stats-cards"
+                : activeTab === "StarVolunteers"
+                  ? "/api/volunteer/star"
+                  : activeTab === "DetailedStories"
+                    ? "/api/stories/detailed"
+                    : activeTab === "SuccessStories"
+                      ? "/api/success-stories"
+                      : activeTab === "RoleManagement"
+                        ? "/api/admin/users"
+                        : activeTab === "ContactInfo"
+                          ? "/api/contact-info"
+                          : activeTab === "ContactSubmissions"
+                            ? "/api/contact"
+                            : `/api/${activeTab.toLowerCase()}`;
+
     // Build payload based on Tab
     let bodyPayload: any = {};
     if (editingItem) {
@@ -1363,13 +1363,13 @@ export default function AdminPanelPage() {
         triggerAlert("Please fill all required fields (Title, Category, and Description).");
         return;
       }
-      bodyPayload = { 
-        ...bodyPayload, 
-        title: formTitle, 
-        category: formCategory, 
-        desc: formDesc, 
-        image: formImage || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&auto=format&fit=crop&q=80", 
-        stats: formExcerpt, 
+      bodyPayload = {
+        ...bodyPayload,
+        title: formTitle,
+        category: formCategory,
+        desc: formDesc,
+        image: formImage || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&auto=format&fit=crop&q=80",
+        stats: formExcerpt,
         date: formDate || "July 2026"
       };
     } else if (activeTab === "SuccessStories") {
@@ -1377,21 +1377,21 @@ export default function AdminPanelPage() {
         triggerAlert("Please fill all required fields (Title, Description, and Image).");
         return;
       }
-      bodyPayload = { 
-        ...bodyPayload, 
-        title: formTitle, 
-        desc: formDesc, 
-        image: formImage 
+      bodyPayload = {
+        ...bodyPayload,
+        title: formTitle,
+        desc: formDesc,
+        image: formImage
       };
     } else if (activeTab === "Donations") {
       if (!formTitle.trim() || !formPrice.trim()) {
         triggerAlert("Please fill all required fields.");
         return;
       }
-      bodyPayload = { 
-        ...bodyPayload, 
-        name: formTitle, 
-        amount: formPrice, 
+      bodyPayload = {
+        ...bodyPayload,
+        name: formTitle,
+        amount: formPrice,
         time: formDesc || "Just now",
         donation_for: formExcerpt || "General Support",
         honoree: formHonoree,
@@ -1404,14 +1404,14 @@ export default function AdminPanelPage() {
         triggerAlert("Please fill all required fields.");
         return;
       }
-      bodyPayload = { 
-        ...bodyPayload, 
-        title: formTitle, 
-        base_value: parseFloat(formPrice) || 0, 
-        prefix: formAuthor, 
-        suffix: formCategory, 
-        icon: formImage || "rupee", 
-        category: formStatus || "none" 
+      bodyPayload = {
+        ...bodyPayload,
+        title: formTitle,
+        base_value: parseFloat(formPrice) || 0,
+        prefix: formAuthor,
+        suffix: formCategory,
+        icon: formImage || "rupee",
+        category: formStatus || "none"
       };
     } else if (activeTab === "Highlights") {
       if (!formTitle.trim() || !formPrice.trim() || !formDesc.trim()) {
@@ -1424,14 +1424,14 @@ export default function AdminPanelPage() {
         triggerAlert("Please fill all required fields & select at least one skill.");
         return;
       }
-      bodyPayload = { 
-        ...bodyPayload, 
-        name: formTitle, 
-        email: formAuthor, 
-        phone: formPrice, 
-        city: formCategory, 
-        motivation: formDesc, 
-        skills: formSkills, 
+      bodyPayload = {
+        ...bodyPayload,
+        name: formTitle,
+        email: formAuthor,
+        phone: formPrice,
+        city: formCategory,
+        motivation: formDesc,
+        skills: formSkills,
         status: formStatus,
         gender: formGender,
         dob: formDob,
@@ -1659,10 +1659,10 @@ export default function AdminPanelPage() {
       const data = await res.json();
       if (data.success) {
         triggerAlert("Certificate updated successfully!");
-        setVolApps(prev => prev.map(app => app.id === certVol.id ? { 
-          ...app, 
-          certificate_url: certUrl, 
-          certificate_issue_date: certDate, 
+        setVolApps(prev => prev.map(app => app.id === certVol.id ? {
+          ...app,
+          certificate_url: certUrl,
+          certificate_issue_date: certDate,
           internship_start_date: certStartDate,
           certificate_text: certText,
           certificate_signature_name: certSigName,
@@ -1694,41 +1694,41 @@ export default function AdminPanelPage() {
     const isSuccessStories = activeTab === "SuccessStories";
     const isContactInfo = activeTab === "ContactInfo";
     const isContactSub = activeTab === "ContactSubmissions";
-    const confirmName = activeTab === "Highlights" 
-      ? highlightSubTab.substring(0, highlightSubTab.length - 1) 
+    const confirmName = activeTab === "Highlights"
+      ? highlightSubTab.substring(0, highlightSubTab.length - 1)
       : activeTab === "Categories"
-      ? "Category"
-      : activeTab === "RoleManagement"
-      ? "User Account"
-      : isApp ? "Volunteer Application" : isMedia ? "Media Section Banner" : isTexts ? "Text Setting" : isTasks ? "Volunteer Task" : isStar ? "Star Volunteer" : isDetStories ? "Detailed Story" : isSuccessStories ? "Success Story" : isContactInfo ? "Contact Info Card" : isContactSub ? "Contact Message" : activeTab.substring(0, activeTab.length - 1);
-      
+        ? "Category"
+        : activeTab === "RoleManagement"
+          ? "User Account"
+          : isApp ? "Volunteer Application" : isMedia ? "Media Section Banner" : isTexts ? "Text Setting" : isTasks ? "Volunteer Task" : isStar ? "Star Volunteer" : isDetStories ? "Detailed Story" : isSuccessStories ? "Success Story" : isContactInfo ? "Contact Info Card" : isContactSub ? "Contact Message" : activeTab.substring(0, activeTab.length - 1);
+
     if (!window.confirm(`Are you sure you want to delete this ${confirmName}?`)) return;
 
     const endpoint = activeTab === "Highlights"
       ? `/api/about-highlights?type=${highlightSubTab}&id=${idOrKey}`
       : activeTab === "Applications"
-      ? `/api/volunteer?id=${idOrKey}`
-      : activeTab === "StarVolunteers"
-      ? `/api/volunteer/star?id=${idOrKey}`
-      : activeTab === "ContactInfo"
-      ? `/api/contact-info?id=${idOrKey}`
-      : activeTab === "ContactSubmissions"
-      ? `/api/contact?id=${idOrKey}`
-      : isMedia
-      ? `/api/page-media?key=${idOrKey}`
-      : isTexts
-      ? `/api/page-texts?key=${idOrKey}`
-      : isTasks
-      ? `/api/volunteer/tasks?id=${idOrKey}`
-      : activeTab === "StatsCards"
-      ? `/api/stats-cards?id=${idOrKey}`
-      : activeTab === "DetailedStories"
-      ? `/api/stories/detailed?id=${idOrKey}`
-      : activeTab === "SuccessStories"
-      ? `/api/success-stories?id=${idOrKey}`
-      : activeTab === "RoleManagement"
-      ? `/api/admin/users?id=${idOrKey}`
-      : `/api/${activeTab.toLowerCase()}?id=${idOrKey}`;
+        ? `/api/volunteer?id=${idOrKey}`
+        : activeTab === "StarVolunteers"
+          ? `/api/volunteer/star?id=${idOrKey}`
+          : activeTab === "ContactInfo"
+            ? `/api/contact-info?id=${idOrKey}`
+            : activeTab === "ContactSubmissions"
+              ? `/api/contact?id=${idOrKey}`
+              : isMedia
+                ? `/api/page-media?key=${idOrKey}`
+                : isTexts
+                  ? `/api/page-texts?key=${idOrKey}`
+                  : isTasks
+                    ? `/api/volunteer/tasks?id=${idOrKey}`
+                    : activeTab === "StatsCards"
+                      ? `/api/stats-cards?id=${idOrKey}`
+                      : activeTab === "DetailedStories"
+                        ? `/api/stories/detailed?id=${idOrKey}`
+                        : activeTab === "SuccessStories"
+                          ? `/api/success-stories?id=${idOrKey}`
+                          : activeTab === "RoleManagement"
+                            ? `/api/admin/users?id=${idOrKey}`
+                            : `/api/${activeTab.toLowerCase()}?id=${idOrKey}`;
 
     try {
       const res = await fetch(endpoint, {
@@ -2032,7 +2032,7 @@ export default function AdminPanelPage() {
 
   return (
     <div className="bg-zinc-950 text-white min-h-screen py-16 px-4 md:px-8 font-sans">
-      
+
       {/* Hidden File Input for PageMedia manager */}
       <input
         type="file"
@@ -2102,17 +2102,17 @@ export default function AdminPanelPage() {
       })()}
 
       <div className="mx-auto max-w-7xl">
-        
+
         {/* Header Dashboard section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10 border-b border-zinc-800 pb-8">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">Admin Dashboard</h1>
             <p className="mt-1 text-sm text-zinc-400">Manage campaign causes, reviews, blog posts, photo gallery, live donations, and team highlights dynamically.</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {/* Admin Avatar Circle Header Info */}
-            <div 
+            <div
               onClick={() => setActiveTab("AdminProfile")}
               className="flex items-center gap-2.5 cursor-pointer group bg-zinc-900 border border-zinc-800 rounded-full px-3.5 py-1.5 hover:border-[#F3A61E] transition-all"
               title="Edit Profile"
@@ -2165,8 +2165,8 @@ export default function AdminPanelPage() {
               <span className="text-sm">🔔</span>
               <span>You have {volApps.filter(app => app.status === "Pending" || !app.status).length} pending volunteer applications awaiting review and approval.</span>
             </div>
-            <button 
-              onClick={() => setActiveTab("Applications")} 
+            <button
+              onClick={() => setActiveTab("Applications")}
               className="px-4 py-1.5 bg-[#F3A61E] hover:bg-[#d68f12] text-black rounded-lg transition-colors cursor-pointer text-[10px] font-black uppercase tracking-wider shadow-sm"
             >
               Review Apps
@@ -2183,11 +2183,10 @@ export default function AdminPanelPage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                  isTabActive
-                    ? "bg-[#F3A61E] text-black shadow-lg"
-                    : "bg-zinc-900/50 text-zinc-400 hover:text-white border border-zinc-800/20"
-                }`}
+                className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${isTabActive
+                  ? "bg-[#F3A61E] text-black shadow-lg"
+                  : "bg-zinc-900/50 text-zinc-400 hover:text-white border border-zinc-800/20"
+                  }`}
               >
                 <span>
                   {tab === "SpotlightCampaign" ? "⭐ Spotlight Campaign" : tab === "FestivalPopup" ? "🎉 Festival Popup" : tab === "DonateMonthly" ? "💳 Donate Monthly" : tab === "Reminders" ? "🎂 Birthdays & Renewals" : tab === "StarVolunteers" ? "Star Volunteers" : tab === "Applications" ? "Volunteer Apps" : tab === "PageMedia" ? "Page Banners & Media" : tab === "PageTexts" ? "Page Layout Texts" : tab === "StatsCards" ? "Stats Ribbon" : tab === "RoleManagement" ? "Role Manager" : tab === "Navbar" ? "Navbar Config" : tab === "Footer" ? "Footer Config" : tab === "AdminProfile" ? "My Profile" : tab === "DetailedStories" ? "Detailed Stories" : tab === "SuccessStories" ? "Success Stories" : tab === "ContactInfo" ? "Contact Info Cards" : tab === "ContactSubmissions" ? "Contact Messages" : tab === "WhatsAppCommunity" ? "WhatsApp Community" : tab === "Beneficiaries" ? "Beneficiaries (Underprivileged)" : tab}
@@ -2207,17 +2206,15 @@ export default function AdminPanelPage() {
           <div className="flex gap-2 mb-8 text-left">
             <button
               onClick={() => setHighlightSubTab("directors")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                highlightSubTab === "directors" ? 'bg-zinc-800 text-[#F3A61E] border border-[#F3A61E]/30' : 'bg-zinc-900/40 text-zinc-450 hover:text-white'
-              }`}
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${highlightSubTab === "directors" ? 'bg-zinc-800 text-[#F3A61E] border border-[#F3A61E]/30' : 'bg-zinc-900/40 text-zinc-450 hover:text-white'
+                }`}
             >
               Directors List
             </button>
             <button
               onClick={() => setHighlightSubTab("volunteers")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                highlightSubTab === "volunteers" ? 'bg-zinc-800 text-[#F3A61E] border border-[#F3A61E]/30' : 'bg-zinc-900/40 text-zinc-450 hover:text-white'
-              }`}
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${highlightSubTab === "volunteers" ? 'bg-zinc-800 text-[#F3A61E] border border-[#F3A61E]/30' : 'bg-zinc-900/40 text-zinc-450 hover:text-white'
+                }`}
             >
               Volunteers List
             </button>
@@ -2511,7 +2508,7 @@ export default function AdminPanelPage() {
             {activeTab === "Donations" && (() => {
               const filteredReportDonations = donations.filter(d => {
                 const dDate = d.created_at ? new Date(d.created_at) : new Date();
-                
+
                 if (reportFilterType === "date") {
                   if (reportStartDate) {
                     const start = new Date(reportStartDate);
@@ -2559,101 +2556,101 @@ export default function AdminPanelPage() {
                   </div>
 
                   {/* PDF/Print Report Control Panel */}
-                    <div className="bg-zinc-900/50 border border-zinc-800/60 p-6 rounded-2xl space-y-5">
-                      <h3 className="text-sm font-black uppercase tracking-wider text-[#F3A61E] mb-2 flex items-center gap-2">
-                        <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 00-4-4H5m14 0h-3a4 4 0 00-4 4v2m21 2h-1a2 2 0 01-2-2V5a2 2 0 00-2-2H9a2 2 0 00-2 2v12a2 2 0 01-2 2H3" />
-                        </svg>
-                        Donation Report Generator (Print / PDF)
-                      </h3>
+                  <div className="bg-zinc-900/50 border border-zinc-800/60 p-6 rounded-2xl space-y-5">
+                    <h3 className="text-sm font-black uppercase tracking-wider text-[#F3A61E] mb-2 flex items-center gap-2">
+                      <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 00-4-4H5m14 0h-3a4 4 0 00-4 4v2m21 2h-1a2 2 0 01-2-2V5a2 2 0 00-2-2H9a2 2 0 00-2 2v12a2 2 0 01-2 2H3" />
+                      </svg>
+                      Donation Report Generator (Print / PDF)
+                    </h3>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-                        <div>
-                          <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Filter Type</label>
-                          <select 
-                            value={reportFilterType} 
-                            onChange={(e) => setReportFilterType(e.target.value as "date" | "month")}
-                            className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
-                          >
-                            <option value="date">Date Range</option>
-                            <option value="month">Month-wise</option>
-                          </select>
-                        </div>
-
-                        {reportFilterType === "date" ? (
-                          <>
-                            <div>
-                              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">From Date</label>
-                              <input 
-                                type="date" 
-                                value={reportStartDate} 
-                                onChange={(e) => setReportStartDate(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-300"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">To Date</label>
-                              <input 
-                                type="date" 
-                                value={reportEndDate} 
-                                onChange={(e) => setReportEndDate(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-300"
-                              />
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div>
-                              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Select Month</label>
-                              <select 
-                                value={reportMonth} 
-                                onChange={(e) => setReportMonth(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
-                              >
-                                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                                  <option key={m} value={m}>
-                                    {new Date(2020, m - 1).toLocaleString('default', { month: 'long' })}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Select Year</label>
-                              <select 
-                                value={reportYear} 
-                                onChange={(e) => setReportYear(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
-                              >
-                                {["2025", "2026", "2027"].map(y => (
-                                  <option key={y} value={y}>{y}</option>
-                                ))}
-                              </select>
-                            </div>
-                          </>
-                        )}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Filter Type</label>
+                        <select
+                          value={reportFilterType}
+                          onChange={(e) => setReportFilterType(e.target.value as "date" | "month")}
+                          className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
+                        >
+                          <option value="date">Date Range</option>
+                          <option value="month">Month-wise</option>
+                        </select>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                        <button 
-                          onClick={() => setIsReportOpen(true)}
-                          className="flex-1 py-3 px-4 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-emerald-800/40 text-center flex justify-center items-center gap-2 shadow-sm"
-                        >
-                          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                          </svg>
-                          <span>Print PDF / Report</span>
-                        </button>
-                        <a 
-                          href="/admin/donations"
-                          className="flex-1 py-3 px-4 bg-[#F3A61E] hover:bg-[#d68f12] text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center flex justify-center items-center gap-2 shadow-sm"
-                        >
-                          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          <span>Manage Donations Dashboard ↗</span>
-                        </a>
-                      </div>
+                      {reportFilterType === "date" ? (
+                        <>
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">From Date</label>
+                            <input
+                              type="date"
+                              value={reportStartDate}
+                              onChange={(e) => setReportStartDate(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-300"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">To Date</label>
+                            <input
+                              type="date"
+                              value={reportEndDate}
+                              onChange={(e) => setReportEndDate(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-300"
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Select Month</label>
+                            <select
+                              value={reportMonth}
+                              onChange={(e) => setReportMonth(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
+                            >
+                              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                                <option key={m} value={m}>
+                                  {new Date(2020, m - 1).toLocaleString('default', { month: 'long' })}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Select Year</label>
+                            <select
+                              value={reportYear}
+                              onChange={(e) => setReportYear(e.target.value)}
+                              className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
+                            >
+                              {["2025", "2026", "2027"].map(y => (
+                                <option key={y} value={y}>{y}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </>
+                      )}
                     </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                      <button
+                        onClick={() => setIsReportOpen(true)}
+                        className="flex-1 py-3 px-4 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border border-emerald-800/40 text-center flex justify-center items-center gap-2 shadow-sm"
+                      >
+                        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        <span>Print PDF / Report</span>
+                      </button>
+                      <a
+                        href="/admin/donations"
+                        className="flex-1 py-3 px-4 bg-[#F3A61E] hover:bg-[#d68f12] text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer text-center flex justify-center items-center gap-2 shadow-sm"
+                      >
+                        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span>Manage Donations Dashboard ↗</span>
+                      </a>
+                    </div>
+                  </div>
 
                   <table className="min-w-full divide-y divide-zinc-800 text-left">
                     <thead>
@@ -2681,8 +2678,8 @@ export default function AdminPanelPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <p className="text-xs text-zinc-400">
-                              {d.created_at 
-                                ? new Date(d.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                              {d.created_at
+                                ? new Date(d.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
                                 : 'Prior Record'}
                             </p>
                           </td>
@@ -2809,10 +2806,10 @@ export default function AdminPanelPage() {
                   {volApps.map((app) => (
                     <tr key={app.id} className="hover:bg-zinc-900/30 transition-colors">
                       <td className="px-6 py-4 flex items-center gap-3">
-                        <img 
-                          src={app.profile_photo || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"} 
-                          alt={app.name} 
-                          className="h-9 w-9 object-cover rounded-full border border-zinc-850 shadow-sm" 
+                        <img
+                          src={app.profile_photo || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"}
+                          alt={app.name}
+                          className="h-9 w-9 object-cover rounded-full border border-zinc-850 shadow-sm"
                         />
                         <div>
                           <p className="text-sm font-bold text-white">{app.name}</p>
@@ -2892,15 +2889,15 @@ export default function AdminPanelPage() {
                               <span className="px-3 py-1 bg-emerald-950/30 text-emerald-450 border border-emerald-900/40 rounded-lg text-xs font-bold">
                                 Approved ✅
                               </span>
-                              <button 
-                                onClick={() => handleOpenAssignTaskModal(app)} 
+                              <button
+                                onClick={() => handleOpenAssignTaskModal(app)}
                                 className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-black font-black uppercase rounded text-[10px] cursor-pointer shadow-md"
                               >
                                 Assign Task
                               </button>
                               {app.certificate_url ? (
                                 <div className="flex gap-1.5">
-                                  <button 
+                                  <button
                                     onClick={() => {
                                       setViewingCertVol(app);
                                       setIsViewCertModalOpen(true);
@@ -2909,16 +2906,16 @@ export default function AdminPanelPage() {
                                   >
                                     View Certificate
                                   </button>
-                                  <button 
-                                    onClick={() => handleOpenCertificateModal(app)} 
+                                  <button
+                                    onClick={() => handleOpenCertificateModal(app)}
                                     className="px-2.5 py-1 bg-blue-550 hover:bg-blue-650 text-white font-black uppercase rounded text-[10px] cursor-pointer shadow-md"
                                   >
                                     Edit Certificate
                                   </button>
                                 </div>
                               ) : (
-                                <button 
-                                  onClick={() => handleOpenCertificateModal(app)} 
+                                <button
+                                  onClick={() => handleOpenCertificateModal(app)}
                                   className="px-2.5 py-1 bg-zinc-700 hover:bg-zinc-650 text-white font-black uppercase rounded text-[10px] cursor-pointer shadow-md"
                                 >
                                   Create Certificate
@@ -2926,8 +2923,8 @@ export default function AdminPanelPage() {
                               )}
                             </div>
                           ) : (
-                            <button 
-                              onClick={() => handleApproveApp(app)} 
+                            <button
+                              onClick={() => handleApproveApp(app)}
                               className="px-3 py-1 bg-emerald-650 hover:bg-emerald-700 text-white font-bold rounded text-xs cursor-pointer"
                             >
                               Approve
@@ -2976,23 +2973,22 @@ export default function AdminPanelPage() {
                           <span className="ml-1.5 px-2 py-0.5 bg-zinc-850 rounded text-xs text-zinc-400">{task.task_time}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${
-                            task.status === "Completed" 
-                              ? 'bg-emerald-950/30 text-emerald-450 border-emerald-900/40' 
-                              : task.status === "Processing"
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${task.status === "Completed"
+                            ? 'bg-emerald-950/30 text-emerald-450 border-emerald-900/40'
+                            : task.status === "Processing"
                               ? 'bg-blue-950/30 text-blue-450 border-blue-900/40'
                               : task.status === "Started"
-                              ? 'bg-indigo-950/30 text-indigo-400 border-indigo-900/40'
-                              : 'bg-amber-950/30 text-amber-450 border-amber-900/40'
-                          }`}>
+                                ? 'bg-indigo-950/30 text-indigo-400 border-indigo-900/40'
+                                : 'bg-amber-950/30 text-amber-450 border-amber-900/40'
+                            }`}>
                             {task.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right whitespace-nowrap">
                           <div className="flex justify-end items-center gap-2">
                             {task.status === "Completed" && (
-                              <button 
-                                onClick={() => openViewProofModal(task)} 
+                              <button
+                                onClick={() => openViewProofModal(task)}
                                 className="px-2.5 py-1 bg-emerald-950/20 text-emerald-450 hover:bg-emerald-950/40 border border-emerald-900/40 rounded text-xs font-bold cursor-pointer whitespace-nowrap"
                               >
                                 View Proof
@@ -3400,12 +3396,12 @@ export default function AdminPanelPage() {
                                 const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
                                   ? navbarConfig.navItems
                                   : [
-                                      { label: "Home", href: "/" },
-                                      { label: "Causes", href: "/causes" },
-                                      { label: "Our Impact", href: "/impacts" },
-                                      { label: "About Us", href: "/about" },
-                                      { label: "Contact", href: "/contact" }
-                                    ];
+                                    { label: "Home", href: "/" },
+                                    { label: "Causes", href: "/causes" },
+                                    { label: "Our Impact", href: "/impacts" },
+                                    { label: "About Us", href: "/about" },
+                                    { label: "Contact", href: "/contact" }
+                                  ];
                                 const newLinks = [...currentLinks, { label: "New Page", href: "/" }];
                                 setNavbarConfig({ ...navbarConfig, navItems: newLinks });
                               }}
@@ -3427,12 +3423,12 @@ export default function AdminPanelPage() {
                           {(navbarConfig.navItems && navbarConfig.navItems.length > 0
                             ? navbarConfig.navItems
                             : [
-                                { label: "Home", href: "/" },
-                                { label: "Causes", href: "/causes" },
-                                { label: "Our Impact", href: "/impacts" },
-                                { label: "About Us", href: "/about" },
-                                { label: "Contact", href: "/contact" }
-                              ]
+                              { label: "Home", href: "/" },
+                              { label: "Causes", href: "/causes" },
+                              { label: "Our Impact", href: "/impacts" },
+                              { label: "About Us", href: "/about" },
+                              { label: "Contact", href: "/contact" }
+                            ]
                           ).map((link: any, idx: number) => (
                             <div key={idx} className="flex gap-2 items-center">
                               <input
@@ -3442,12 +3438,12 @@ export default function AdminPanelPage() {
                                   const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
                                     ? [...navbarConfig.navItems]
                                     : [
-                                        { label: "Home", href: "/" },
-                                        { label: "Causes", href: "/causes" },
-                                        { label: "Our Impact", href: "/impacts" },
-                                        { label: "About Us", href: "/about" },
-                                        { label: "Contact", href: "/contact" }
-                                      ];
+                                      { label: "Home", href: "/" },
+                                      { label: "Causes", href: "/causes" },
+                                      { label: "Our Impact", href: "/impacts" },
+                                      { label: "About Us", href: "/about" },
+                                      { label: "Contact", href: "/contact" }
+                                    ];
                                   currentLinks[idx] = { ...link, label: e.target.value };
                                   setNavbarConfig({ ...navbarConfig, navItems: currentLinks });
                                 }}
@@ -3461,12 +3457,12 @@ export default function AdminPanelPage() {
                                   const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
                                     ? [...navbarConfig.navItems]
                                     : [
-                                        { label: "Home", href: "/" },
-                                        { label: "Causes", href: "/causes" },
-                                        { label: "Our Impact", href: "/impacts" },
-                                        { label: "About Us", href: "/about" },
-                                        { label: "Contact", href: "/contact" }
-                                      ];
+                                      { label: "Home", href: "/" },
+                                      { label: "Causes", href: "/causes" },
+                                      { label: "Our Impact", href: "/impacts" },
+                                      { label: "About Us", href: "/about" },
+                                      { label: "Contact", href: "/contact" }
+                                    ];
                                   currentLinks[idx] = { ...link, href: e.target.value };
                                   setNavbarConfig({ ...navbarConfig, navItems: currentLinks });
                                 }}
@@ -3479,12 +3475,12 @@ export default function AdminPanelPage() {
                                   const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
                                     ? navbarConfig.navItems
                                     : [
-                                        { label: "Home", href: "/" },
-                                        { label: "Causes", href: "/causes" },
-                                        { label: "Our Impact", href: "/impacts" },
-                                        { label: "About Us", href: "/about" },
-                                        { label: "Contact", href: "/contact" }
-                                      ];
+                                      { label: "Home", href: "/" },
+                                      { label: "Causes", href: "/causes" },
+                                      { label: "Our Impact", href: "/impacts" },
+                                      { label: "About Us", href: "/about" },
+                                      { label: "Contact", href: "/contact" }
+                                    ];
                                   handleSaveNavbar(undefined, { navItems: currentLinks }, `"${link.label || 'Link'}" updated successfully!`);
                                 }}
                                 className="px-2.5 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-[#52c47c] border border-emerald-800/50 rounded-xl text-xs font-bold uppercase cursor-pointer shrink-0"
@@ -3498,12 +3494,12 @@ export default function AdminPanelPage() {
                                   const currentLinks = navbarConfig.navItems && navbarConfig.navItems.length > 0
                                     ? navbarConfig.navItems
                                     : [
-                                        { label: "Home", href: "/" },
-                                        { label: "Causes", href: "/causes" },
-                                        { label: "Our Impact", href: "/impacts" },
-                                        { label: "About Us", href: "/about" },
-                                        { label: "Contact", href: "/contact" }
-                                      ];
+                                      { label: "Home", href: "/" },
+                                      { label: "Causes", href: "/causes" },
+                                      { label: "Our Impact", href: "/impacts" },
+                                      { label: "About Us", href: "/about" },
+                                      { label: "Contact", href: "/contact" }
+                                    ];
                                   const newLinks = currentLinks.filter((_: any, i: number) => i !== idx);
                                   const updated = { ...navbarConfig, navItems: newLinks };
                                   setNavbarConfig(updated);
@@ -3975,7 +3971,7 @@ export default function AdminPanelPage() {
                     </div>
                   </div>
 
-                  <form 
+                  <form
                     onSubmit={async (e) => {
                       e.preventDefault();
                       const currentEmail = localStorage.getItem("admin_email") || "admin@kanha.org";
@@ -4007,7 +4003,7 @@ export default function AdminPanelPage() {
                         console.error("Save profile error:", err);
                         triggerAlert("Error saving profile details.");
                       }
-                    }} 
+                    }}
                     className="space-y-4"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -4079,13 +4075,13 @@ export default function AdminPanelPage() {
                     {starVolunteers.map((star, idx) => (
                       <tr key={star.id || idx} className="hover:bg-zinc-900/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <img 
-                            src={star.profile_photo || (star.gender === "Female" 
+                          <img
+                            src={star.profile_photo || (star.gender === "Female"
                               ? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80"
                               : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
-                            )} 
-                            alt={star.name} 
-                            className="h-10 w-10 object-cover rounded-full border border-zinc-850" 
+                            )}
+                            alt={star.name}
+                            className="h-10 w-10 object-cover rounded-full border border-zinc-850"
                           />
                         </td>
                         <td className="px-6 py-4"><span className="text-sm font-bold text-white">{star.name}</span></td>
@@ -4338,11 +4334,10 @@ export default function AdminPanelPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleCampaignActive(camp)}
-                                  className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border cursor-pointer transition-all ${
-                                    isActive
-                                      ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60"
-                                      : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white"
-                                  }`}
+                                  className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border cursor-pointer transition-all ${isActive
+                                    ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60"
+                                    : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white"
+                                    }`}
                                 >
                                   {isActive ? "Active on Home" : "Disabled"}
                                 </button>
@@ -4635,11 +4630,10 @@ export default function AdminPanelPage() {
                         key={cat.id}
                         type="button"
                         onClick={() => setActiveMonthlyId(cat.id)}
-                        className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                          activeMonthlyId === cat.id
-                            ? "bg-[#F3A61E] text-black shadow-md"
-                            : "bg-zinc-850/60 text-zinc-400 hover:text-white"
-                        }`}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${activeMonthlyId === cat.id
+                          ? "bg-[#F3A61E] text-black shadow-md"
+                          : "bg-zinc-850/60 text-zinc-400 hover:text-white"
+                          }`}
                       >
                         {cat.label}
                       </button>
@@ -4919,9 +4913,8 @@ export default function AdminPanelPage() {
                                 <span>🎂</span> {b.name}
                               </td>
                               <td className="px-4 py-3">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                                  b.type === 'Volunteer' ? 'bg-blue-950 text-blue-300' : 'bg-emerald-950 text-emerald-300'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${b.type === 'Volunteer' ? 'bg-blue-950 text-blue-300' : 'bg-emerald-950 text-emerald-300'
+                                  }`}>
                                   {b.type}
                                 </span>
                               </td>
@@ -5229,7 +5222,7 @@ export default function AdminPanelPage() {
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
             <div className="fixed inset-0" onClick={() => setIsModalOpen(false)} />
-            
+
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -5237,13 +5230,13 @@ export default function AdminPanelPage() {
               className="bg-zinc-900 border border-zinc-800/80 w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl relative z-10 p-8 max-h-[90vh] overflow-y-auto"
             >
               <h2 className="text-xl sm:text-2xl font-black text-white mb-6">
-                {editingItem 
-                  ? `Edit ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}` 
+                {editingItem
+                  ? `Edit ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}`
                   : `Add ${activeTab === "Blogs" ? "Blog" : activeTab === "Highlights" ? (highlightSubTab === "directors" ? "Director" : "Volunteer") : activeTab === "Applications" ? "Volunteer App" : activeTab === "PageMedia" ? "Banner/Media Setting" : activeTab === "PageTexts" ? "Text Setting" : activeTab === "ContactInfo" ? "Contact Card" : activeTab === "StatsCards" ? "Stats Card" : activeTab === "DetailedStories" ? "Detailed Story" : activeTab === "SuccessStories" ? "Success Story" : activeTab.substring(0, activeTab.length - 1)}`}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                
+
                 {activeTab === "Causes" && (
                   <>
                     <div>
@@ -5262,7 +5255,7 @@ export default function AdminPanelPage() {
                         <input type="text" required value={formPrice} onChange={(e) => setFormPrice(e.target.value)} placeholder="e.g. Rs. 2,000.00" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white" />
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Image Upload</label>
@@ -5364,13 +5357,13 @@ export default function AdminPanelPage() {
                       <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Story Title</label>
                       <input type="text" required value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="e.g. Empowering Schoolkids with Kits" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Category</label>
-                        <select 
-                          value={formCategory} 
-                          onChange={(e) => setFormCategory(e.target.value)} 
+                        <select
+                          value={formCategory}
+                          onChange={(e) => setFormCategory(e.target.value)}
                           className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                         >
                           <option value="Food Relief">Food Relief</option>
@@ -5379,7 +5372,7 @@ export default function AdminPanelPage() {
                           <option value="Stray Care">Stray Care</option>
                         </select>
                       </div>
-                      
+
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Date Label</label>
                         <input type="text" value={formDate} onChange={(e) => setFormDate(e.target.value)} placeholder="e.g. July 2026" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white" />
@@ -5396,7 +5389,7 @@ export default function AdminPanelPage() {
                         </button>
                         {formImage && <p className="text-[10px] text-zinc-400 mt-1 truncate">{formImage}</p>}
                       </div>
-                      
+
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Stats Highlight Label</label>
                         <input type="text" value={formExcerpt} onChange={(e) => setFormExcerpt(e.target.value)} placeholder="e.g. 150+ Kits Distributed" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white" />
@@ -5442,13 +5435,13 @@ export default function AdminPanelPage() {
                       <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Card Title</label>
                       <input type="text" required value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="e.g. Registered Address" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-emerald-500" />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Type</label>
-                        <select 
-                          value={formStatus} 
-                          onChange={(e) => setFormStatus(e.target.value)} 
+                        <select
+                          value={formStatus}
+                          onChange={(e) => setFormStatus(e.target.value)}
                           className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                         >
                           <option value="address">Address</option>
@@ -5458,12 +5451,12 @@ export default function AdminPanelPage() {
                           <option value="text">General Text</option>
                         </select>
                       </div>
-                      
+
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Icon Style</label>
-                        <select 
-                          value={formImage} 
-                          onChange={(e) => setFormImage(e.target.value)} 
+                        <select
+                          value={formImage}
+                          onChange={(e) => setFormImage(e.target.value)}
                           className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                         >
                           <option value="map-pin">Map Pin</option>
@@ -5621,12 +5614,12 @@ export default function AdminPanelPage() {
                     <div>
                       <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Profile Photo Link/Upload</label>
                       <div className="flex gap-2">
-                        <input 
-                          type="text" 
-                          value={formProfilePhoto} 
-                          onChange={(e) => setFormProfilePhoto(e.target.value)} 
-                          placeholder="Image URL or upload" 
-                          className="flex-1 px-4 py-2 bg-zinc-955 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none" 
+                        <input
+                          type="text"
+                          value={formProfilePhoto}
+                          onChange={(e) => setFormProfilePhoto(e.target.value)}
+                          placeholder="Image URL or upload"
+                          className="flex-1 px-4 py-2 bg-zinc-955 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none"
                         />
                         <input type="file" ref={imageInputRef} accept="image/*" onChange={(e) => handleFileUpload(e, setFormProfilePhoto)} className="hidden" />
                         <button type="button" onClick={() => imageInputRef.current?.click()} className="px-4 bg-zinc-850 hover:bg-zinc-800 border border-zinc-800 text-xs font-bold rounded-xl text-zinc-300 transition-all cursor-pointer">
@@ -5639,24 +5632,24 @@ export default function AdminPanelPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Aadhaar Card Number</label>
-                        <input 
-                          type="text" 
-                          value={formAadharNumber} 
-                          onChange={(e) => setFormAadharNumber(e.target.value)} 
-                          placeholder="12-digit number" 
+                        <input
+                          type="text"
+                          value={formAadharNumber}
+                          onChange={(e) => setFormAadharNumber(e.target.value)}
+                          placeholder="12-digit number"
                           maxLength={12}
-                          className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" 
+                          className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Aadhaar Card Document</label>
                         <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={formAadharUploadUrl} 
-                            onChange={(e) => setFormAadharUploadUrl(e.target.value)} 
-                            placeholder="Aadhaar URL or upload" 
-                            className="flex-1 px-4 py-2 bg-zinc-955 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none" 
+                          <input
+                            type="text"
+                            value={formAadharUploadUrl}
+                            onChange={(e) => setFormAadharUploadUrl(e.target.value)}
+                            placeholder="Aadhaar URL or upload"
+                            className="flex-1 px-4 py-2 bg-zinc-955 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none"
                           />
                           <input type="file" id="admin-aadhar-file-input" accept="image/*,application/pdf" onChange={(e) => handleFileUpload(e, setFormAadharUploadUrl)} className="hidden" />
                           <button type="button" onClick={() => document.getElementById('admin-aadhar-file-input')?.click()} className="px-4 bg-zinc-850 hover:bg-zinc-800 border border-zinc-800 text-xs font-bold rounded-xl text-zinc-300 transition-all cursor-pointer">
@@ -5670,15 +5663,15 @@ export default function AdminPanelPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Internship Duration</label>
-                        <select 
-                          value={formInternshipDuration} 
+                        <select
+                          value={formInternshipDuration}
                           onChange={(e) => {
                             const newDur = e.target.value;
                             setFormInternshipDuration(newDur);
                             if (formStartDate) {
                               setFormEndDate(computeEndDate(formStartDate, newDur));
                             }
-                          }} 
+                          }}
                           className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white"
                         >
                           <option value="1 Month">1 Month</option>
@@ -5762,7 +5755,7 @@ export default function AdminPanelPage() {
                     .slice()
                     .sort((a, b) => (b.id || 0) - (a.id || 0))
                     .filter(d => volCity && d.address && d.address.toLowerCase().includes(volCity.toLowerCase()));
-                  
+
                   const otherRecentDonations = donations
                     .slice()
                     .sort((a, b) => (b.id || 0) - (a.id || 0))
@@ -5774,7 +5767,7 @@ export default function AdminPanelPage() {
                     <>
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Select Approved Volunteer</label>
-                        <select 
+                        <select
                           required
                           value={taskFormVolunteerId}
                           onChange={(e) => setTaskFormVolunteerId(e.target.value)}
@@ -5796,7 +5789,7 @@ export default function AdminPanelPage() {
                             </label>
                             <span className="text-[10px] text-zinc-400">Click a donation to auto-fill task</span>
                           </div>
-                          
+
                           {recent20.length === 0 ? (
                             <p className="text-xs text-zinc-500 italic">No recent donations found. Please make sure donations exist in system.</p>
                           ) : (
@@ -5836,13 +5829,12 @@ export default function AdminPanelPage() {
                                         setTaskFormAssignedMoney(String(numAmount));
                                       }
                                     }}
-                                    className={`p-2.5 rounded-lg border text-xs cursor-pointer transition-all flex justify-between items-center ${
-                                      isSelected 
-                                        ? 'bg-emerald-950/60 border-emerald-500 text-white' 
-                                        : isMatched
+                                    className={`p-2.5 rounded-lg border text-xs cursor-pointer transition-all flex justify-between items-center ${isSelected
+                                      ? 'bg-emerald-950/60 border-emerald-500 text-white'
+                                      : isMatched
                                         ? 'bg-zinc-900 border-emerald-800/60 text-zinc-200 hover:border-emerald-500/50'
                                         : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700'
-                                    }`}
+                                      }`}
                                   >
                                     <div className="space-y-0.5">
                                       <div className="flex items-center gap-2">
@@ -5872,63 +5864,63 @@ export default function AdminPanelPage() {
 
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Task Title</label>
-                        <input 
-                          type="text" 
-                          required 
-                          value={taskFormTitle} 
-                          onChange={(e) => setTaskFormTitle(e.target.value)} 
-                          placeholder="e.g. Ranchi Food Distribution Drive" 
-                          className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" 
+                        <input
+                          type="text"
+                          required
+                          value={taskFormTitle}
+                          onChange={(e) => setTaskFormTitle(e.target.value)}
+                          placeholder="e.g. Ranchi Food Distribution Drive"
+                          className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Task Description / Instructions</label>
-                        <textarea 
-                          value={taskFormDesc} 
-                          onChange={(e) => setTaskFormDesc(e.target.value)} 
-                          placeholder="Details/Instructions for the volunteer task..." 
-                          className="w-full h-24 px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" 
+                        <textarea
+                          value={taskFormDesc}
+                          onChange={(e) => setTaskFormDesc(e.target.value)}
+                          placeholder="Details/Instructions for the volunteer task..."
+                          className="w-full h-24 px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Target Date</label>
-                          <input 
-                            type="date" 
-                            required 
-                            value={taskFormDate} 
-                            onChange={(e) => setTaskFormDate(e.target.value)} 
-                            className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-350" 
+                          <input
+                            type="date"
+                            required
+                            value={taskFormDate}
+                            onChange={(e) => setTaskFormDate(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-350"
                           />
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Target Time</label>
-                          <input 
-                            type="time" 
-                            required 
-                            value={taskFormTime} 
-                            onChange={(e) => setTaskFormTime(e.target.value)} 
-                            className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-350" 
+                          <input
+                            type="time"
+                            required
+                            value={taskFormTime}
+                            onChange={(e) => setTaskFormTime(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none text-zinc-350"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Assigned Money / Budget (₹)</label>
-                          <input 
-                            type="number" 
-                            required 
-                            value={taskFormAssignedMoney} 
-                            onChange={(e) => setTaskFormAssignedMoney(e.target.value)} 
-                            placeholder="e.g. 500" 
-                            className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" 
+                          <input
+                            type="number"
+                            required
+                            value={taskFormAssignedMoney}
+                            onChange={(e) => setTaskFormAssignedMoney(e.target.value)}
+                            placeholder="e.g. 500"
+                            className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                           />
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Task Status</label>
-                          <select 
-                            value={taskFormStatus} 
-                            onChange={(e) => setTaskFormStatus(e.target.value)} 
+                          <select
+                            value={taskFormStatus}
+                            onChange={(e) => setTaskFormStatus(e.target.value)}
                             className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                           >
                             <option value="Pending">Pending</option>
@@ -5962,8 +5954,8 @@ export default function AdminPanelPage() {
                               Object.values(KEY_MAP).map(v => v.title).includes(formTitle)
                                 ? formTitle
                                 : formTitle === ""
-                                ? "Home Page - Main Hero Background (Video/Image)"
-                                : "custom"
+                                  ? "Home Page - Main Hero Background (Video/Image)"
+                                  : "custom"
                             }
                             onChange={(e) => {
                               const val = e.target.value;
@@ -6029,8 +6021,8 @@ export default function AdminPanelPage() {
                               Object.keys(KEY_MAP).includes(formAuthor)
                                 ? formAuthor
                                 : formAuthor === ""
-                                ? "home_hero"
-                                : "custom"
+                                  ? "home_hero"
+                                  : "custom"
                             }
                             onChange={(e) => {
                               const val = e.target.value;
@@ -6117,8 +6109,8 @@ export default function AdminPanelPage() {
                               Object.values(TEXT_KEY_MAP).map(v => v.title).includes(formTitle)
                                 ? formTitle
                                 : formTitle === ""
-                                ? "About Page - Top Banner Title Prefix Text"
-                                : "custom"
+                                  ? "About Page - Top Banner Title Prefix Text"
+                                  : "custom"
                             }
                             onChange={(e) => {
                               const val = e.target.value;
@@ -6171,8 +6163,8 @@ export default function AdminPanelPage() {
                               Object.keys(TEXT_KEY_MAP).includes(formAuthor)
                                 ? formAuthor
                                 : formAuthor === ""
-                                ? "about_banner_title_prefix"
-                                : "custom"
+                                  ? "about_banner_title_prefix"
+                                  : "custom"
                             }
                             onChange={(e) => {
                               const val = e.target.value;
@@ -6223,7 +6215,7 @@ export default function AdminPanelPage() {
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Select Approved Volunteer Profile (Optional)</label>
-                        <select 
+                        <select
                           value={formVolunteerId}
                           onChange={(e) => {
                             setFormVolunteerId(e.target.value);
@@ -6289,15 +6281,15 @@ export default function AdminPanelPage() {
                       <div>
                         <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Profile Photo Link/Upload</label>
                         <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={formProfilePhoto || formImage} 
+                          <input
+                            type="text"
+                            value={formProfilePhoto || formImage}
                             onChange={(e) => {
                               setFormProfilePhoto(e.target.value);
                               setFormImage(e.target.value);
-                            }} 
-                            placeholder="Image URL or upload" 
-                            className="flex-1 px-4 py-2 bg-zinc-955 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none" 
+                            }}
+                            placeholder="Image URL or upload"
+                            className="flex-1 px-4 py-2 bg-zinc-955 border border-zinc-800 rounded-xl text-xs text-white focus:outline-none"
                           />
                           <input type="file" ref={imageInputRef} accept="image/*" onChange={(e) => {
                             handleFileUpload(e, (url) => {
@@ -6440,7 +6432,7 @@ export default function AdminPanelPage() {
         {isReportOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm no-print">
             <div className="fixed inset-0" onClick={() => setIsReportOpen(false)} />
-            
+
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -6451,13 +6443,13 @@ export default function AdminPanelPage() {
               <div className="flex justify-between items-center bg-zinc-950 px-8 py-4 border-b border-zinc-800">
                 <h3 className="text-sm font-black uppercase tracking-wider text-zinc-300">Donation Report Document Preview</h3>
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => window.print()}
                     className="px-5 py-2 bg-emerald-650 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider rounded-xl cursor-pointer"
                   >
                     Print / Save PDF
                   </button>
-                  <button 
+                  <button
                     onClick={() => setIsReportOpen(false)}
                     className="px-4 py-2 border border-zinc-850 text-zinc-400 hover:text-white text-xs font-bold rounded-xl cursor-pointer"
                   >
@@ -6468,7 +6460,8 @@ export default function AdminPanelPage() {
 
               {/* Actual Report Document Container (printed) */}
               <div className="flex-1 overflow-y-auto p-8 sm:p-12 bg-white text-black" id="print-report-container">
-                <style dangerouslySetInnerHTML={{__html: `
+                <style dangerouslySetInnerHTML={{
+                  __html: `
                   @media print {
                     body {
                       background: white !important;
@@ -6505,8 +6498,8 @@ export default function AdminPanelPage() {
                   <div className="text-right">
                     <h2 className="text-base font-black uppercase tracking-wider text-zinc-800">Donation Statement</h2>
                     <p className="text-xs text-zinc-550 font-bold mt-1">
-                      Report Scope: {reportFilterType === "date" 
-                        ? `Period: ${reportStartDate || 'All'} to ${reportEndDate || 'Today'}` 
+                      Report Scope: {reportFilterType === "date"
+                        ? `Period: ${reportStartDate || 'All'} to ${reportEndDate || 'Today'}`
                         : `Month: ${new Date(2020, parseInt(reportMonth, 10) - 1).toLocaleString('default', { month: 'long' })} ${reportYear}`}
                     </p>
                     <p className="text-[10px] text-zinc-500 mt-0.5">Generated: {new Date().toLocaleString('en-IN')}</p>
@@ -6552,8 +6545,8 @@ export default function AdminPanelPage() {
                         <tr key={d.id} className="text-zinc-800 text-xs">
                           <td className="py-3 font-medium">{index + 1}</td>
                           <td className="py-3 font-mono">
-                            {d.created_at 
-                              ? new Date(d.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                            {d.created_at
+                              ? new Date(d.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
                               : 'Prior Record'}
                           </td>
                           <td className="py-3 font-bold">{d.name}</td>
@@ -6649,7 +6642,7 @@ export default function AdminPanelPage() {
         {isViewProofModalOpen && viewingTaskProof && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
             <div className="fixed inset-0" onClick={() => setIsViewProofModalOpen(false)} />
-            
+
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -6757,7 +6750,7 @@ export default function AdminPanelPage() {
         {isCertModalOpen && certVol && (
           <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="fixed inset-0" onClick={() => setIsCertModalOpen(false)} />
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -6786,22 +6779,22 @@ export default function AdminPanelPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Internship Start Date</label>
-                    <input 
-                      type="date" 
-                      required 
-                      value={certStartDate} 
-                      onChange={(e) => setCertStartDate(e.target.value)} 
-                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" 
+                    <input
+                      type="date"
+                      required
+                      value={certStartDate}
+                      onChange={(e) => setCertStartDate(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Completion/Issue Date</label>
-                    <input 
-                      type="date" 
-                      required 
-                      value={certDate} 
-                      onChange={(e) => setCertDate(e.target.value)} 
-                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" 
+                    <input
+                      type="date"
+                      required
+                      value={certDate}
+                      onChange={(e) => setCertDate(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
                     />
                   </div>
                 </div>
@@ -6812,19 +6805,18 @@ export default function AdminPanelPage() {
                     <button
                       type="button"
                       onClick={() => setCertUrl("auto")}
-                      className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${
-                        certUrl === "auto" 
-                          ? "bg-emerald-650 border-emerald-650 text-white shadow-lg" 
-                          : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
-                      }`}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${certUrl === "auto"
+                        ? "bg-emerald-650 border-emerald-650 text-white shadow-lg"
+                        : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
+                        }`}
                     >
                       Auto-Generate
                     </button>
                     <div className="relative">
-                      <input 
-                        type="file" 
-                        id="admin-cert-upload-input" 
-                        accept="image/*,application/pdf" 
+                      <input
+                        type="file"
+                        id="admin-cert-upload-input"
+                        accept="image/*,application/pdf"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
@@ -6841,17 +6833,16 @@ export default function AdminPanelPage() {
                           } catch (err) {
                             console.error("Upload error:", err);
                           }
-                        }} 
-                        className="hidden" 
+                        }}
+                        className="hidden"
                       />
                       <button
                         type="button"
                         onClick={() => document.getElementById('admin-cert-upload-input')?.click()}
-                        className={`w-full py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${
-                          certUrl !== "auto" && certUrl !== "" 
-                            ? "bg-emerald-650 border-emerald-650 text-white shadow-lg" 
-                            : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
-                        }`}
+                        className={`w-full py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${certUrl !== "auto" && certUrl !== ""
+                          ? "bg-emerald-650 border-emerald-650 text-white shadow-lg"
+                          : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
+                          }`}
                       >
                         Upload File
                       </button>
@@ -7143,7 +7134,7 @@ export default function AdminPanelPage() {
               </button>
             </div>
 
-            <div 
+            <div
               ref={certContainerRef}
               className="w-full flex items-center justify-center overflow-hidden"
               style={{ height: `${565 * certScale}px` }}
@@ -7193,7 +7184,7 @@ export default function AdminPanelPage() {
                   <h2 className="text-3xl font-black tracking-tight text-[#1E4D2B] font-serif uppercase">
                     Certificate of Internship
                   </h2>
-                  
+
                   <div className="space-y-1.5 mt-2">
                     <p className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">This is proudly presented to</p>
                     <h3 className="text-2xl font-black text-[#1E4D2B] underline decoration-[#F3A61E] decoration-2 underline-offset-8">
@@ -7233,13 +7224,13 @@ export default function AdminPanelPage() {
                     <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Verification ID</p>
                     <p className="text-xs font-extrabold text-[#F3A61E]">KH-VOL-CERT-{viewingCertVol.id}</p>
                   </div>
-                  
+
                   {/* Stamp Seal */}
                   <div className="h-16 w-16 flex items-center justify-center relative select-none">
                     {viewingCertVol.certificate_seal_image_url ? (
-                      <img 
-                        src={viewingCertVol.certificate_seal_image_url} 
-                        className="h-16 w-16 object-contain" 
+                      <img
+                        src={viewingCertVol.certificate_seal_image_url}
+                        className="h-16 w-16 object-contain"
                         alt="Seal"
                       />
                     ) : (
@@ -7259,9 +7250,9 @@ export default function AdminPanelPage() {
 
                   <div className="text-right w-44">
                     {viewingCertVol.certificate_signature_image_url ? (
-                      <img 
-                        src={viewingCertVol.certificate_signature_image_url} 
-                        className="h-10 max-w-full object-contain mx-auto mb-1" 
+                      <img
+                        src={viewingCertVol.certificate_signature_image_url}
+                        className="h-10 max-w-full object-contain mx-auto mb-1"
                         alt="Signature"
                       />
                     ) : viewingCertVol.certificate_signature_name ? (
