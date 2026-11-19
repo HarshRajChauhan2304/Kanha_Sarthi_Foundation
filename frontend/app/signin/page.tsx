@@ -203,40 +203,40 @@ export default function SignIn() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50/80 dark:bg-[#070b09] px-3 font-sans pt-18 pb-6 sm:pt-20 sm:pb-8 text-left">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50/80 dark:bg-[#070b09] px-3 font-sans pt-14 pb-4 sm:pt-16 sm:pb-6 text-left">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="w-full max-w-[390px] rounded-3xl bg-white dark:bg-[#101412] p-4 sm:p-5 shadow-xl border border-gray-150/70 dark:border-zinc-800 relative text-center my-auto"
+        className="w-full max-w-[400px] rounded-2xl sm:rounded-3xl bg-white dark:bg-[#101412] p-3.5 sm:p-4.5 shadow-xl border border-gray-150/70 dark:border-zinc-800 relative text-center my-auto"
       >
         {sessionExpiredNotice && (
-          <div className="mb-2.5 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-lg text-[11px] font-bold text-amber-700 dark:text-amber-400">
+          <div className="mb-2 p-1.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-lg text-[10px] font-bold text-amber-700 dark:text-amber-400">
             ⏰ Your session expired. Please sign in to continue.
           </div>
         )}
 
-        {/* Top Heart Badge (Compact) */}
-        <div className="w-11 h-11 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center mx-auto mb-1.5 border border-emerald-100/80 dark:border-emerald-800/40">
-          <div className="w-8 h-8 rounded-full bg-[#1E4D2B] dark:bg-emerald-600 flex items-center justify-center shadow-xs">
-            <svg className="w-4 h-4 fill-white drop-shadow-xs" viewBox="0 0 24 24">
+        {/* Top Heart Badge (Ultra Compact) */}
+        <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center mx-auto mb-1 border border-emerald-100/80 dark:border-emerald-800/40">
+          <div className="w-6.5 h-6.5 rounded-full bg-[#1E4D2B] dark:bg-emerald-600 flex items-center justify-center shadow-xs">
+            <svg className="w-3.5 h-3.5 fill-white drop-shadow-xs" viewBox="0 0 24 24">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
           </div>
         </div>
 
         {/* Heading & Subtitle */}
-        <h1 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white tracking-tight">
+        <h1 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight">
           {mode === "signin" ? "Welcome Back!" : "Create Account"}
         </h1>
-        <p className="text-[11px] text-gray-500 dark:text-zinc-400 mt-0.5 leading-tight">
+        <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-zinc-400 mt-0.5 leading-tight">
           {mode === "signin"
             ? "Sign in with your username/email and password"
             : "Register to track your impact and donations"}
         </p>
 
         {/* Mode Switcher Tabs: Sign In | Sign Up (Compact) */}
-        <div className="grid grid-cols-2 p-0.5 bg-gray-100 dark:bg-zinc-900 rounded-lg mt-2.5 border border-gray-200 dark:border-zinc-800">
+        <div className="grid grid-cols-2 p-0.5 bg-gray-100 dark:bg-zinc-900 rounded-lg mt-2 border border-gray-200 dark:border-zinc-800">
           <button
             type="button"
             onClick={() => {
@@ -244,7 +244,7 @@ export default function SignIn() {
               setError("");
               setSuccessMsg("");
             }}
-            className={`py-1.5 text-xs font-black rounded-md transition-all cursor-pointer ${
+            className={`py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
               mode === "signin"
                 ? "bg-[#1E4D2B] text-white shadow-xs"
                 : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white"
@@ -259,7 +259,7 @@ export default function SignIn() {
               setError("");
               setSuccessMsg("");
             }}
-            className={`py-1.5 text-xs font-black rounded-md transition-all cursor-pointer ${
+            className={`py-1 text-xs font-black rounded-md transition-all cursor-pointer ${
               mode === "signup"
                 ? "bg-[#1E4D2B] text-white shadow-xs"
                 : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white"
@@ -271,12 +271,12 @@ export default function SignIn() {
 
         {/* Alert Messages */}
         {error && (
-          <p className="mt-2.5 p-2 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-[11px] font-bold text-red-600 dark:text-red-400 text-left">
+          <p className="mt-2 p-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-[10px] font-bold text-red-600 dark:text-red-400 text-left">
             {error}
           </p>
         )}
         {successMsg && (
-          <p className="mt-2.5 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 text-left">
+          <p className="mt-2 p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 text-left">
             {successMsg}
           </p>
         )}
@@ -285,7 +285,7 @@ export default function SignIn() {
         {/* TAB 1: SIGN IN FORM (Username/Email & Password) */}
         {/* ======================================================== */}
         {mode === "signin" && (
-          <form onSubmit={handleSignIn} className="space-y-2.5 mt-3 text-left">
+          <form onSubmit={handleSignIn} className="space-y-2 mt-2.5 text-left">
             <div>
               <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
                 Username or Email *
@@ -296,7 +296,7 @@ export default function SignIn() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="Username or email address"
-                className="w-full px-3 py-2 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
+                className="w-full px-2.5 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
               />
             </div>
 
@@ -311,12 +311,12 @@ export default function SignIn() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-[11px] font-bold cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-[10px] font-bold cursor-pointer"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -326,12 +326,12 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-3 rounded-lg bg-[#1E4D2B] hover:bg-[#153e22] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold text-xs shadow-sm active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 mt-1"
+              className="w-full py-2 px-3 rounded-lg bg-[#1E4D2B] hover:bg-[#153e22] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold text-xs shadow-sm active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 mt-1"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
 
-            <div className="text-center pt-0.5 text-[11px]">
+            <div className="text-center pt-0.5 text-[10px]">
               <span className="text-gray-500 dark:text-zinc-400">Don't have an account? </span>
               <button
                 type="button"
@@ -348,24 +348,47 @@ export default function SignIn() {
         )}
 
         {/* ======================================================== */}
-        {/* TAB 2: SIGN UP FORM (Username, Email, Phone, Password) */}
+        {/* TAB 2: SIGN UP FORM (Username, Email, Phone, Password) - Compact Layout */}
         {/* ======================================================== */}
         {mode === "signup" && (
-          <form onSubmit={handleSignUp} className="space-y-2 mt-2.5 text-left">
-            <div>
-              <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
-                Full Name / Username *
-              </label>
-              <input
-                type="text"
-                required
-                value={signupUsername}
-                onChange={(e) => setSignupUsername(e.target.value)}
-                placeholder="e.g. Vikram Singh"
-                className="w-full px-3 py-1.5 sm:py-2 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
-              />
+          <form onSubmit={handleSignUp} className="space-y-1.5 mt-2 text-left">
+            {/* Row 1: Full Name & Mobile Number in 2-column grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={signupUsername}
+                  onChange={(e) => setSignupUsername(e.target.value)}
+                  placeholder="e.g. Vikram Singh"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
+                  Mobile Number *
+                </label>
+                <div className="flex rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 overflow-hidden focus-within:ring-1.5 focus-within:ring-[#1E4D2B] dark:focus-within:ring-emerald-500">
+                  <span className="flex items-center px-2 bg-gray-50 dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 text-[10px] font-bold text-gray-700 dark:text-zinc-300">
+                    +91
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    value={signupPhone}
+                    onChange={(e) => setSignupPhone(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                    placeholder="10-digit number"
+                    className="w-full px-2 py-1.5 text-xs text-gray-900 dark:text-white bg-transparent focus:outline-none placeholder-gray-400"
+                  />
+                </div>
+              </div>
             </div>
 
+            {/* Row 2: Email Address */}
             <div>
               <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
                 Email Address *
@@ -376,30 +399,12 @@ export default function SignIn() {
                 value={signupEmail}
                 onChange={(e) => setSignupEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full px-3 py-1.5 sm:py-2 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
+                className="w-full px-2.5 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
               />
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
-                Mobile Number *
-              </label>
-              <div className="flex rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 overflow-hidden focus-within:ring-1.5 focus-within:ring-[#1E4D2B] dark:focus-within:ring-emerald-500">
-                <span className="flex items-center px-2.5 bg-gray-50 dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 text-[11px] font-bold text-gray-700 dark:text-zinc-300">
-                  +91
-                </span>
-                <input
-                  type="tel"
-                  required
-                  value={signupPhone}
-                  onChange={(e) => setSignupPhone(e.target.value.replace(/\D/g, "").slice(0, 12))}
-                  placeholder="10-digit mobile"
-                  className="w-full px-2.5 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-900 dark:text-white bg-transparent focus:outline-none placeholder-gray-400"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
+            {/* Row 3: Password & Confirm Password */}
+            <div className="grid grid-cols-2 gap-1.5">
               <div>
                 <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-400 uppercase tracking-wider mb-0.5">
                   Password *
@@ -410,7 +415,7 @@ export default function SignIn() {
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
                   placeholder="Min 6 chars"
-                  className="w-full px-2.5 py-1.5 sm:py-2 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
+                  className="w-full px-2 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
                 />
               </div>
 
@@ -424,7 +429,7 @@ export default function SignIn() {
                   value={signupConfirmPassword}
                   onChange={(e) => setSignupConfirmPassword(e.target.value)}
                   placeholder="Re-enter"
-                  className="w-full px-2.5 py-1.5 sm:py-2 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
+                  className="w-full px-2 py-1.5 rounded-lg border border-gray-250 dark:border-zinc-750 bg-white dark:bg-zinc-950 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1.5 focus:ring-[#1E4D2B] dark:focus:ring-emerald-500 placeholder-gray-400"
                 />
               </div>
             </div>
@@ -432,12 +437,12 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-3 rounded-lg bg-[#1E4D2B] hover:bg-[#153e22] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold text-xs shadow-sm active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 mt-1"
+              className="w-full py-2 px-3 rounded-lg bg-[#1E4D2B] hover:bg-[#153e22] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold text-xs shadow-sm active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 mt-1"
             >
               {loading ? "Creating Account..." : "Create Account"}
             </button>
 
-            <div className="text-center pt-0.5 text-[11px]">
+            <div className="text-center pt-0.5 text-[10px]">
               <span className="text-gray-500 dark:text-zinc-400">Already registered? </span>
               <button
                 type="button"
@@ -456,9 +461,9 @@ export default function SignIn() {
         {/* ======================================================== */}
         {/* BOTTOM SECTION: OR Divider & Sign In with Google */}
         {/* ======================================================== */}
-        <div className="relative my-3 flex items-center justify-center">
+        <div className="relative my-2 flex items-center justify-center">
           <div className="border-t border-gray-200 dark:border-zinc-800 w-full" />
-          <span className="bg-white dark:bg-[#101412] px-2.5 text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest absolute">
+          <span className="bg-white dark:bg-[#101412] px-2 text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest absolute">
             OR
           </span>
         </div>
@@ -468,9 +473,9 @@ export default function SignIn() {
           type="button"
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full py-2 px-3 border border-gray-250 dark:border-zinc-750 rounded-lg bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-850 flex items-center justify-center gap-2.5 text-xs font-bold text-gray-800 dark:text-gray-200 shadow-2xs transition-all active:scale-[0.99] cursor-pointer"
+          className="w-full py-1.5 px-3 border border-gray-250 dark:border-zinc-750 rounded-lg bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-850 flex items-center justify-center gap-2 text-xs font-bold text-gray-800 dark:text-gray-200 shadow-2xs transition-all active:scale-[0.99] cursor-pointer"
         >
-          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -480,12 +485,12 @@ export default function SignIn() {
         </button>
 
         {/* Need Help? Section (Compact) */}
-        <div className="mt-3.5 pt-2.5 border-t border-gray-150 dark:border-zinc-800">
-          <p className="text-[10px] font-bold text-gray-600 dark:text-zinc-400 mb-1.5">
+        <div className="mt-2.5 pt-2 border-t border-gray-150 dark:border-zinc-800">
+          <p className="text-[10px] font-bold text-gray-600 dark:text-zinc-400 mb-1">
             Need Help?
           </p>
 
-          <div className="flex items-center justify-center gap-5 text-[11px] font-semibold">
+          <div className="flex items-center justify-center gap-4 text-[10px] font-semibold">
             {/* WhatsApp */}
             <a
               href="https://wa.me/9182587765159"
