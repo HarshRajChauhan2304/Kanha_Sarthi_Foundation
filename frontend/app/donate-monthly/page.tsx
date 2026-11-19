@@ -23,13 +23,13 @@ const CATEGORIES: MonthlyCategory[] = [
     title: "Educate, Empower, Transform.",
     tagline: "Provide school uniforms, textbooks, digital learning, and tuition to underprivileged children.",
     image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1000&auto=format&fit=crop&q=80",
-    defaultMonthly: 1000,
+    defaultMonthly: 200, // Education default: ₹200 as requested
     impactNotes: {
-      1000: "₹1,000 / month sponsors school kit, books, uniform & mid-day nutrition for 1 child.",
-      5000: "₹5,000 / month supports full academic sponsorship and evening coaching for 5 children.",
-      10000: "₹10,000 / month funds digital classroom access and annual fees for an entire learning center.",
-      20000: "₹20,000 / month sponsors comprehensive yearly schooling, health care, and nutrition for 20 children.",
-      default: "Every monthly rupee helps provide quality education and a brighter tomorrow for underprivileged children."
+      200: "₹200 / month sponsors notebook sets, pens, and study stationery for an underprivileged child.",
+      500: "₹500 / month funds school kit, textbooks, uniform and educational support for 1 child.",
+      1000: "₹1,000 / month sponsors full schooling and remedial evening coaching for 2 children.",
+      5000: "₹5,000 / month supports complete digital classroom access and fees for 10 children.",
+      default: "Every monthly rupee provides quality education and a brighter tomorrow for underprivileged children."
     }
   },
   {
@@ -39,12 +39,11 @@ const CATEGORIES: MonthlyCategory[] = [
     title: "Healing Lives, Restoring Dignity.",
     tagline: "Deliver critical medicines, mobile clinic checkups, diagnostic tests, and emergency medical aid to vulnerable families.",
     image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1000&auto=format&fit=crop&q=80",
-    defaultMonthly: 1000,
+    defaultMonthly: 500, // Healthcare default: ₹500 as requested
     impactNotes: {
-      1000: "₹1,000 / month provides essential chronic medicines and physician checkups for 1 destitute patient.",
-      5000: "₹5,000 / month sponsors specialized diagnostic blood panels, dialysis support, and pediatric consultations.",
-      10000: "₹10,000 / month funds a full mobile health clinic camp in remote tribal and slum pockets.",
-      20000: "₹20,000 / month supports life-saving emergency surgery costs for destitute patients in critical need.",
+      500: "₹500 / month provides essential chronic medicines and physician checkup for 1 destitute patient.",
+      1000: "₹1,000 / month covers diagnostic tests, medical consultations, and first-aid kits.",
+      5000: "₹5,000 / month sponsors life-saving emergency medical aid and pediatric care.",
       default: "Your monthly healthcare contribution provides immediate medical attention and relief to vulnerable lives."
     }
   },
@@ -55,12 +54,11 @@ const CATEGORIES: MonthlyCategory[] = [
     title: "No One Sleeps Hungry.",
     tagline: "Supply wholesome 15-item monthly dry grocery ration kits and daily hot cooked nutritious meals to daily wage workers and children.",
     image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1000&auto=format&fit=crop&q=80",
-    defaultMonthly: 1000,
+    defaultMonthly: 500, // Food default: ₹500 as requested
     impactNotes: {
-      1000: "₹1,000 / month delivers a complete 15-item dry ration grocery kit feeding a needy family for 1 whole month.",
-      5000: "₹5,000 / month serves 125+ freshly cooked hot nutritious meals to street children and daily wage laborers.",
-      10000: "₹10,000 / month powers an open community kitchen drive feeding over 250 vulnerable individuals.",
-      20000: "₹20,000 / month funds complete sustained monthly nutrition and dry ration for 20 impoverished families.",
+      500: "₹500 / month delivers a wholesome 15-item dry ration grocery packet feeding a needy family.",
+      1000: "₹1,000 / month delivers full grocery ration plus daily hot cooked nutritious meals.",
+      5000: "₹5,000 / month serves 125+ freshly cooked hot nutritious meals to street children.",
       default: "Your recurring monthly meal donation ensures hunger is eliminated one plate at a time."
     }
   }
@@ -71,12 +69,12 @@ export default function DonateMonthlyPage() {
 
   const [activeCategory, setActiveCategory] = useState<MonthlyCategory>(CATEGORIES[0]);
   
-  // Duration: 1, 6, or 12 Months (Requested by user)
+  // Duration Months: 1, 2, 6, 12, or custom increased months
   const [durationMonths, setDurationMonths] = useState<number>(1);
 
-  // Monthly base amount (customizable with +/- steppers or direct typing)
-  const [monthlyAmount, setMonthlyAmount] = useState<number>(1000);
-  const [monthlyAmountInput, setMonthlyAmountInput] = useState<string>("1000");
+  // Monthly base amount: Education = 200, Healthcare = 500, Food = 500
+  const [monthlyAmount, setMonthlyAmount] = useState<number>(200);
+  const [monthlyAmountInput, setMonthlyAmountInput] = useState<string>("200");
 
   // Donor Details
   const [donorName, setDonorName] = useState<string>("");
@@ -115,8 +113,8 @@ export default function DonateMonthlyPage() {
 
   // Increase amount via stepper button (+)
   const handleIncreaseAmount = () => {
-    let step = 500;
-    if (monthlyAmount < 1000) step = 100;
+    let step = 100;
+    if (monthlyAmount >= 1000 && monthlyAmount < 5000) step = 500;
     else if (monthlyAmount >= 5000) step = 1000;
     const nextVal = (monthlyAmount || 0) + step;
     setMonthlyAmount(nextVal);
@@ -125,12 +123,22 @@ export default function DonateMonthlyPage() {
 
   // Decrease amount via stepper button (-)
   const handleDecreaseAmount = () => {
-    let step = 500;
-    if (monthlyAmount <= 1000) step = 100;
-    else if (monthlyAmount > 5000) step = 1000;
+    let step = 100;
+    if (monthlyAmount > 5000) step = 1000;
+    else if (monthlyAmount > 1000 && monthlyAmount <= 5000) step = 500;
     const nextVal = Math.max(100, (monthlyAmount || 0) - step);
     setMonthlyAmount(nextVal);
     setMonthlyAmountInput(String(nextVal));
+  };
+
+  // Increase duration months (+)
+  const handleIncreaseMonths = () => {
+    setDurationMonths((prev) => prev + 1);
+  };
+
+  // Decrease duration months (-)
+  const handleDecreaseMonths = () => {
+    setDurationMonths((prev) => Math.max(1, prev - 1));
   };
 
   // Total calculated amount based on duration: monthlyAmount * durationMonths
@@ -302,23 +310,25 @@ export default function DonateMonthlyPage() {
           <form onSubmit={handleDonateNow} className="p-4 sm:p-7 space-y-4 sm:space-y-6">
             
             {/* ======================================================== */}
-            {/* REQUIREMENT 2.1: DURATION SELECTION (1, 6, 12 MONTHS) */}
+            {/* DURATION SELECTION (1, 2, 6, 12 MONTHS + STEPPER +/-) */}
             {/* ======================================================== */}
             <div>
-              <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                   Select Duration (Months)
                 </label>
                 <span className="text-[11px] font-black text-[#1E4D2B] dark:text-emerald-400">
-                  {durationMonths} {durationMonths === 1 ? "Month" : "Months"} Plan
+                  {durationMonths} {durationMonths === 1 ? "Month" : "Months"} Subscription
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {/* 4 Quick Preset Buttons: 1, 2, 6, 12 Months */}
+              <div className="grid grid-cols-4 gap-2">
                 {[
-                  { months: 1, label: "1 Month", badge: "Flexible" },
-                  { months: 6, label: "6 Months", badge: "Sustained" },
-                  { months: 12, label: "12 Months", badge: "1 Year Impact" }
+                  { months: 1, label: "1 Mo", full: "1 Month" },
+                  { months: 2, label: "2 Mos", full: "2 Months" },
+                  { months: 6, label: "6 Mos", full: "6 Months" },
+                  { months: 12, label: "12 Mos", full: "12 Months" }
                 ].map((item) => {
                   const isSelected = durationMonths === item.months;
                   return (
@@ -326,24 +336,52 @@ export default function DonateMonthlyPage() {
                       key={item.months}
                       type="button"
                       onClick={() => setDurationMonths(item.months)}
-                      className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer relative flex flex-col items-center justify-center gap-0.5 ${
+                      className={`py-2.5 px-1 rounded-xl text-xs sm:text-sm font-black border transition-all cursor-pointer flex flex-col items-center justify-center ${
                         isSelected
-                          ? "bg-emerald-50 dark:bg-emerald-950/40 border-[#1E4D2B] dark:border-emerald-500 text-[#1E4D2B] dark:text-emerald-300 ring-2 ring-[#1E4D2B]/30 scale-[1.02] shadow-sm"
+                          ? "bg-emerald-50 dark:bg-emerald-950/40 border-[#1E4D2B] dark:border-emerald-500 text-[#1E4D2B] dark:text-emerald-300 ring-2 ring-[#1E4D2B]/30 scale-[1.02] shadow-xs"
                           : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-emerald-400"
                       }`}
                     >
-                      <span className="text-sm sm:text-base font-black">{item.label}</span>
-                      <span className={`text-[10px] font-bold ${isSelected ? "text-[#1E4D2B] dark:text-emerald-400" : "text-zinc-400"}`}>
-                        {item.badge}
-                      </span>
+                      <span className="text-xs sm:text-sm font-black">{item.full}</span>
                     </button>
                   );
                 })}
               </div>
+
+              {/* Month Stepper: [-] {durationMonths} Months [+] */}
+              <div className="flex items-center justify-between p-2.5 bg-zinc-50 dark:bg-zinc-900/60 rounded-xl border border-zinc-200 dark:border-zinc-800 mt-2.5">
+                <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">
+                  Adjust Months:
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDecreaseMonths}
+                    disabled={durationMonths <= 1}
+                    className="w-8 h-8 rounded-lg bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 disabled:opacity-40 flex items-center justify-center font-black text-base text-zinc-800 dark:text-zinc-100 cursor-pointer active:scale-95 transition-all select-none"
+                    title="Decrease month"
+                    aria-label="Decrease month"
+                  >
+                    −
+                  </button>
+                  <span className="w-24 text-center font-black text-sm text-[#1E4D2B] dark:text-emerald-400">
+                    {durationMonths} {durationMonths === 1 ? "Month" : "Months"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleIncreaseMonths}
+                    className="w-8 h-8 rounded-lg bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 flex items-center justify-center font-black text-base text-zinc-800 dark:text-zinc-100 cursor-pointer active:scale-95 transition-all select-none"
+                    title="Increase month"
+                    aria-label="Increase month"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* ======================================================== */}
-            {/* REQUIREMENT 2.2: MONTHLY AMOUNT INPUT & +/- STEPPERS */}
+            {/* MONTHLY AMOUNT INPUT & +/- STEPPERS */}
             {/* ======================================================== */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -351,7 +389,7 @@ export default function DonateMonthlyPage() {
                   Monthly Contribution (Per Month)
                 </label>
                 <span className="text-[11px] font-bold text-zinc-400">
-                  Minimum: ₹100
+                  Default: ₹{activeCategory.defaultMonthly}/mo
                 </span>
               </div>
 
@@ -399,12 +437,12 @@ export default function DonateMonthlyPage() {
               </div>
 
               {/* ======================================================== */}
-              {/* REQUIREMENT 2.3: ACCORDING TO MONTHS AMOUNT DISPLAY */}
+              {/* ACCORDING TO MONTHS AMOUNT DISPLAY */}
               {/* ======================================================== */}
               <div className="p-3.5 sm:p-4 bg-emerald-50/90 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl flex items-center justify-between shadow-xs">
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-400 block">
-                    Total Amount ({durationMonths} {durationMonths === 1 ? "Month" : "Months"})
+                    Total Contribution ({durationMonths} {durationMonths === 1 ? "Month" : "Months"})
                   </span>
                   <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
                     ₹{monthlyAmount.toLocaleString("en-IN")} × {durationMonths} {durationMonths === 1 ? "month" : "months"}
