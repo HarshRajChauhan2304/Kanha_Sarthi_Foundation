@@ -1,0 +1,48 @@
+[
+  {
+    "id": "education",
+    "name": "Education",
+    "tabLabel": "Education",
+    "title": "Educate, Empower, Transform.",
+    "tagline": "Provide school uniforms, textbooks, digital learning, and tuition to underprivileged children.",
+    "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1000&auto=format&fit=crop&q=80",
+    "defaultMonthly": 200,
+    "impactNotes": {
+      "200": "₹200 / month sponsors notebook sets, pens, and study stationery for an underprivileged child.",
+      "500": "₹500 / month funds school kit, textbooks, uniform and educational support for 1 child.",
+      "1000": "₹1,000 / month sponsors full schooling and remedial evening coaching for 2 children.",
+      "5000": "₹5,000 / month supports complete digital classroom access and fees for 10 children.",
+      "default": "Every monthly rupee provides quality education and a brighter tomorrow for underprivileged children."
+    }
+  },
+  {
+    "id": "healthcare",
+    "name": "Healthcare",
+    "tabLabel": "Healthcare",
+    "title": "Healing Lives, Restoring Dignity.",
+    "tagline": "Deliver critical medicines, mobile clinic checkups, diagnostic tests, and emergency medical aid to vulnerable families.",
+    "image": "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1000&auto=format&fit=crop&q=80",
+    "defaultMonthly": 500,
+    "impactNotes": {
+      "500": "₹500 / month provides essential chronic medicines and physician checkup for 1 destitute patient.",
+      "1000": "₹1,000 / month covers diagnostic tests, medical consultations, and first-aid kits.",
+      "5000": "₹5,000 / month sponsors life-saving emergency medical aid and pediatric care.",
+      "default": "Your monthly healthcare contribution provides immediate medical attention and relief to vulnerable lives."
+    }
+  },
+  {
+    "id": "food",
+    "name": "Food & Nutrition",
+    "tabLabel": "Food & Nutrition",
+    "title": "No One Sleeps Hungry.",
+    "tagline": "Supply wholesome 15-item monthly dry grocery ration kits and daily hot cooked nutritious meals to daily wage workers and children.",
+    "image": "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1000&auto=format&fit=crop&q=80",
+    "defaultMonthly": 500,
+    "impactNotes": {
+      "500": "₹500 / month delivers a wholesome 15-item dry ration grocery packet feeding a needy family.",
+      "1000": "₹1,000 / month delivers full grocery ration plus daily hot cooked nutritious meals.",
+      "5000": "₹5,000 / month serves 125+ freshly cooked hot nutritious meals to street children.",
+      "default": "Your recurring monthly meal donation ensures hunger is eliminated one plate at a time."
+    }
+  }
+]

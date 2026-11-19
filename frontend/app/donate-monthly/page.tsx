@@ -67,6 +67,7 @@ const CATEGORIES: MonthlyCategory[] = [
 export default function DonateMonthlyPage() {
   const router = useRouter();
 
+  const [categories, setCategories] = useState<MonthlyCategory[]>(CATEGORIES);
   const [activeCategory, setActiveCategory] = useState<MonthlyCategory>(CATEGORIES[0]);
   
   // Duration Months: 1, 2, 6, 12, or custom increased months
@@ -85,6 +86,24 @@ export default function DonateMonthlyPage() {
   // Tax Benefits Modal
   const [showTaxModal, setShowTaxModal] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  // Dynamically load monthly donation settings from API
+  useEffect(() => {
+    fetch('/api/monthly-donation', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCategories(data);
+          setActiveCategory(prev => {
+            const found = data.find((c: any) => c.id === prev.id) || data[0];
+            setMonthlyAmount(found.defaultMonthly);
+            setMonthlyAmountInput(String(found.defaultMonthly));
+            return found;
+          });
+        }
+      })
+      .catch(err => console.error("Error loading monthly donation categories:", err));
+  }, []);
 
   // Pre-fill from active user session if available
   useEffect(() => {
@@ -247,7 +266,7 @@ export default function DonateMonthlyPage() {
           {/* Category Tabs: Education | Healthcare | Food & Nutrition */}
           <div className="px-4 sm:px-7 pt-4">
             <div className="grid grid-cols-3 gap-1.5 sm:gap-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-              {CATEGORIES.map((cat) => {
+              {categories.map((cat) => {
                 const isActive = activeCategory.id === cat.id;
                 return (
                   <button

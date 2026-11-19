@@ -49,6 +49,7 @@ export default function VolunteerProfilePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [volunteer, setVolunteer] = useState<Volunteer | null>(null);
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+  const [isBirthdayToday, setIsBirthdayToday] = useState(false);
 
   const computeEndDate = (startDateStr: string, durationStr: string) => {
     if (!startDateStr) return "";
@@ -295,6 +296,7 @@ export default function VolunteerProfilePage() {
       }
 
       if (dobMMDD === todayMMDD) {
+        setIsBirthdayToday(true);
         setShowBirthdayModal(true);
         fetch('/api/cron/birthday', { method: 'POST' }).catch(() => {});
       }
@@ -447,6 +449,7 @@ export default function VolunteerProfilePage() {
         isOpen={showBirthdayModal}
         onClose={() => setShowBirthdayModal(false)}
         userName={volunteer?.name || 'Volunteer'}
+        phone={volunteer?.phone}
         userType="volunteer"
       />
 
@@ -569,6 +572,46 @@ export default function VolunteerProfilePage() {
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl text-left"
         >
+          {/* 🎂 Birthday Celebration In-Page Banner */}
+          {isBirthdayToday && (
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-rose-500/20 border-2 border-amber-500/50 text-white relative overflow-hidden shadow-lg">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center text-2xl shrink-0 shadow-md">
+                    🎂
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">
+                      🎉 Special Birthday Greetings!
+                    </span>
+                    <h3 className="text-sm sm:text-base font-black text-white">
+                      Happy Birthday, {volunteer?.name || 'Volunteer'}! 🎈
+                    </h3>
+                    <p className="text-xs text-zinc-300 mt-0.5 leading-snug">
+                      Thank you for your tireless dedication as a volunteer. Celebrate today with extra joy and purpose!
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                  <a
+                    href="/donate?cause=birthday"
+                    className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all text-center"
+                  >
+                    🎁 Donate Today
+                  </a>
+                  <a
+                    href={`https://api.whatsapp.com/send?phone=${volunteer?.phone ? volunteer.phone.replace(/[^0-9]/g, '') : '9182587765159'}&text=${encodeURIComponent(`🎉 Happy Birthday ${volunteer?.name || 'Volunteer'}! 🎂 Thank you for serving communities with Kanha Sarthi Foundation. Have a blessed birthday!`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1 shrink-0"
+                    title="WhatsApp Wish"
+                  >
+                    <span>📲 WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Header row */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-800/80 pb-6 mb-8">
             <div className="flex items-center gap-4">

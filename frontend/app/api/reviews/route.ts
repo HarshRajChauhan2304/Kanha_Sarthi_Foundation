@@ -12,18 +12,25 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from('reviews')
-      .select('*')
-      .order('id', { ascending: true });
+      .select('*');
 
     if (error || !data || data.length === 0) {
       useFallback = true;
     } else {
-      reviews = data.map(item => ({
+      const sorted = [...data].sort((a: any, b: any) => {
+        if (typeof a.order_index === 'number' && typeof b.order_index === 'number') {
+          return a.order_index - b.order_index;
+        }
+        return (a.id || 0) - (b.id || 0);
+      });
+
+      reviews = sorted.map(item => ({
         id: item.id,
         title: item.title,
         desc: item.desc_text,
         author: item.author,
-        video: item.video
+        video: item.video,
+        order_index: item.order_index
       }));
     }
   } catch (err) {

@@ -39,6 +39,9 @@ export default function UserProfilePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [alertMsg, setAlertMsg] = useState("");
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+  const [isBirthdayToday, setIsBirthdayToday] = useState(false);
+  const [activeMonthlyDonation, setActiveMonthlyDonation] = useState<any | null>(null);
+  const [isMonthlyRenewalDue, setIsMonthlyRenewalDue] = useState(false);
   
   // Form input binding states
   const [editName, setEditName] = useState("");
@@ -95,7 +98,7 @@ export default function UserProfilePage() {
     setEditDob(storedDob);
     setEditBio(storedBio);
 
-    // Analyze DOB for Birthday Popup
+    // Analyze DOB for Birthday Popup & In-Page Celebration Banner
     if (storedDob) {
       const today = new Date();
       const todayMMDD = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -110,6 +113,7 @@ export default function UserProfilePage() {
       }
 
       if (dobMMDD === todayMMDD) {
+        setIsBirthdayToday(true);
         setShowBirthdayModal(true);
         // Call cron API to process notifications
         fetch('/api/cron/birthday', { method: 'POST' }).catch(() => {});
@@ -136,6 +140,25 @@ export default function UserProfilePage() {
         if (res.ok && res.headers.get("content-type")?.includes("application/json")) {
           const data = await res.json();
           if (data.success && Array.isArray(data.donations) && data.donations.length > 0) {
+            // Check for monthly recurring donation
+            const monthlyRecord = data.donations.find((d: any) => {
+              const text = `${d.donation_for || ''} ${d.title || ''}`.toLowerCase();
+              return text.includes("monthly") || text.includes("subscription") || text.includes("recurring");
+            });
+
+            if (monthlyRecord) {
+              setActiveMonthlyDonation(monthlyRecord);
+              const now = new Date();
+              let subDay = now.getDate();
+              if (monthlyRecord.created_at) {
+                const cDate = new Date(monthlyRecord.created_at);
+                if (!isNaN(cDate.getTime())) subDay = cDate.getDate();
+              }
+              if (subDay === now.getDate()) {
+                setIsMonthlyRenewalDue(true);
+              }
+            }
+
             const mapped: DonationItem[] = data.donations.map((d: any) => {
               const numAmt = d.amount ? String(d.amount).replace(/[^0-9]/g, "") : "";
               
@@ -319,6 +342,7 @@ export default function UserProfilePage() {
         isOpen={showBirthdayModal}
         onClose={() => setShowBirthdayModal(false)}
         userName={name}
+        phone={phone}
         userType="user"
       />
 
@@ -341,6 +365,96 @@ export default function UserProfilePage() {
 
       <div className="mx-auto max-w-5xl">
         
+        {/* 🎂 Birthday Celebration In-Page Banner */}
+        {isBirthdayToday && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-rose-500/20 border-2 border-amber-500/50 text-white relative overflow-hidden shadow-xl"
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4 text-left">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center text-3xl shrink-0 shadow-lg shadow-orange-500/30">
+                  🎂
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/30 text-amber-300 text-[10px] font-black uppercase tracking-wider mb-1">
+                    <span>🎉 Happy Birthday!</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-gray-950 dark:text-white">
+                    Wishing you a blessed & joyful Birthday, {name}! 🎈
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-zinc-300 mt-0.5 leading-snug">
+                    Celebrate your special day by spreading smiles. Sponsor a nutritious meal or study kit for underprivileged children today!
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+                <a
+                  href="/donate?cause=birthday"
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all text-center"
+                >
+                  🎁 Donate on My Birthday
+                </a>
+                <a
+                  href={`https://api.whatsapp.com/send?phone=${phone ? phone.replace(/[^0-9]/g, '') : '9182587765159'}&text=${encodeURIComponent(`🎉 Happy Birthday ${name}! 🎂 Kanha Sarthi Foundation wishes you good health & happiness. Make your day memorable by giving back: https://kanha-foundation.org/donate?cause=birthday`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 shrink-0"
+                  title="WhatsApp Wish"
+                >
+                  <span>📲 WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* 🔁 Monthly Subscription Renewal Due Banner */}
+        {isMonthlyRenewalDue && activeMonthlyDonation && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-emerald-950/40 border-2 border-emerald-500/60 text-white relative overflow-hidden shadow-xl"
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4 text-left">
+                <div className="w-14 h-14 rounded-2xl bg-[#1E4D2B] border border-emerald-500/40 flex items-center justify-center text-2xl shrink-0 shadow-lg shadow-emerald-900/30">
+                  🔁
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 text-[10px] font-black uppercase tracking-wider mb-1">
+                    <span>🌸 Monthly Support Renewal Due</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-gray-950 dark:text-white">
+                    Namaste {name}! Your monthly support is due today.
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-zinc-300 mt-0.5 leading-snug">
+                    Your monthly contribution of <strong>{activeMonthlyDonation.amount}</strong> for <strong>{activeMonthlyDonation.donation_for || 'Monthly Giving'}</strong> keeps hope and nourishment alive for innocent children.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+                <a
+                  href={`/donate-monthly?amount=${(activeMonthlyDonation.amount || '').replace(/[^0-9]/g, '') || '200'}`}
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-[#1E4D2B] hover:bg-[#15381E] text-white font-black text-xs uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all text-center border border-emerald-500/40"
+                >
+                  Renew Donation ({activeMonthlyDonation.amount}) 🌸
+                </a>
+                <a
+                  href={`https://api.whatsapp.com/send?phone=9182587765159&text=${encodeURIComponent(`🌸 Namaste Kanha Sarthi Foundation, today is my monthly donation renewal day (${activeMonthlyDonation.amount}). I would like to renew my monthly subscription!`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 shrink-0"
+                  title="WhatsApp Support"
+                >
+                  <span>📲 WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Profile/Donation Grid */}
         <div className="grid gap-8 lg:grid-cols-12 items-start">
           

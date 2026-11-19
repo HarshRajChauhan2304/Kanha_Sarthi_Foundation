@@ -12,13 +12,18 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from('causes')
-      .select('*')
-      .order('id', { ascending: true });
+      .select('*');
 
     if (error || !data || data.length === 0) {
       useFallback = true;
     } else {
-      causes = data;
+      // Sort by order_index if available, otherwise by id
+      causes = [...data].sort((a: any, b: any) => {
+        if (typeof a.order_index === 'number' && typeof b.order_index === 'number') {
+          return a.order_index - b.order_index;
+        }
+        return (a.id || 0) - (b.id || 0);
+      });
     }
   } catch (err) {
     useFallback = true;

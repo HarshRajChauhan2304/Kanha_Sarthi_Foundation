@@ -9,9 +9,10 @@ interface BirthdayWishModalProps {
   onClose: () => void;
   userName: string;
   userType?: 'user' | 'volunteer';
+  phone?: string;
 }
 
-export default function BirthdayWishModal({ isOpen, onClose, userName, userType = 'user' }: BirthdayWishModalProps) {
+export default function BirthdayWishModal({ isOpen, onClose, userName, userType = 'user', phone }: BirthdayWishModalProps) {
   const router = useRouter();
 
   if (!isOpen) return null;
@@ -20,6 +21,11 @@ export default function BirthdayWishModal({ isOpen, onClose, userName, userType 
     onClose();
     router.push('/donate?cause=birthday');
   };
+
+  const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
+  const waTargetPhone = cleanPhone && cleanPhone.length >= 10 ? cleanPhone : '9182587765159';
+  const waWishText = `🎉 *Happy Birthday ${userName}!* 🎂%0A%0AThe *Kanha Sarthi Foundation* wishes you endless joy, good health, and peace on your special day! 🌟%0A%0A🎁 *Make your birthday unforgettable:* Bring a smile to slum children today by sponsoring a birthday meal or study kit:%0A👉 https://kanha-foundation.org/donate?cause=birthday%0A%0AWith warm wishes,%0AKanha Sarthi Foundation Team`;
+  const waUrl = `https://api.whatsapp.com/send?phone=${waTargetPhone}&text=${waWishText}`;
 
   return (
     <AnimatePresence>
@@ -79,21 +85,29 @@ export default function BirthdayWishModal({ isOpen, onClose, userName, userType 
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
             <button
               onClick={handleDonateClick}
-              className="flex-1 px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              className="flex-1 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
             >
-              <span>Donate on My Birthday</span>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span>🎁 Donate on My Birthday</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </button>
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all flex items-center justify-center gap-1.5 text-xs sm:text-sm shadow-md cursor-pointer"
+            >
+              <span>📲 WhatsApp Wish</span>
+            </a>
             <button
               onClick={onClose}
-              className="px-5 py-3.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium transition-colors"
+              className="px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium transition-colors text-xs sm:text-sm cursor-pointer"
             >
-              Thank You!
+              Close
             </button>
           </div>
         </motion.div>

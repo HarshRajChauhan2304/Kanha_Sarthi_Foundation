@@ -115,7 +115,7 @@ interface VolunteerTask {
   admin_verified?: boolean;
 }
 
-type TabType = "Causes" | "SpotlightCampaign" | "FestivalPopup" | "Reviews" | "Blogs" | "Stories" | "DetailedStories" | "SuccessStories" | "Donations" | "Beneficiaries" | "Highlights" | "Applications" | "Tasks" | "AssignTask" | "PageMedia" | "PageTexts" | "StatsCards" | "Categories" | "RoleManagement" | "Navbar" | "Footer" | "AdminProfile" | "StarVolunteers" | "ContactInfo" | "ContactSubmissions" | "WhatsAppCommunity";
+type TabType = "Causes" | "SpotlightCampaign" | "FestivalPopup" | "Reviews" | "Blogs" | "Stories" | "DetailedStories" | "SuccessStories" | "Donations" | "Beneficiaries" | "Highlights" | "Applications" | "Tasks" | "AssignTask" | "PageMedia" | "PageTexts" | "StatsCards" | "Categories" | "RoleManagement" | "Navbar" | "Footer" | "AdminProfile" | "StarVolunteers" | "ContactInfo" | "ContactSubmissions" | "WhatsAppCommunity" | "DonateMonthly" | "Reminders";
 type AuthMode = "signin" | "signup" | "forgot";
 
 const KEY_MAP: Record<string, { title: string; type: string }> = {
@@ -247,6 +247,16 @@ export default function AdminPanelPage() {
     donate_url: "/donate"
   });
   const [isFestivalSaving, setIsFestivalSaving] = useState(false);
+
+  // Donate Monthly configuration states
+  const [monthlyConfigs, setMonthlyConfigs] = useState<any[]>([]);
+  const [activeMonthlyId, setActiveMonthlyId] = useState<string>("education");
+  const [isMonthlySaving, setIsMonthlySaving] = useState(false);
+
+  // Reminders states (Birthdays & Monthly Renewals)
+  const [birthdaysList, setBirthdaysList] = useState<any[]>([]);
+  const [monthlyDonorsDueList, setMonthlyDonorsDueList] = useState<any[]>([]);
+  const [remindersLoading, setRemindersLoading] = useState(false);
 
   // Task form fields states
   const [taskFormVolunteerId, setTaskFormVolunteerId] = useState<string>("");
@@ -707,6 +717,34 @@ export default function AdminPanelPage() {
           }
         } catch (err) {
           console.error("Error loading festival popup:", err);
+        }
+      } else if (activeTab === "DonateMonthly") {
+        try {
+          const res = await fetch('/api/monthly-donation', { cache: 'no-store' });
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setMonthlyConfigs(data);
+          }
+        } catch (err) {
+          console.error("Error loading monthly donation configs:", err);
+        }
+      } else if (activeTab === "Reminders") {
+        try {
+          setRemindersLoading(true);
+          const bRes = await fetch('/api/cron/birthday', { cache: 'no-store' });
+          const bData = await bRes.json();
+          if (bData.success && Array.isArray(bData.birthdaysProcessed)) {
+            setBirthdaysList(bData.birthdaysProcessed);
+          }
+          const mRes = await fetch('/api/cron/monthly-reminder', { cache: 'no-store' });
+          const mData = await mRes.json();
+          if (mData.success && Array.isArray(mData.donorsDue)) {
+            setMonthlyDonorsDueList(mData.donorsDue);
+          }
+        } catch (err) {
+          console.error("Error loading reminders:", err);
+        } finally {
+          setRemindersLoading(false);
         }
       }
     } catch (error) {
@@ -1742,6 +1780,94 @@ export default function AdminPanelPage() {
     }
   };
 
+  // Rearrange Causes
+  const handleMoveCause = async (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === causes.length - 1) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const newCauses = [...causes];
+    const temp = newCauses[index];
+    newCauses[index] = newCauses[targetIndex];
+    newCauses[targetIndex] = temp;
+    setCauses(newCauses);
+
+    try {
+      const orderedIds = newCauses.map(c => c.id);
+      const res = await fetch('/api/causes/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedIds })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerAlert("Causes order rearranged successfully!");
+      } else {
+        triggerAlert(data.error || "Failed to update causes order.");
+        fetchData();
+      }
+    } catch (err) {
+      console.error("Reorder causes error:", err);
+      triggerAlert("Error rearranging causes.");
+      fetchData();
+    }
+  };
+
+  // Rearrange Reviews
+  const handleMoveReview = async (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === reviews.length - 1) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const newReviews = [...reviews];
+    const temp = newReviews[index];
+    newReviews[index] = newReviews[targetIndex];
+    newReviews[targetIndex] = temp;
+    setReviews(newReviews);
+
+    try {
+      const orderedIds = newReviews.map(r => r.id);
+      const res = await fetch('/api/reviews/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedIds })
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerAlert("Reviews order rearranged successfully!");
+      } else {
+        triggerAlert(data.error || "Failed to update reviews order.");
+        fetchData();
+      }
+    } catch (err) {
+      console.error("Reorder reviews error:", err);
+      triggerAlert("Error rearranging reviews.");
+      fetchData();
+    }
+  };
+
+  // Save Monthly Category Settings
+  const handleSaveMonthlyCategory = async (categoryData: any) => {
+    try {
+      setIsMonthlySaving(true);
+      const res = await fetch('/api/monthly-donation', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryData)
+      });
+      const data = await res.json();
+      if (data.success) {
+        triggerAlert(`${categoryData.name || 'Category'} monthly settings saved!`);
+        if (data.categories) setMonthlyConfigs(data.categories);
+      } else {
+        triggerAlert(data.error || "Failed to save monthly settings.");
+      }
+    } catch (err) {
+      console.error("Error saving monthly config:", err);
+      triggerAlert("Error saving monthly settings.");
+    } finally {
+      setIsMonthlySaving(false);
+    }
+  };
+
   // Pre-hydration loading state to prevent flash of login page or hydration mismatches
   if (!isMounted) {
     return (
@@ -1994,7 +2120,7 @@ export default function AdminPanelPage() {
                 </span>
               </div>
             </div>
-            {activeTab !== "Applications" && activeTab !== "ContactSubmissions" && activeTab !== "Navbar" && activeTab !== "Footer" && activeTab !== "AdminProfile" && activeTab !== "SpotlightCampaign" && activeTab !== "FestivalPopup" && (
+            {activeTab !== "Applications" && activeTab !== "ContactSubmissions" && activeTab !== "Navbar" && activeTab !== "Footer" && activeTab !== "AdminProfile" && activeTab !== "SpotlightCampaign" && activeTab !== "FestivalPopup" && activeTab !== "DonateMonthly" && activeTab !== "Reminders" && (
               <button
                 onClick={openAddModal}
                 className="px-5 py-2.5 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-full transition-all cursor-pointer flex items-center gap-2 border border-emerald-800/40"
@@ -2039,7 +2165,7 @@ export default function AdminPanelPage() {
 
         {/* Tab Selection Row */}
         <div className="flex border-b border-zinc-900 gap-1.5 mb-10 overflow-x-auto pb-2 scrollbar-none">
-          {(["Causes", "SpotlightCampaign", "FestivalPopup", "Reviews", "Blogs", "Stories", "DetailedStories", "SuccessStories", "Donations", "Beneficiaries", "Highlights", "Applications", "Tasks", "StarVolunteers", "ContactInfo", "ContactSubmissions", "PageMedia", "PageTexts", "StatsCards", "Categories", "RoleManagement", "Navbar", "Footer", "WhatsAppCommunity", "AdminProfile"] as TabType[]).map((tab) => {
+          {(["Causes", "SpotlightCampaign", "FestivalPopup", "DonateMonthly", "Reminders", "Reviews", "Blogs", "Stories", "DetailedStories", "SuccessStories", "Donations", "Beneficiaries", "Highlights", "Applications", "Tasks", "StarVolunteers", "ContactInfo", "ContactSubmissions", "PageMedia", "PageTexts", "StatsCards", "Categories", "RoleManagement", "Navbar", "Footer", "WhatsAppCommunity", "AdminProfile"] as TabType[]).map((tab) => {
             const isTabActive = activeTab === tab;
             const pendingCount = tab === "Applications" ? volApps.filter(a => a.status === "Pending" || !a.status).length : 0;
             return (
@@ -2053,7 +2179,7 @@ export default function AdminPanelPage() {
                 }`}
               >
                 <span>
-                  {tab === "SpotlightCampaign" ? "⭐ Spotlight Campaign" : tab === "FestivalPopup" ? "🎉 Festival Popup" : tab === "StarVolunteers" ? "Star Volunteers" : tab === "Applications" ? "Volunteer Apps" : tab === "PageMedia" ? "Page Banners & Media" : tab === "PageTexts" ? "Page Layout Texts" : tab === "StatsCards" ? "Stats Ribbon" : tab === "RoleManagement" ? "Role Manager" : tab === "Navbar" ? "Navbar Config" : tab === "Footer" ? "Footer Config" : tab === "AdminProfile" ? "My Profile" : tab === "DetailedStories" ? "Detailed Stories" : tab === "SuccessStories" ? "Success Stories" : tab === "ContactInfo" ? "Contact Info Cards" : tab === "ContactSubmissions" ? "Contact Messages" : tab === "WhatsAppCommunity" ? "WhatsApp Community" : tab === "Beneficiaries" ? "Beneficiaries (Underprivileged)" : tab}
+                  {tab === "SpotlightCampaign" ? "⭐ Spotlight Campaign" : tab === "FestivalPopup" ? "🎉 Festival Popup" : tab === "DonateMonthly" ? "💳 Donate Monthly" : tab === "Reminders" ? "🎂 Birthdays & Renewals" : tab === "StarVolunteers" ? "Star Volunteers" : tab === "Applications" ? "Volunteer Apps" : tab === "PageMedia" ? "Page Banners & Media" : tab === "PageTexts" ? "Page Layout Texts" : tab === "StatsCards" ? "Stats Ribbon" : tab === "RoleManagement" ? "Role Manager" : tab === "Navbar" ? "Navbar Config" : tab === "Footer" ? "Footer Config" : tab === "AdminProfile" ? "My Profile" : tab === "DetailedStories" ? "Detailed Stories" : tab === "SuccessStories" ? "Success Stories" : tab === "ContactInfo" ? "Contact Info Cards" : tab === "ContactSubmissions" ? "Contact Messages" : tab === "WhatsAppCommunity" ? "WhatsApp Community" : tab === "Beneficiaries" ? "Beneficiaries (Underprivileged)" : tab}
                 </span>
                 {pendingCount > 0 && (
                   <span className="px-2 py-0.5 bg-red-650 text-white text-[9px] font-black rounded-full shadow-sm animate-bounce">
@@ -2098,11 +2224,43 @@ export default function AdminPanelPage() {
             {activeTab === "Causes" && (
               <table className="min-w-full divide-y divide-zinc-800 text-left">
                 <thead>
-                  <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider"><th className="px-6 py-4">Preview</th><th className="px-6 py-4">Title</th><th className="px-6 py-4">Category</th><th className="px-6 py-4">Price</th><th className="px-6 py-4 text-right">Actions</th></tr>
+                  <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider">
+                    <th className="px-4 py-4 text-center w-24">Order</th>
+                    <th className="px-6 py-4">Preview</th>
+                    <th className="px-6 py-4">Title</th>
+                    <th className="px-6 py-4">Category</th>
+                    <th className="px-6 py-4">Price</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-900">
-                  {causes.map((c) => (
+                  {causes.map((c, index) => (
                     <tr key={c.id} className="hover:bg-zinc-900/30 transition-colors">
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveCause(index, 'up')}
+                            disabled={index === 0}
+                            title="Move Up"
+                            className="h-7 w-7 rounded-lg bg-zinc-850 hover:bg-zinc-750 disabled:opacity-20 text-zinc-300 hover:text-white flex items-center justify-center text-xs font-black cursor-pointer disabled:cursor-not-allowed transition-all border border-zinc-800"
+                          >
+                            ▲
+                          </button>
+                          <span className="text-xs font-mono text-zinc-400 font-bold min-w-5 text-center">
+                            #{index + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveCause(index, 'down')}
+                            disabled={index === causes.length - 1}
+                            title="Move Down"
+                            className="h-7 w-7 rounded-lg bg-zinc-850 hover:bg-zinc-750 disabled:opacity-20 text-zinc-300 hover:text-white flex items-center justify-center text-xs font-black cursor-pointer disabled:cursor-not-allowed transition-all border border-zinc-800"
+                          >
+                            ▼
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {c.video ? (
                           <div className="relative h-10 w-14 rounded-lg overflow-hidden border border-zinc-800"><video src={c.video} className="h-full w-full object-cover" muted /></div>
@@ -2123,11 +2281,43 @@ export default function AdminPanelPage() {
             {activeTab === "Reviews" && (
               <table className="min-w-full divide-y divide-zinc-800 text-left">
                 <thead>
-                  <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider"><th className="px-6 py-4">Video Preview</th><th className="px-6 py-4">Title</th><th className="px-6 py-4">Author</th><th className="px-6 py-4">Description snippet</th><th className="px-6 py-4 text-right">Actions</th></tr>
+                  <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider">
+                    <th className="px-4 py-4 text-center w-24">Order</th>
+                    <th className="px-6 py-4">Video Preview</th>
+                    <th className="px-6 py-4">Title</th>
+                    <th className="px-6 py-4">Author</th>
+                    <th className="px-6 py-4">Description snippet</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-900">
-                  {reviews.map((r) => (
+                  {reviews.map((r, index) => (
                     <tr key={r.id} className="hover:bg-zinc-900/30 transition-colors">
+                      <td className="px-4 py-4 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveReview(index, 'up')}
+                            disabled={index === 0}
+                            title="Move Up"
+                            className="h-7 w-7 rounded-lg bg-zinc-850 hover:bg-zinc-750 disabled:opacity-20 text-zinc-300 hover:text-white flex items-center justify-center text-xs font-black cursor-pointer disabled:cursor-not-allowed transition-all border border-zinc-800"
+                          >
+                            ▲
+                          </button>
+                          <span className="text-xs font-mono text-zinc-400 font-bold min-w-5 text-center">
+                            #{index + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveReview(index, 'down')}
+                            disabled={index === reviews.length - 1}
+                            title="Move Down"
+                            className="h-7 w-7 rounded-lg bg-zinc-850 hover:bg-zinc-750 disabled:opacity-20 text-zinc-300 hover:text-white flex items-center justify-center text-xs font-black cursor-pointer disabled:cursor-not-allowed transition-all border border-zinc-800"
+                          >
+                            ▼
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap"><div className="relative h-10 w-14 rounded-lg overflow-hidden border border-zinc-800"><video src={r.video} className="h-full w-full object-cover" muted /></div></td>
                       <td className="px-6 py-4"><p className="text-sm font-bold text-white line-clamp-1 max-w-xs">{r.title}</p></td>
                       <td className="px-6 py-4"><p className="text-xs text-gray-300 font-bold">{r.author}</p></td>
@@ -4350,6 +4540,455 @@ export default function AdminPanelPage() {
                   >
                     {isFestivalSaving ? "Saving..." : "Save Festival Popup"}
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Donate Monthly Configuration Tab */}
+            {activeTab === "DonateMonthly" && (() => {
+              const currentCat = monthlyConfigs.find((c: any) => c.id === activeMonthlyId) || monthlyConfigs[0] || {
+                id: "education",
+                name: "Education",
+                tabLabel: "Education",
+                title: "Educate, Empower, Transform.",
+                tagline: "Provide school uniforms, textbooks, digital learning, and tuition to underprivileged children.",
+                image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1000&auto=format&fit=crop&q=80",
+                defaultMonthly: 200,
+                impactNotes: {
+                  200: "₹200 / month sponsors notebook sets, pens, and study stationery for an underprivileged child.",
+                  500: "₹500 / month funds school kit, textbooks, uniform and educational support for 1 child.",
+                  1000: "₹1,000 / month sponsors full schooling and remedial evening coaching for 2 children.",
+                  5000: "₹5,000 / month supports complete digital classroom access and fees for 10 children.",
+                  default: "Every monthly rupee provides quality education and a brighter tomorrow for underprivileged children."
+                }
+              };
+
+              const updateField = (field: string, val: any) => {
+                const updated = { ...currentCat, [field]: val };
+                setMonthlyConfigs(prev => {
+                  const idx = prev.findIndex((c: any) => c.id === currentCat.id);
+                  if (idx !== -1) {
+                    const next = [...prev];
+                    next[idx] = updated;
+                    return next;
+                  }
+                  return [...prev, updated];
+                });
+              };
+
+              const updateImpactNote = (key: string, val: string) => {
+                const notes = { ...(currentCat.impactNotes || {}), [key]: val };
+                updateField('impactNotes', notes);
+              };
+
+              return (
+                <div className="space-y-6 text-left">
+                  {/* Header Box */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-900/40 p-6 rounded-2xl border border-zinc-800/80">
+                    <div>
+                      <h2 className="text-xl font-black text-white flex items-center gap-2">
+                        <span>💳</span> Donate Monthly Subscriptions Configuration
+                      </h2>
+                      <p className="text-xs text-zinc-400 mt-1">
+                        Edit categories, default monthly amounts (e.g. ₹200 for Education, ₹500 for Healthcare/Food), banner images, titles, and impact descriptions shown on /donate-monthly.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isMonthlySaving}
+                      onClick={() => handleSaveMonthlyCategory(currentCat)}
+                      className="px-6 py-2.5 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 border border-emerald-700/40 shrink-0"
+                    >
+                      {isMonthlySaving ? "Saving..." : "Save Category Settings 💾"}
+                    </button>
+                  </div>
+
+                  {/* Category Selector Tabs */}
+                  <div className="flex gap-2 p-1.5 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-x-auto">
+                    {[
+                      { id: "education", label: "Education (Default: ₹200)" },
+                      { id: "healthcare", label: "Healthcare (Default: ₹500)" },
+                      { id: "food", label: "Food & Nutrition (Default: ₹500)" }
+                    ].map(cat => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setActiveMonthlyId(cat.id)}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                          activeMonthlyId === cat.id
+                            ? "bg-[#F3A61E] text-black shadow-md"
+                            : "bg-zinc-850/60 text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Form Grid */}
+                  <div className="grid gap-6 md:grid-cols-2 bg-zinc-900/30 p-6 rounded-2xl border border-zinc-800/80">
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Category Display Name</label>
+                      <input
+                        type="text"
+                        value={currentCat.name || ""}
+                        onChange={(e) => updateField("name", e.target.value)}
+                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Tab Short Label</label>
+                      <input
+                        type="text"
+                        value={currentCat.tabLabel || ""}
+                        onChange={(e) => updateField("tabLabel", e.target.value)}
+                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Category Hero Title</label>
+                      <input
+                        type="text"
+                        value={currentCat.title || ""}
+                        onChange={(e) => updateField("title", e.target.value)}
+                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Tagline / Mission Summary</label>
+                      <textarea
+                        rows={2}
+                        value={currentCat.tagline || ""}
+                        onChange={(e) => updateField("tagline", e.target.value)}
+                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Default Monthly Amount (₹)</label>
+                      <input
+                        type="number"
+                        min="100"
+                        value={currentCat.defaultMonthly || 200}
+                        onChange={(e) => updateField("defaultMonthly", parseInt(e.target.value, 10) || 100)}
+                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white font-bold focus:outline-none focus:ring-1 focus:ring-[#F3A61E]"
+                      />
+                      <span className="text-[10px] text-zinc-400 mt-1 block">Recommended: ₹200 for Education, ₹500 for Healthcare/Food</span>
+                    </div>
+
+                    {/* Banner Image URL & File Upload */}
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Category Banner Image</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={currentCat.image || ""}
+                          onChange={(e) => updateField("image", e.target.value)}
+                          placeholder="Image URL"
+                          className="flex-1 px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-zinc-200 focus:outline-none"
+                        />
+                        <input
+                          type="file"
+                          id={`monthly-img-upload-${currentCat.id}`}
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, (url) => updateField("image", url))}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById(`monthly-img-upload-${currentCat.id}`)?.click()}
+                          className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold rounded-xl text-zinc-200 cursor-pointer shrink-0"
+                        >
+                          Upload
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Impact Notes Editor */}
+                    <div className="md:col-span-2 border-t border-zinc-800/80 pt-5 space-y-4">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-emerald-400">
+                        Impact Notes by Donation Amount:
+                      </h4>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-[11px] font-bold text-zinc-400 mb-1">
+                            Impact for ₹{currentCat.defaultMonthly || 200} (Default):
+                          </label>
+                          <input
+                            type="text"
+                            value={currentCat.impactNotes?.[currentCat.defaultMonthly] || ""}
+                            onChange={(e) => updateImpactNote(String(currentCat.defaultMonthly), e.target.value)}
+                            className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-zinc-400 mb-1">Impact for ₹500:</label>
+                          <input
+                            type="text"
+                            value={currentCat.impactNotes?.["500"] || ""}
+                            onChange={(e) => updateImpactNote("500", e.target.value)}
+                            className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-zinc-400 mb-1">Impact for ₹1,000:</label>
+                          <input
+                            type="text"
+                            value={currentCat.impactNotes?.["1000"] || ""}
+                            onChange={(e) => updateImpactNote("1000", e.target.value)}
+                            className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-zinc-400 mb-1">Impact for ₹5,000:</label>
+                          <input
+                            type="text"
+                            value={currentCat.impactNotes?.["5000"] || ""}
+                            onChange={(e) => updateImpactNote("5000", e.target.value)}
+                            className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-bold text-zinc-400 mb-1">Default / Fallback Impact Note:</label>
+                          <input
+                            type="text"
+                            value={currentCat.impactNotes?.default || ""}
+                            onChange={(e) => updateImpactNote("default", e.target.value)}
+                            className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Preview Card */}
+                    <div className="md:col-span-2 border-t border-zinc-800/80 pt-5">
+                      <span className="text-xs font-black uppercase tracking-wider text-zinc-400 block mb-3">Live Card Preview</span>
+                      <div className="relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 max-w-md mx-auto shadow-xl">
+                        <div className="relative h-44 w-full">
+                          <img src={currentCat.image} alt={currentCat.name} className="h-full w-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                          <div className="absolute bottom-3 left-4 right-4">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full inline-block mb-1">
+                              {currentCat.tabLabel}
+                            </span>
+                            <h4 className="text-sm font-black text-white">{currentCat.title}</h4>
+                            <p className="text-[11px] text-zinc-300 line-clamp-1">{currentCat.tagline}</p>
+                          </div>
+                        </div>
+                        <div className="p-4 flex items-center justify-between border-t border-zinc-800">
+                          <div>
+                            <span className="text-[10px] text-zinc-400 block">Default Monthly</span>
+                            <span className="text-sm font-black text-[#F3A61E]">₹{currentCat.defaultMonthly}/mo</span>
+                          </div>
+                          <span className="px-3 py-1.5 bg-[#1E4D2B] text-white text-xs font-bold rounded-lg">
+                            Active Category
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      disabled={isMonthlySaving}
+                      onClick={() => handleSaveMonthlyCategory(currentCat)}
+                      className="px-8 py-3 bg-[#1E4D2B] hover:bg-[#15381E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg disabled:opacity-50 border border-emerald-700/40"
+                    >
+                      {isMonthlySaving ? "Saving..." : "Save Category Settings 💾"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Reminders Tab (Birthdays & Monthly Renewals) */}
+            {activeTab === "Reminders" && (
+              <div className="space-y-8 text-left">
+                {/* Header Row */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-900/40 p-6 rounded-2xl border border-zinc-800/80">
+                  <div>
+                    <h2 className="text-xl font-black text-white flex items-center gap-2">
+                      <span>🎂</span> Birthdays & Recurring Monthly Donation Reminders
+                    </h2>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      Monitor user and volunteer birthdays today, and donors whose recurring monthly donations are scheduled for renewal today ({new Date().getDate()}th).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={remindersLoading}
+                    onClick={() => fetchData()}
+                    className="px-5 py-2.5 bg-[#F3A61E] hover:bg-[#d68f12] text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 shrink-0"
+                  >
+                    {remindersLoading ? "Checking..." : "🔄 Refresh Reminders"}
+                  </button>
+                </div>
+
+                {/* Summary Metrics */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="p-5 bg-gradient-to-br from-amber-950/40 to-zinc-900/80 border border-amber-500/30 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-amber-300">Birthdays Today</span>
+                      <span className="text-2xl">🎂</span>
+                    </div>
+                    <p className="text-3xl font-black text-white mt-2">{birthdaysList.length}</p>
+                    <p className="text-[11px] text-zinc-400 mt-1">Users & volunteers celebrating today</p>
+                  </div>
+
+                  <div className="p-5 bg-gradient-to-br from-emerald-950/40 to-zinc-900/80 border border-emerald-500/30 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-emerald-300">Monthly Renewals Due</span>
+                      <span className="text-2xl">🔁</span>
+                    </div>
+                    <p className="text-3xl font-black text-white mt-2">{monthlyDonorsDueList.length}</p>
+                    <p className="text-[11px] text-zinc-400 mt-1">Recurring donors due on {new Date().getDate()}th</p>
+                  </div>
+
+                  <div className="p-5 bg-zinc-900/60 border border-zinc-800 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-zinc-300">System Date</span>
+                      <span className="text-2xl">📅</span>
+                    </div>
+                    <p className="text-xl font-black text-white mt-2">
+                      {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                    <p className="text-[11px] text-emerald-400 mt-1">Automated daily check active</p>
+                  </div>
+                </div>
+
+                {/* Sub-Section 1: Birthdays Today */}
+                <div className="space-y-4 border border-zinc-800/80 p-6 rounded-2xl bg-zinc-900/30">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                      <span>🎉</span> Birthdays Celebrated Today ({birthdaysList.length})
+                    </h3>
+                  </div>
+
+                  {birthdaysList.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-zinc-800 rounded-xl">
+                      <span className="text-3xl block mb-2">🎂</span>
+                      <p className="text-xs text-zinc-400 font-bold">No user or volunteer birthdays recorded for today.</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">When members have their date of birth on this calendar day, they appear here with quick WhatsApp wishing.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-zinc-800 text-left">
+                        <thead>
+                          <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider">
+                            <th className="px-4 py-3">Member</th>
+                            <th className="px-4 py-3">Role</th>
+                            <th className="px-4 py-3">Phone</th>
+                            <th className="px-4 py-3">Email</th>
+                            <th className="px-4 py-3 text-right">WhatsApp Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-900">
+                          {birthdaysList.map((b: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-zinc-900/40">
+                              <td className="px-4 py-3 font-bold text-white text-xs flex items-center gap-2">
+                                <span>🎂</span> {b.name}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                                  b.type === 'Volunteer' ? 'bg-blue-950 text-blue-300' : 'bg-emerald-950 text-emerald-300'
+                                }`}>
+                                  {b.type}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-zinc-300">{b.phone || 'N/A'}</td>
+                              <td className="px-4 py-3 text-xs text-zinc-400">{b.email || 'N/A'}</td>
+                              <td className="px-4 py-3 text-right">
+                                {b.whatsapp?.waLink ? (
+                                  <a
+                                    href={b.whatsapp.waLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all"
+                                  >
+                                    <span>📲 Wish on WhatsApp</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-zinc-500">No phone</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sub-Section 2: Monthly Support Renewals Due Today */}
+                <div className="space-y-4 border border-zinc-800/80 p-6 rounded-2xl bg-zinc-900/30">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                      <span>🌸</span> Recurring Monthly Donations Due Today ({monthlyDonorsDueList.length})
+                    </h3>
+                  </div>
+
+                  {monthlyDonorsDueList.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-zinc-800 rounded-xl">
+                      <span className="text-3xl block mb-2">🔁</span>
+                      <p className="text-xs text-zinc-400 font-bold">No recurring monthly donations due for renewal today ({new Date().getDate()}th).</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Recurring donors whose subscription falls on this day of the month will be listed here with instant WhatsApp reminder links.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-zinc-800 text-left">
+                        <thead>
+                          <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider">
+                            <th className="px-4 py-3">Donor Name</th>
+                            <th className="px-4 py-3">Amount</th>
+                            <th className="px-4 py-3">Cause / Category</th>
+                            <th className="px-4 py-3">Phone</th>
+                            <th className="px-4 py-3 text-right">WhatsApp Reminder</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-900">
+                          {monthlyDonorsDueList.map((donor: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-zinc-900/40">
+                              <td className="px-4 py-3 font-bold text-white text-xs">
+                                {donor.name}
+                              </td>
+                              <td className="px-4 py-3 text-xs font-black text-[#F3A61E]">
+                                {donor.amount}
+                              </td>
+                              <td className="px-4 py-3 text-xs text-zinc-300">
+                                {donor.cause}
+                              </td>
+                              <td className="px-4 py-3 text-xs text-zinc-400">
+                                {donor.phone || 'N/A'}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                {donor.waLink ? (
+                                  <a
+                                    href={donor.waLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all"
+                                  >
+                                    <span>📲 Send WhatsApp Reminder</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-zinc-500">No phone</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
