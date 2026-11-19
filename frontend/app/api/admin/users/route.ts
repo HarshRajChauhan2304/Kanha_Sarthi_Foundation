@@ -2,28 +2,24 @@ import { NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { getFallbackPath, syncVolunteerToHighlights } from '@/lib/db-fallback';
+import { getResilientData, saveResilientFallback, syncVolunteerToHighlights } from '@/lib/db-fallback';
 
-// Helper to read local JSON files
-const readLocalJSON = (filename: string): any[] => {
+// Helper to read resilient JSON files (memory -> storage -> local disk)
+const readLocalJSON = async (filename: string): Promise<any[]> => {
   try {
-    const filePath = getFallbackPath(filename);
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    }
+    return await getResilientData<any[]>(filename, []);
   } catch (error) {
-    console.error(`Error reading local ${filename}:`, error);
+    console.error(`Error reading ${filename}:`, error);
   }
   return [];
 };
 
-// Helper to write local JSON files
-const writeLocalJSON = (filename: string, data: any[]) => {
+// Helper to write resilient JSON files (memory + storage + local disk)
+const writeLocalJSON = async (filename: string, data: any[]) => {
   try {
-    const filePath = getFallbackPath(filename);
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    await saveResilientFallback(filename, data);
   } catch (error) {
-    console.error(`Error writing local ${filename}:`, error);
+    console.error(`Error writing ${filename}:`, error);
   }
 };
 
@@ -37,7 +33,7 @@ export async function GET() {
     } catch (e) {
       console.warn("DB Admin fetch failed, using fallback:", e);
     }
-    const localAdmins = readLocalJSON('admin_users.json');
+    const localAdmins = await readLocalJSON('admin_users.json');
     localAdmins.forEach(la => {
       const match = admins.find(a => a.email?.trim().toLowerCase() === la.email?.trim().toLowerCase());
       if (match) {
@@ -74,7 +70,7 @@ export async function GET() {
     } catch (e) {
       console.warn("DB Volunteer fetch failed, using fallback:", e);
     }
-    const localVols = readLocalJSON('volunteer_applications.json').filter(v => v.status === "Approved");
+    const localVols = (await readLocalJSON('volunteer_applications.json')).filter(v => v.status === "Approved");
     localVols.forEach(lv => {
       const match = volunteers.find(v => v.email?.trim().toLowerCase() === lv.email?.trim().toLowerCase() || String(v.id) === String(lv.id));
       if (match) {
@@ -95,7 +91,7 @@ export async function GET() {
     } catch (e) {
       console.warn("DB User fetch failed, using fallback:", e);
     }
-    const localUsers = readLocalJSON('users.json');
+    const localUsers = await readLocalJSON('users.json');
     localUsers.forEach(lu => {
       const match = users.find(u => u.email?.trim().toLowerCase() === lu.email?.trim().toLowerCase());
       if (match) {
@@ -196,9 +192,9 @@ export async function POST(request: Request) {
       console.warn("DB deletes failed/bypassed in POST:", e);
     }
 
-    let localAdmins = readLocalJSON('admin_users.json').filter(a => a.email?.trim().toLowerCase() !== cleanEmail);
-    let localVols = readLocalJSON('volunteer_applications.json').filter(v => v.email?.trim().toLowerCase() !== cleanEmail);
-    let localUsers = readLocalJSON('users.json').filter(u => u.email?.trim().toLowerCase() !== cleanEmail);
+    let localAdmins = (await readLocalJSON('admin_users.json')).filter(a => a.email?.trim().toLowerCase() !== cleanEmail);
+    let localVols = (await readLocalJSON('volunteer_applications.json')).filter(v => v.email?.trim().toLowerCase() !== cleanEmail);
+    let localUsers = (await readLocalJSON('users.json')).filter(u => u.email?.trim().toLowerCase() !== cleanEmail);
 
     let dbSuccess = false;
     let newId: any = Date.now();
@@ -216,7 +212,7 @@ export async function POST(request: Request) {
         console.warn("DB Admin insert failed:", e);
       }
       localAdmins.push({ id: newId, ...payload });
-      writeLocalJSON('admin_users.json', localAdmins);
+      await writeLocalJSON('admin_users.json', localAdmins);
     } else if (targetRole === "volunteer") {
       const payload = {
         name: username,
@@ -240,7 +236,7 @@ export async function POST(request: Request) {
         console.warn("DB Volunteer insert failed:", e);
       }
       localVols.push({ id: newId, ...payload });
-      writeLocalJSON('volunteer_applications.json', localVols);
+      await writeLocalJSON('volunteer_applications.json', localVols);
     } else {
       const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "", avatar: avatar || "", created_at: new Date().toISOString() };
       try {
@@ -259,13 +255,13 @@ export async function POST(request: Request) {
         console.warn("DB User insert failed:", e);
       }
       localUsers.push({ id: newId, ...payload });
-      writeLocalJSON('users.json', localUsers);
+      await writeLocalJSON('users.json', localUsers);
     }
 
     // Write back other lists to keep them clean
-    writeLocalJSON('admin_users.json', localAdmins);
-    writeLocalJSON('volunteer_applications.json', localVols);
-    writeLocalJSON('users.json', localUsers);
+    await writeLocalJSON('admin_users.json', localAdmins);
+    await writeLocalJSON('volunteer_applications.json', localVols);
+    await writeLocalJSON('users.json', localUsers);
 
     return NextResponse.json({ success: true, id: `${targetRole}-${newId}` });
   } catch (error: any) {
@@ -319,14 +315,14 @@ export async function PUT(request: Request) {
 
       // Delete from JSON
       if (oldRole === "admin") {
-        const local = readLocalJSON('admin_users.json').filter(a => String(a.id) !== cleanId && a.email?.trim().toLowerCase() !== cleanEmail);
-        writeLocalJSON('admin_users.json', local);
+        const local = (await readLocalJSON('admin_users.json')).filter(a => String(a.id) !== cleanId && a.email?.trim().toLowerCase() !== cleanEmail);
+        await writeLocalJSON('admin_users.json', local);
       } else if (oldRole === "volunteer") {
-        const local = readLocalJSON('volunteer_applications.json').filter(v => String(v.id) !== cleanId && v.email?.trim().toLowerCase() !== cleanEmail);
-        writeLocalJSON('volunteer_applications.json', local);
+        const local = (await readLocalJSON('volunteer_applications.json')).filter(v => String(v.id) !== cleanId && v.email?.trim().toLowerCase() !== cleanEmail);
+        await writeLocalJSON('volunteer_applications.json', local);
       } else {
-        const local = readLocalJSON('users.json').filter(u => String(u.id) !== cleanId && u.email?.trim().toLowerCase() !== cleanEmail);
-        writeLocalJSON('users.json', local);
+        const local = (await readLocalJSON('users.json')).filter(u => String(u.id) !== cleanId && u.email?.trim().toLowerCase() !== cleanEmail);
+        await writeLocalJSON('users.json', local);
       }
 
       // Insert into new table
@@ -338,9 +334,9 @@ export async function PUT(request: Request) {
           const { data } = await supabaseAdmin.from('admin_users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
           if (data) { dbSuccess = true; newId = data.id; }
         } catch (e) {}
-        const local = readLocalJSON('admin_users.json');
+        const local = await readLocalJSON('admin_users.json');
         local.push({ id: newId, ...payload });
-        writeLocalJSON('admin_users.json', local);
+        await writeLocalJSON('admin_users.json', local);
       } else if (targetRole === "volunteer") {
         const payload = {
           name: username,
@@ -358,9 +354,9 @@ export async function PUT(request: Request) {
           const { data } = await supabaseAdmin.from('volunteer_applications').insert([payload]).select().single();
           if (data) { dbSuccess = true; newId = data.id; }
         } catch (e) {}
-        const local = readLocalJSON('volunteer_applications.json');
+        const local = await readLocalJSON('volunteer_applications.json');
         local.push({ id: newId, ...payload });
-        writeLocalJSON('volunteer_applications.json', local);
+        await writeLocalJSON('volunteer_applications.json', local);
 
         // Sync created volunteer to about highlights page
         try {
@@ -383,9 +379,9 @@ export async function PUT(request: Request) {
             if (d2) { dbSuccess = true; newId = d2.id; }
           }
         } catch (e) {}
-        const local = readLocalJSON('users.json');
+        const local = await readLocalJSON('users.json');
         local.push({ id: newId, ...payload });
-        writeLocalJSON('users.json', local);
+        await writeLocalJSON('users.json', local);
       }
     } else {
       // 2. Same role: update corresponding record
@@ -394,17 +390,17 @@ export async function PUT(request: Request) {
           await supabaseAdmin.from('admin_users').update({ username, email: cleanEmail, phone: phone || "", password }).eq('id', cleanId);
           await supabaseAdmin.from('admin_users').update({ username, phone: phone || "", password }).eq('email', cleanEmail);
         } catch (e) {}
-        let local = readLocalJSON('admin_users.json');
+        let local = await readLocalJSON('admin_users.json');
         local = local.map(a => ((cleanId && String(a.id) === cleanId) || (cleanEmail && a.email?.trim().toLowerCase() === cleanEmail)) ? { ...a, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (a.dob || ""), gender: gender !== undefined ? gender : (a.gender || "") } : a);
-        writeLocalJSON('admin_users.json', local);
+        await writeLocalJSON('admin_users.json', local);
       } else if (targetRole === "volunteer") {
         try {
           await supabaseAdmin.from('volunteer_applications').update({ name: username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('id', cleanId);
           await supabaseAdmin.from('volunteer_applications').update({ name: username, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('email', cleanEmail);
         } catch (e) {}
-        let local = readLocalJSON('volunteer_applications.json');
+        let local = await readLocalJSON('volunteer_applications.json');
         local = local.map(v => ((cleanId && String(v.id) === cleanId) || (cleanEmail && v.email?.trim().toLowerCase() === cleanEmail)) ? { ...v, name: username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (v.dob || ""), gender: gender !== undefined ? gender : (v.gender || "") } : v);
-        writeLocalJSON('volunteer_applications.json', local);
+        await writeLocalJSON('volunteer_applications.json', local);
 
         // Sync updated volunteer to about highlights page
         try {
@@ -428,7 +424,7 @@ export async function PUT(request: Request) {
           }
           await supabaseAdmin.from('users').update({ username, phone: phone || "", password, avatar: avatar !== undefined ? avatar : "" }).eq('email', cleanEmail);
         } catch (e) {}
-        let local = readLocalJSON('users.json');
+        let local = await readLocalJSON('users.json');
         let matched = false;
         local = local.map(u => {
           if ((cleanId && String(u.id) === cleanId) || (cleanEmail && u.email?.trim().toLowerCase() === cleanEmail)) {
@@ -440,7 +436,7 @@ export async function PUT(request: Request) {
         if (!matched) {
           local.push({ id: cleanId || Date.now(), username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "", avatar: avatar || "", created_at: new Date().toISOString() });
         }
-        writeLocalJSON('users.json', local);
+        await writeLocalJSON('users.json', local);
       }
     }
 
@@ -476,17 +472,17 @@ export async function DELETE(request: Request) {
     // Resolve target email if not directly provided
     let targetEmail = emailParam ? emailParam.trim().toLowerCase() : "";
     if (!targetEmail && cleanId) {
-      // 1. Check in local JSON
-      const u1 = readLocalJSON('users.json').find(u => String(u.id) === cleanId);
+      // 1. Check in resilient JSON
+      const u1 = (await readLocalJSON('users.json')).find(u => String(u.id) === cleanId);
       if (u1?.email) targetEmail = u1.email.trim().toLowerCase();
 
       if (!targetEmail) {
-        const v1 = readLocalJSON('volunteer_applications.json').find(v => String(v.id) === cleanId);
+        const v1 = (await readLocalJSON('volunteer_applications.json')).find(v => String(v.id) === cleanId);
         if (v1?.email) targetEmail = v1.email.trim().toLowerCase();
       }
 
       if (!targetEmail) {
-        const a1 = readLocalJSON('admin_users.json').find(a => String(a.id) === cleanId);
+        const a1 = (await readLocalJSON('admin_users.json')).find(a => String(a.id) === cleanId);
         if (a1?.email) targetEmail = a1.email.trim().toLowerCase();
       }
 
@@ -519,21 +515,21 @@ export async function DELETE(request: Request) {
       console.warn("DB user delete failed in /api/admin/users:", e);
     }
 
-    // Delete from all local JSON files by ID AND by Email
+    // Delete from all resilient JSON files by ID AND by Email
     const isTarget = (item: any) => {
       const idMatch = cleanId && String(item.id) === cleanId;
       const emailMatch = targetEmail && item.email && item.email.trim().toLowerCase() === targetEmail;
       return idMatch || emailMatch;
     };
 
-    const localUsers = readLocalJSON('users.json').filter(u => !isTarget(u));
-    writeLocalJSON('users.json', localUsers);
+    const localUsers = (await readLocalJSON('users.json')).filter(u => !isTarget(u));
+    await writeLocalJSON('users.json', localUsers);
 
-    const localVols = readLocalJSON('volunteer_applications.json').filter(v => !isTarget(v));
-    writeLocalJSON('volunteer_applications.json', localVols);
+    const localVols = (await readLocalJSON('volunteer_applications.json')).filter(v => !isTarget(v));
+    await writeLocalJSON('volunteer_applications.json', localVols);
 
-    const localAdmins = readLocalJSON('admin_users.json').filter(a => !isTarget(a));
-    writeLocalJSON('admin_users.json', localAdmins);
+    const localAdmins = (await readLocalJSON('admin_users.json')).filter(a => !isTarget(a));
+    await writeLocalJSON('admin_users.json', localAdmins);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

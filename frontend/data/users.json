@@ -1,21 +1,5 @@
 [
   {
-    "id": 1783340424498,
-    "username": "Vikram",
-    "email": "vikram@gmail.com",
-    "phone": "9876543210",
-    "password": "vikram123"
-  },
-  {
-    "id": 8,
-    "username": "harshee",
-    "email": "harshrajchauhan9422@gmail.com",
-    "phone": "7488164529",
-    "dob": "2000-11-20",
-    "password": "Harsh@123",
-    "created_at": "2026-07-06T12:41:15.519941+00:00"
-  },
-  {
     "id": 1783362213270,
     "username": "Aman Kumar",
     "email": "amankumar22@gmail.com",

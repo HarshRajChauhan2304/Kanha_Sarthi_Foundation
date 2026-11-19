@@ -2,30 +2,16 @@ import { NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
-import { getFallbackPath, syncVolunteerToHighlights } from '@/lib/db-fallback';
+import { getFallbackPath, getResilientData, saveResilientFallback, syncVolunteerToHighlights } from '@/lib/db-fallback';
 
-// Helper to read local JSON files
-const readLocalJSON = (filename: string): any[] => {
-  try {
-    const filePath = getFallbackPath(filename);
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    }
-  } catch (error) {
-    console.error(`Error reading local ${filename}:`, error);
-  }
-  return [];
+// Helper to read resilient JSON files
+const readLocalJSON = async (filename: string): Promise<any[]> => {
+  return await getResilientData<any[]>(filename, []);
 };
 
-// Helper to write local JSON files
-const writeLocalJSON = (filename: string, data: any[]) => {
-  try {
-    const filePath = getFallbackPath(filename);
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (error) {
-    console.error(`Error writing local ${filename}:`, error);
-  }
+// Helper to write resilient JSON files
+const writeLocalJSON = async (filename: string, data: any[]) => {
+  await saveResilientFallback(filename, data);
 };
 
 export async function POST(request: Request) {
@@ -83,7 +69,7 @@ export async function POST(request: Request) {
 
     // D. If not found in DB, check fallback JSON files
     if (!existingUser) {
-      const admins = readLocalJSON('admin_users.json');
+      const admins = await readLocalJSON('admin_users.json');
       const foundAdmin = admins.find(a => a.email?.trim().toLowerCase() === cleanEmail);
       if (foundAdmin) {
         existingUser = { name: foundAdmin.username, phone: foundAdmin.phone || "", password: foundAdmin.password || "admin123", currentRole: "admin" };
@@ -91,7 +77,7 @@ export async function POST(request: Request) {
     }
 
     if (!existingUser) {
-      const volunteers = readLocalJSON('volunteer_applications.json');
+      const volunteers = await readLocalJSON('volunteer_applications.json');
       const foundVol = volunteers.find(v => v.email?.trim().toLowerCase() === cleanEmail);
       if (foundVol) {
         existingUser = { name: foundVol.name, phone: foundVol.phone || "", password: foundVol.password || "volunteer123", currentRole: "volunteer" };
@@ -99,7 +85,7 @@ export async function POST(request: Request) {
     }
 
     if (!existingUser) {
-      const users = readLocalJSON('users.json');
+      const users = await readLocalJSON('users.json');
       const foundUser = users.find(u => u.email?.trim().toLowerCase() === cleanEmail);
       if (foundUser) {
         existingUser = { name: foundUser.username || foundUser.name, phone: foundUser.phone || "", password: foundUser.password || "user123", currentRole: "user" };
@@ -132,9 +118,9 @@ export async function POST(request: Request) {
     }
 
     // Delete from JSON files
-    const localAdmins = readLocalJSON('admin_users.json').filter(a => a.email?.trim().toLowerCase() !== cleanEmail);
-    const localVols = readLocalJSON('volunteer_applications.json').filter(v => v.email?.trim().toLowerCase() !== cleanEmail);
-    const localUsers = readLocalJSON('users.json').filter(u => u.email?.trim().toLowerCase() !== cleanEmail);
+    const localAdmins = (await readLocalJSON('admin_users.json')).filter(a => a.email?.trim().toLowerCase() !== cleanEmail);
+    const localVols = (await readLocalJSON('volunteer_applications.json')).filter(v => v.email?.trim().toLowerCase() !== cleanEmail);
+    const localUsers = (await readLocalJSON('users.json')).filter(u => u.email?.trim().toLowerCase() !== cleanEmail);
 
     // B. Insert into the target table
     if (newRole === "admin") {
@@ -185,9 +171,9 @@ export async function POST(request: Request) {
     }
 
     // Write back updated local JSON databases
-    writeLocalJSON('admin_users.json', localAdmins);
-    writeLocalJSON('volunteer_applications.json', localVols);
-    writeLocalJSON('users.json', localUsers);
+    await writeLocalJSON('admin_users.json', localAdmins);
+    await writeLocalJSON('volunteer_applications.json', localVols);
+    await writeLocalJSON('users.json', localUsers);
 
     return NextResponse.json({ success: true, message: `Role for ${cleanEmail} updated to ${newRole} successfully!` });
   } catch (error: any) {
