@@ -267,15 +267,37 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const idStr = searchParams.get('id');
-    if (!idStr) {
-      return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
+    let emailParam = searchParams.get('email') || undefined;
+    if (!idStr && !emailParam) {
+      return NextResponse.json({ success: false, error: "ID or email missing" }, { status: 400 });
     }
 
-    const id = parseInt(idStr, 10);
+    const id = idStr ? (isNaN(parseInt(idStr, 10)) ? idStr : parseInt(idStr, 10)) : undefined;
+
+    // Resolve email if missing
+    if (!emailParam && id !== undefined) {
+      try {
+        const fallbackPath = getFallbackPath('volunteer_applications.json');
+        if (fs.existsSync(fallbackPath)) {
+          const local = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
+          const found = local.find((a: any) => String(a.id) === String(id));
+          if (found?.email) emailParam = found.email;
+        }
+      } catch (e) {}
+
+      if (!emailParam) {
+        try {
+          const { data } = await supabaseAdmin.from('volunteer_applications').select('email').eq('id', id).maybeSingle();
+          if (data?.email) emailParam = data.email;
+        } catch (e) {}
+      }
+    }
+
     const result = await resilientDelete({
       table: 'volunteer_applications',
       idOrKey: id,
-      fallbackFile: 'volunteer_applications.json'
+      fallbackFile: 'volunteer_applications.json',
+      email: emailParam
     });
 
     return NextResponse.json(result);

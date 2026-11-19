@@ -303,9 +303,16 @@ export async function PUT(request: Request) {
     if (oldRole !== targetRole) {
       // Delete from DB
       try {
-        if (oldRole === "admin") await supabaseAdmin.from('admin_users').delete().eq('id', cleanId);
-        else if (oldRole === "volunteer") await supabaseAdmin.from('volunteer_applications').delete().eq('id', cleanId);
-        else await supabaseAdmin.from('users').delete().eq('id', cleanId);
+        if (oldRole === "admin") {
+          await supabaseAdmin.from('admin_users').delete().eq('id', cleanId);
+          await supabaseAdmin.from('admin_users').delete().eq('email', cleanEmail);
+        } else if (oldRole === "volunteer") {
+          await supabaseAdmin.from('volunteer_applications').delete().eq('id', cleanId);
+          await supabaseAdmin.from('volunteer_applications').delete().eq('email', cleanEmail);
+        } else {
+          await supabaseAdmin.from('users').delete().eq('id', cleanId);
+          await supabaseAdmin.from('users').delete().eq('email', cleanEmail);
+        }
       } catch (e) {
         console.warn("DB delete old role failed:", e);
       }
@@ -385,21 +392,23 @@ export async function PUT(request: Request) {
       if (targetRole === "admin") {
         try {
           await supabaseAdmin.from('admin_users').update({ username, email: cleanEmail, phone: phone || "", password }).eq('id', cleanId);
+          await supabaseAdmin.from('admin_users').update({ username, phone: phone || "", password }).eq('email', cleanEmail);
         } catch (e) {}
         let local = readLocalJSON('admin_users.json');
-        local = local.map(a => String(a.id) === cleanId ? { ...a, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (a.dob || ""), gender: gender !== undefined ? gender : (a.gender || "") } : a);
+        local = local.map(a => ((cleanId && String(a.id) === cleanId) || (cleanEmail && a.email?.trim().toLowerCase() === cleanEmail)) ? { ...a, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (a.dob || ""), gender: gender !== undefined ? gender : (a.gender || "") } : a);
         writeLocalJSON('admin_users.json', local);
       } else if (targetRole === "volunteer") {
         try {
           await supabaseAdmin.from('volunteer_applications').update({ name: username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('id', cleanId);
+          await supabaseAdmin.from('volunteer_applications').update({ name: username, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('email', cleanEmail);
         } catch (e) {}
         let local = readLocalJSON('volunteer_applications.json');
-        local = local.map(v => String(v.id) === cleanId ? { ...v, name: username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (v.dob || ""), gender: gender !== undefined ? gender : (v.gender || "") } : v);
+        local = local.map(v => ((cleanId && String(v.id) === cleanId) || (cleanEmail && v.email?.trim().toLowerCase() === cleanEmail)) ? { ...v, name: username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (v.dob || ""), gender: gender !== undefined ? gender : (v.gender || "") } : v);
         writeLocalJSON('volunteer_applications.json', local);
 
         // Sync updated volunteer to about highlights page
         try {
-          const volData = local.find(v => String(v.id) === cleanId);
+          const volData = local.find(v => ((cleanId && String(v.id) === cleanId) || (cleanEmail && v.email?.trim().toLowerCase() === cleanEmail)));
           if (volData) {
             await syncVolunteerToHighlights({
               name: volData.name,
@@ -417,9 +426,20 @@ export async function PUT(request: Request) {
           if (error) {
             await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password, avatar: avatar !== undefined ? avatar : "" }).eq('id', cleanId);
           }
+          await supabaseAdmin.from('users').update({ username, phone: phone || "", password, avatar: avatar !== undefined ? avatar : "" }).eq('email', cleanEmail);
         } catch (e) {}
         let local = readLocalJSON('users.json');
-        local = local.map(u => String(u.id) === cleanId ? { ...u, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (u.dob || ""), gender: gender !== undefined ? gender : (u.gender || ""), avatar: avatar !== undefined ? avatar : (u.avatar || "") } : u);
+        let matched = false;
+        local = local.map(u => {
+          if ((cleanId && String(u.id) === cleanId) || (cleanEmail && u.email?.trim().toLowerCase() === cleanEmail)) {
+            matched = true;
+            return { ...u, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (u.dob || ""), gender: gender !== undefined ? gender : (u.gender || ""), avatar: avatar !== undefined ? avatar : (u.avatar || "") };
+          }
+          return u;
+        });
+        if (!matched) {
+          local.push({ id: cleanId || Date.now(), username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "", avatar: avatar || "", created_at: new Date().toISOString() });
+        }
         writeLocalJSON('users.json', local);
       }
     }
@@ -434,12 +454,13 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const emailParam = searchParams.get('email');
 
-    if (!id) {
-      return NextResponse.json({ success: false, error: "ID is required." }, { status: 400 });
+    if (!id && !emailParam) {
+      return NextResponse.json({ success: false, error: "ID or email is required." }, { status: 400 });
     }
 
-    let cleanId = String(id);
+    let cleanId = id ? String(id) : "";
     let targetRole = "user";
     if (String(id).startsWith("user-")) {
       targetRole = "user";
@@ -452,30 +473,67 @@ export async function DELETE(request: Request) {
       cleanId = String(id).replace("admin-", "");
     }
 
-    // Supabase delete
-    try {
-      if (targetRole === "admin") {
-        await supabaseAdmin.from('admin_users').delete().eq('id', cleanId);
-      } else if (targetRole === "volunteer") {
-        await supabaseAdmin.from('volunteer_applications').delete().eq('id', cleanId);
-      } else {
-        await supabaseAdmin.from('users').delete().eq('id', cleanId);
+    // Resolve target email if not directly provided
+    let targetEmail = emailParam ? emailParam.trim().toLowerCase() : "";
+    if (!targetEmail && cleanId) {
+      // 1. Check in local JSON
+      const u1 = readLocalJSON('users.json').find(u => String(u.id) === cleanId);
+      if (u1?.email) targetEmail = u1.email.trim().toLowerCase();
+
+      if (!targetEmail) {
+        const v1 = readLocalJSON('volunteer_applications.json').find(v => String(v.id) === cleanId);
+        if (v1?.email) targetEmail = v1.email.trim().toLowerCase();
       }
-    } catch (e) {
-      console.warn("DB user delete failed:", e);
+
+      if (!targetEmail) {
+        const a1 = readLocalJSON('admin_users.json').find(a => String(a.id) === cleanId);
+        if (a1?.email) targetEmail = a1.email.trim().toLowerCase();
+      }
+
+      // 2. Check in DB
+      if (!targetEmail) {
+        try {
+          const { data: dbU } = await supabaseAdmin.from('users').select('email').eq('id', cleanId).maybeSingle();
+          if (dbU?.email) targetEmail = dbU.email.trim().toLowerCase();
+          else {
+            const { data: dbV } = await supabaseAdmin.from('volunteer_applications').select('email').eq('id', cleanId).maybeSingle();
+            if (dbV?.email) targetEmail = dbV.email.trim().toLowerCase();
+          }
+        } catch (e) {}
+      }
     }
 
-    // Local JSON delete
-    if (targetRole === "admin") {
-      const local = readLocalJSON('admin_users.json').filter(u => String(u.id) !== cleanId);
-      writeLocalJSON('admin_users.json', local);
-    } else if (targetRole === "volunteer") {
-      const local = readLocalJSON('volunteer_applications.json').filter(u => String(u.id) !== cleanId);
-      writeLocalJSON('volunteer_applications.json', local);
-    } else {
-      const local = readLocalJSON('users.json').filter(u => String(u.id) !== cleanId);
-      writeLocalJSON('users.json', local);
+    // Delete from Supabase DB by ID and by Email across all relevant tables
+    try {
+      if (cleanId) {
+        await supabaseAdmin.from('users').delete().eq('id', cleanId);
+        await supabaseAdmin.from('volunteer_applications').delete().eq('id', cleanId);
+        await supabaseAdmin.from('admin_users').delete().eq('id', cleanId);
+      }
+      if (targetEmail) {
+        await supabaseAdmin.from('users').delete().eq('email', targetEmail);
+        await supabaseAdmin.from('volunteer_applications').delete().eq('email', targetEmail);
+        await supabaseAdmin.from('admin_users').delete().eq('email', targetEmail);
+      }
+    } catch (e) {
+      console.warn("DB user delete failed in /api/admin/users:", e);
     }
+
+    // Delete from all local JSON files by ID AND by Email
+    const isTarget = (item: any) => {
+      const idMatch = cleanId && String(item.id) === cleanId;
+      const emailMatch = targetEmail && item.email && item.email.trim().toLowerCase() === targetEmail;
+      return idMatch || emailMatch;
+    };
+
+    const localUsers = readLocalJSON('users.json').filter(u => !isTarget(u));
+    writeLocalJSON('users.json', localUsers);
+
+    const localVols = readLocalJSON('volunteer_applications.json').filter(v => !isTarget(v));
+    writeLocalJSON('volunteer_applications.json', localVols);
+
+    const localAdmins = readLocalJSON('admin_users.json').filter(a => !isTarget(a));
+    writeLocalJSON('admin_users.json', localAdmins);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

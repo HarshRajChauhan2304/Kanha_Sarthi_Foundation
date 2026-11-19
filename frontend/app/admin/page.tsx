@@ -554,7 +554,7 @@ export default function AdminPanelPage() {
 
       // Fetch volunteer applications always for notifications!
       try {
-        const volRes = await fetch('/api/volunteer');
+        const volRes = await fetch('/api/volunteer', { cache: 'no-store' });
         const volData = await volRes.json();
         setVolApps(Array.isArray(volData) ? volData : []);
       } catch (volErr) {
@@ -1698,7 +1698,7 @@ export default function AdminPanelPage() {
     }
   };
 
-  const handleDelete = async (idOrKey: any) => {
+  const handleDelete = async (idOrKey: any, extraParam?: string) => {
     const isApp = activeTab === "Applications";
     const isMedia = activeTab === "PageMedia";
     const isTexts = activeTab === "PageTexts";
@@ -1721,7 +1721,7 @@ export default function AdminPanelPage() {
     const endpoint = activeTab === "Highlights"
       ? `/api/about-highlights?type=${highlightSubTab}&id=${idOrKey}`
       : activeTab === "Applications"
-        ? `/api/volunteer?id=${idOrKey}`
+        ? `/api/volunteer?id=${idOrKey}${extraParam ? `&email=${encodeURIComponent(extraParam)}` : ''}`
         : activeTab === "StarVolunteers"
           ? `/api/volunteer/star?id=${idOrKey}`
           : activeTab === "ContactInfo"
@@ -1741,7 +1741,7 @@ export default function AdminPanelPage() {
                         : activeTab === "SuccessStories"
                           ? `/api/success-stories?id=${idOrKey}`
                           : (activeTab === "RoleManagement" || activeTab === "Users")
-                            ? `/api/admin/users?id=${idOrKey}`
+                            ? `/api/admin/users?id=${idOrKey}${extraParam ? `&email=${encodeURIComponent(extraParam)}` : ''}`
                             : `/api/${activeTab.toLowerCase()}?id=${idOrKey}`;
 
     try {
@@ -1753,6 +1753,12 @@ export default function AdminPanelPage() {
         triggerAlert("Record deleted successfully!");
         if (isTasks) {
           setTasks(prev => prev.filter(t => String(t.id) !== String(idOrKey)));
+        }
+        if (activeTab === "RoleManagement" || activeTab === "Users") {
+          setUsersList(prev => prev.filter(u => String(u.id) !== String(idOrKey) && (!extraParam || u.email?.trim().toLowerCase() !== extraParam.trim().toLowerCase())));
+        }
+        if (activeTab === "Applications") {
+          setVolApps(prev => prev.filter(a => String(a.id) !== String(idOrKey) && (!extraParam || a.email?.trim().toLowerCase() !== extraParam.trim().toLowerCase())));
         }
         fetchData();
       } else {
@@ -2968,7 +2974,7 @@ export default function AdminPanelPage() {
                                     ✏️ Edit
                                   </button>
                                   <button
-                                    onClick={() => handleDelete(u.id)}
+                                    onClick={() => handleDelete(u.id, u.email)}
                                     className="px-3.5 py-1.5 bg-red-650/15 hover:bg-red-650/30 border border-red-900/40 rounded-xl text-xs font-bold text-red-400 transition-all cursor-pointer flex items-center gap-1"
                                     title="Delete User"
                                   >
@@ -3128,7 +3134,7 @@ export default function AdminPanelPage() {
                             </button>
                           )}
                           <button onClick={() => openEditModal(app)} className="px-3 py-1 border border-zinc-700 rounded text-xs text-zinc-300 cursor-pointer">Edit</button>
-                          <button onClick={() => handleDelete(app.id)} className="px-3 py-1 bg-red-650/15 border border-red-900/40 rounded text-xs text-red-400 cursor-pointer">Archive</button>
+                          <button onClick={() => handleDelete(app.id, app.email)} className="px-3 py-1 bg-red-650/15 border border-red-900/40 rounded text-xs text-red-400 cursor-pointer">Archive</button>
                         </div>
                       </td>
                     </tr>
@@ -3420,7 +3426,7 @@ export default function AdminPanelPage() {
                                   </svg>
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(user.id)}
+                                  onClick={() => handleDelete(user.id, user.email)}
                                   className="p-2 hover:bg-red-950/30 text-red-400 hover:text-red-500 rounded-xl transition-all cursor-pointer"
                                   title="Delete User"
                                 >

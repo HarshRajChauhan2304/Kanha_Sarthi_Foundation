@@ -113,21 +113,26 @@ interface ResilientOptions {
   idField?: string;
   fallbackFile: string;
   bodyData?: any;
+  email?: string;
 }
 
 export async function resilientDelete({
   table,
   idOrKey,
   idField = 'id',
-  fallbackFile
+  fallbackFile,
+  email
 }: ResilientOptions) {
   // 1. Attempt Supabase DB deletion if table exists
   try {
     const numericId = typeof idOrKey === 'number' ? idOrKey : parseInt(String(idOrKey), 10);
     if (!isNaN(numericId) && numericId <= 2147483647) {
       await supabaseAdmin.from(table).delete().eq(idField, idOrKey);
-    } else {
+    } else if (idOrKey !== undefined && idOrKey !== null && idOrKey !== "") {
       await supabaseAdmin.from(table).delete().eq(idField, String(idOrKey));
+    }
+    if (email) {
+      await supabaseAdmin.from(table).delete().eq('email', email.trim().toLowerCase());
     }
   } catch (dbErr) {
     // Fallback continues
@@ -137,13 +142,19 @@ export async function resilientDelete({
   try {
     let currentData: any = await getResilientData(fallbackFile, []);
 
+    const matchesItem = (item: any) => {
+      const matchId = (idOrKey !== undefined && idOrKey !== null && idOrKey !== "") && String(item[idField]) === String(idOrKey);
+      const matchEmail = email && item.email && item.email.trim().toLowerCase() === email.trim().toLowerCase();
+      return matchId || matchEmail;
+    };
+
     if (Array.isArray(currentData)) {
-      currentData = currentData.filter((item: any) => String(item[idField]) !== String(idOrKey));
+      currentData = currentData.filter((item: any) => !matchesItem(item));
     } else if (currentData && typeof currentData === 'object') {
       if (table === 'directors' && Array.isArray((currentData as any).directors)) {
-        (currentData as any).directors = (currentData as any).directors.filter((item: any) => String(item[idField]) !== String(idOrKey));
+        (currentData as any).directors = (currentData as any).directors.filter((item: any) => !matchesItem(item));
       } else if (table === 'volunteers' && Array.isArray((currentData as any).volunteers)) {
-        (currentData as any).volunteers = (currentData as any).volunteers.filter((item: any) => String(item[idField]) !== String(idOrKey));
+        (currentData as any).volunteers = (currentData as any).volunteers.filter((item: any) => !matchesItem(item));
       }
     }
 
