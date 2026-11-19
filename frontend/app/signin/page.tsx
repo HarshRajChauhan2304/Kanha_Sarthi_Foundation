@@ -187,6 +187,21 @@ export default function SignIn() {
     }
   };
 
+  // Dedicated email handler (opens Gmail web compose on desktop, mailto on mobile)
+  const handleEmailSupport = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const email = "kanhasarthifoundation223@gmail.com";
+    const subject = encodeURIComponent("Support Inquiry - Kanha Sarthi Foundation");
+    const isMobile = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      window.location.href = `mailto:${email}?subject=${subject}`;
+    } else {
+      // Direct Gmail compose window in a new tab (always works without needing desktop email client configured)
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}`, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50/80 dark:bg-[#070b09] px-3 font-sans pt-18 pb-6 sm:pt-20 sm:pb-8 text-left">
       <motion.div
@@ -493,8 +508,12 @@ export default function SignIn() {
 
             {/* Email */}
             <a
-              href="mailto:kanhasarthifoundation223@gmail.com"
-              className="flex items-center gap-1 text-[#1E4D2B] dark:text-emerald-400 hover:underline transition-all"
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=kanhasarthifoundation223@gmail.com&su=Kanha%20Sarthi%20Foundation%20Support"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleEmailSupport}
+              className="flex items-center gap-1 text-[#1E4D2B] dark:text-emerald-400 hover:underline transition-all cursor-pointer"
+              title="Send email to kanhasarthifoundation223@gmail.com"
             >
               <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="#EA4335">
                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
