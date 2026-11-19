@@ -421,11 +421,7 @@ function DonateCheckoutPageContent() {
       return;
     }
 
-    // Auto top-up to 700 if they want to customize (not anonymous) and are below the limit
-    let finalAmount = totalAmount;
-    if (!isAnonymous && totalAmount < 700) {
-      finalAmount = 700;
-    }
+    const finalAmount = totalAmount;
 
     // Only validate customization fields if they originally had 700 or more
     if (!isAnonymous && totalAmount >= 700 && (!printedName.trim() || !deliveryDate.trim())) {
