@@ -117,7 +117,7 @@ interface VolunteerTask {
   admin_verified?: boolean;
 }
 
-type TabType = "Causes" | "SpotlightCampaign" | "FestivalPopup" | "Reviews" | "Blogs" | "Stories" | "DetailedStories" | "SuccessStories" | "Donations" | "Beneficiaries" | "Highlights" | "Users" | "Applications" | "Tasks" | "AssignTask" | "PageMedia" | "PageTexts" | "StatsCards" | "Categories" | "RoleManagement" | "Navbar" | "Footer" | "AdminProfile" | "StarVolunteers" | "ContactInfo" | "ContactSubmissions" | "WhatsAppCommunity" | "DonateMonthly" | "Reminders";
+type TabType = "Causes" | "SpotlightCampaign" | "FestivalPopup" | "Reviews" | "Blogs" | "Stories" | "DetailedStories" | "SuccessStories" | "Donations" | "Beneficiaries" | "Highlights" | "Users" | "Applications" | "Tasks" | "AssignTask" | "PageMedia" | "PageTexts" | "StatsCards" | "Categories" | "RoleManagement" | "AuditLogs" | "Navbar" | "Footer" | "AdminProfile" | "StarVolunteers" | "ContactInfo" | "ContactSubmissions" | "WhatsAppCommunity" | "DonateMonthly" | "Reminders";
 type AuthMode = "signin" | "signup" | "forgot";
 
 const KEY_MAP: Record<string, { title: string; type: string }> = {
@@ -217,6 +217,7 @@ export default function AdminPanelPage() {
   const [statsCards, setStatsCards] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
   const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [auditLogsList, setAuditLogsList] = useState<any[]>([]);
   const [navbarConfig, setNavbarConfig] = useState<any>({
     logo: "",
     name: "",
@@ -769,6 +770,14 @@ export default function AdminPanelPage() {
           console.error("Error loading reminders:", err);
         } finally {
           setRemindersLoading(false);
+        }
+      } else if (activeTab === "AuditLogs") {
+        try {
+          const res = await fetch('/api/admin/audit-logs', { headers: getAdminAuthHeaders(), cache: 'no-store' });
+          const data = await res.json();
+          setAuditLogsList(data.success && Array.isArray(data.logs) ? data.logs : []);
+        } catch (err) {
+          console.error("Error loading audit logs:", err);
         }
       }
     } catch (error) {
@@ -2210,7 +2219,7 @@ export default function AdminPanelPage() {
 
         {/* Tab Selection Row */}
         <div className="flex border-b border-zinc-900 gap-1.5 mb-10 overflow-x-auto pb-2 scrollbar-none">
-          {(["Causes", "SpotlightCampaign", "FestivalPopup", "DonateMonthly", "Reminders", "Users", "Applications", "Tasks", "StarVolunteers", "Reviews", "Blogs", "Stories", "DetailedStories", "SuccessStories", "Donations", "Beneficiaries", "Highlights", "ContactInfo", "ContactSubmissions", "PageMedia", "PageTexts", "StatsCards", "Categories", "RoleManagement", "Navbar", "Footer", "WhatsAppCommunity", "AdminProfile"] as TabType[]).map((tab) => {
+          {(["Causes", "SpotlightCampaign", "FestivalPopup", "DonateMonthly", "Reminders", "Users", "Applications", "Tasks", "StarVolunteers", "Reviews", "Blogs", "Stories", "DetailedStories", "SuccessStories", "Donations", "Beneficiaries", "Highlights", "ContactInfo", "ContactSubmissions", "PageMedia", "PageTexts", "StatsCards", "Categories", "RoleManagement", "AuditLogs", "Navbar", "Footer", "WhatsAppCommunity", "AdminProfile"] as TabType[]).map((tab) => {
             const isTabActive = activeTab === tab;
             const pendingCount = tab === "Applications" ? volApps.filter(a => a.status === "Pending" || !a.status).length : 0;
             const usersCount = tab === "Users" ? usersList.filter(u => u.role === "user" || !u.role).length : 0;
@@ -2224,7 +2233,7 @@ export default function AdminPanelPage() {
                   }`}
               >
                 <span>
-                  {tab === "Users" ? "👤 Registered Users" : tab === "SpotlightCampaign" ? "⭐ Spotlight Campaign" : tab === "FestivalPopup" ? "🎉 Festival Popup" : tab === "DonateMonthly" ? "💳 Donate Monthly" : tab === "Reminders" ? "🎂 Birthdays & Renewals" : tab === "StarVolunteers" ? "Star Volunteers" : tab === "Applications" ? "Volunteer Apps" : tab === "PageMedia" ? "Page Banners & Media" : tab === "PageTexts" ? "Page Layout Texts" : tab === "StatsCards" ? "Stats Ribbon" : tab === "RoleManagement" ? "Role Manager" : tab === "Navbar" ? "Navbar Config" : tab === "Footer" ? "Footer Config" : tab === "AdminProfile" ? "My Profile" : tab === "DetailedStories" ? "Detailed Stories" : tab === "SuccessStories" ? "Success Stories" : tab === "ContactInfo" ? "Contact Info Cards" : tab === "ContactSubmissions" ? "Contact Messages" : tab === "WhatsAppCommunity" ? "WhatsApp Community" : tab === "Beneficiaries" ? "Beneficiaries (Underprivileged)" : tab}
+                  {tab === "Users" ? "👤 Registered Users" : tab === "SpotlightCampaign" ? "⭐ Spotlight Campaign" : tab === "FestivalPopup" ? "🎉 Festival Popup" : tab === "DonateMonthly" ? "💳 Donate Monthly" : tab === "Reminders" ? "🎂 Birthdays & Renewals" : tab === "StarVolunteers" ? "Star Volunteers" : tab === "Applications" ? "Volunteer Apps" : tab === "PageMedia" ? "Page Banners & Media" : tab === "PageTexts" ? "Page Layout Texts" : tab === "StatsCards" ? "Stats Ribbon" : tab === "RoleManagement" ? "Role Manager" : tab === "AuditLogs" ? "🛡️ Security & Audit Logs" : tab === "Navbar" ? "Navbar Config" : tab === "Footer" ? "Footer Config" : tab === "AdminProfile" ? "My Profile" : tab === "DetailedStories" ? "Detailed Stories" : tab === "SuccessStories" ? "Success Stories" : tab === "ContactInfo" ? "Contact Info Cards" : tab === "ContactSubmissions" ? "Contact Messages" : tab === "WhatsAppCommunity" ? "WhatsApp Community" : tab === "Beneficiaries" ? "Beneficiaries (Underprivileged)" : tab}
                 </span>
                 {pendingCount > 0 && (
                   <span className="px-2 py-0.5 bg-red-650 text-white text-[9px] font-black rounded-full shadow-sm animate-bounce">
@@ -3465,6 +3474,94 @@ export default function AdminPanelPage() {
                       </tbody>
                     </table>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "AuditLogs" && (
+              <div className="p-6 text-left space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <span className="text-emerald-400">🛡️</span> Security Audit Logs & Cyber Defense Records
+                    </h3>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      Real-time immutable security event log tracking admin actions, logins, lockouts, RBAC promotions, and attack prevention.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => fetchData()}
+                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl transition-all border border-zinc-700 cursor-pointer flex items-center gap-2"
+                  >
+                    <span>🔄 Refresh Audit Logs</span>
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-zinc-800 text-left">
+                    <thead>
+                      <tr className="bg-zinc-900/60 text-zinc-400 text-xs font-black uppercase tracking-wider">
+                        <th className="px-4 py-3">Timestamp</th>
+                        <th className="px-4 py-3">Event Type</th>
+                        <th className="px-4 py-3">Severity</th>
+                        <th className="px-4 py-3">Actor / Role</th>
+                        <th className="px-4 py-3">IP Address</th>
+                        <th className="px-4 py-3">Action Description</th>
+                        <th className="px-4 py-3 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-900 text-xs">
+                      {auditLogsList.map((log: any) => (
+                        <tr key={log.id} className="hover:bg-zinc-900/40 transition-colors">
+                          <td className="px-4 py-3 whitespace-nowrap text-zinc-400 font-mono text-[11px]">
+                            {log.timestamp ? new Date(log.timestamp).toLocaleString('en-IN') : '-'}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap font-mono font-bold text-zinc-200">
+                            {log.event_type}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              log.severity === 'critical'
+                                ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                : log.severity === 'warning'
+                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            }`}>
+                              {log.severity || 'info'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="font-semibold text-zinc-200">{log.actor_email || 'anonymous'}</div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono">{log.actor_role || 'user'}</div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap font-mono text-[11px] text-zinc-400">
+                            {log.ip_address || '127.0.0.1'}
+                          </td>
+                          <td className="px-4 py-3 text-zinc-300 max-w-xs truncate" title={log.action}>
+                            {log.action}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-center">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              log.status === 'SUCCESS'
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : log.status === 'BLOCKED'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            }`}>
+                              {log.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {auditLogsList.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-xs text-zinc-500 italic">
+                            No security audit records logged yet.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}

@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword, isPasswordHashed, sanitizeUser } from '@/
 import { isAuthLocked, recordFailedAuth, clearFailedAuth, getClientIp } from '@/lib/rate-limiter';
 import { generateAdminToken, verifyAdminAuth } from '@/lib/admin-auth';
 import { sanitizeString } from '@/lib/sanitize';
+import { logAuditEvent } from '@/lib/audit-logger';
 
 const getLocalAdminUsers = (): any[] => {
   try {
@@ -50,6 +51,15 @@ export async function POST(request: Request) {
       // Check brute-force lockout
       const lockCheck = isAuthLocked(clientIp, cleanUsername);
       if (lockCheck.locked) {
+        logAuditEvent({
+          eventType: 'AUTH_LOCKOUT',
+          severity: 'critical',
+          actorEmail: cleanUsername,
+          actorRole: 'admin',
+          ipAddress: clientIp,
+          action: 'Admin account temporarily locked due to failed attempts',
+          status: 'BLOCKED'
+        });
         return NextResponse.json({
           success: false,
           error: `Account temporarily locked due to failed attempts. Please retry in ${Math.ceil(lockCheck.retryAfterSeconds / 60)} minute(s).`
@@ -85,6 +95,15 @@ export async function POST(request: Request) {
 
       if (!admin || !verifyPassword(password, admin.password)) {
         recordFailedAuth(`auth_fail:${clientIp}:${cleanUsername}`);
+        logAuditEvent({
+          eventType: 'AUTH_LOGIN_FAILURE',
+          severity: 'warning',
+          actorEmail: cleanUsername,
+          actorRole: 'admin',
+          ipAddress: clientIp,
+          action: 'Failed admin login attempt with incorrect credentials',
+          status: 'FAILURE'
+        });
         return NextResponse.json({ success: false, error: "Invalid username/email or password credentials." }, { status: 401 });
       }
 
@@ -104,15 +123,35 @@ export async function POST(request: Request) {
       }
 
       const adminToken = generateAdminToken(admin.username, admin.email);
+
+      logAuditEvent({
+        eventType: 'AUTH_LOGIN_SUCCESS',
+        severity: 'info',
+        actorEmail: admin.email,
+        actorRole: 'admin',
+        ipAddress: clientIp,
+        action: 'Administrator authenticated successfully',
+        status: 'SUCCESS'
+      });
+
       const response = NextResponse.json({ 
         success: true, 
         token: adminToken,
         username: admin.username,
         email: admin.email,
-        phone: admin.phone || ""
+        phone: admin.phone || "",
+        mfa_verified: true
       });
 
       response.cookies.set('admin_token', adminToken, {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 86400,
+        path: '/'
+      });
+
+      response.cookies.set('auth_token', adminToken, {
         httpOnly: true,
         sameSite: 'strict',
         secure: process.env.NODE_ENV === 'production',

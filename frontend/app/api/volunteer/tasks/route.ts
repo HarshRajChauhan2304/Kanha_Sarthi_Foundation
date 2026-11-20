@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import { getFallbackPath } from '@/lib/db-fallback';
+import { requireAuth } from '@/lib/rbac';
+import { logAuditEvent } from '@/lib/audit-logger';
 
 const getLocalTasks = (): any[] => {
   try {
@@ -100,8 +102,15 @@ export async function GET(request: Request) {
   }
 }
 
-// POST new task
+// POST new task - Admin Only
 export async function POST(request: Request) {
+  const auth = await requireAuth(request, ['admin']);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { success: false, error: auth.error || "Administrator privileges required to assign tasks." },
+      { status: auth.status }
+    );
+  }
   try {
     const body = await request.json();
     const { 
@@ -188,8 +197,15 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT edit task
+// PUT edit task - Admin or Assigned Volunteer
 export async function PUT(request: Request) {
+  const auth = await requireAuth(request, ['admin', 'volunteer']);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { success: false, error: auth.error || "Authentication required." },
+      { status: auth.status }
+    );
+  }
   try {
     const body = await request.json();
     const { 
@@ -287,8 +303,15 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE task
+// DELETE task - Admin Only
 export async function DELETE(request: Request) {
+  const auth = await requireAuth(request, ['admin']);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { success: false, error: auth.error || "Administrator privileges required to delete tasks." },
+      { status: auth.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     let idStr = searchParams.get('id');

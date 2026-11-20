@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { getFallbackPath, getResilientData, saveResilientFallback, syncVolunteerToHighlights } from '@/lib/db-fallback';
 import { verifyAdminAuth } from '@/lib/admin-auth';
+import { logAuditEvent } from '@/lib/audit-logger';
+import { getClientIp } from '@/lib/rate-limiter';
 
 // Helper to read resilient JSON files
 const readLocalJSON = async (filename: string): Promise<any[]> => {
@@ -180,6 +182,17 @@ export async function POST(request: Request) {
     await writeLocalJSON('admin_users.json', localAdmins);
     await writeLocalJSON('volunteer_applications.json', localVols);
     await writeLocalJSON('users.json', localUsers);
+
+    logAuditEvent({
+      eventType: 'RBAC_ROLE_CHANGE',
+      severity: 'critical',
+      actorEmail: auth.admin?.e || 'admin',
+      actorRole: 'admin',
+      ipAddress: getClientIp(request),
+      action: `User ${cleanEmail} role changed to ${newRole}`,
+      details: { targetEmail: cleanEmail, newRole },
+      status: 'SUCCESS'
+    });
 
     return NextResponse.json({ success: true, message: `Role for ${cleanEmail} updated to ${newRole} successfully!` });
   } catch (error: any) {

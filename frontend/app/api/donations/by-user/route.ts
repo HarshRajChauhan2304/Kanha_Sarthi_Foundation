@@ -2,15 +2,46 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getFallbackPath } from '@/lib/db-fallback';
 import fs from 'fs';
+import { requireAuth } from '@/lib/rbac';
+import { logAuditEvent } from '@/lib/audit-logger';
+import { getClientIp } from '@/lib/rate-limiter';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    const auth = await requireAuth(request, ['admin', 'user', 'volunteer']);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Authentication required to access personal donation records.' },
+        { status: auth.status }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const emailParam = (searchParams.get('email') || '').trim().toLowerCase();
     const phoneParam = (searchParams.get('phone') || '').trim().replace(/[^0-9]/g, '');
     const nameParam = (searchParams.get('name') || '').trim().toLowerCase();
+
+    // IDOR Prevention: If caller is not Admin, they can only view donations for their own verified email
+    if (auth.user?.role !== 'admin') {
+      const requesterEmail = auth.user?.email.toLowerCase().trim();
+      if (emailParam && requesterEmail !== emailParam) {
+        logAuditEvent({
+          eventType: 'UNAUTHORIZED_ACCESS_ATTEMPT',
+          severity: 'warning',
+          actorEmail: requesterEmail,
+          actorRole: auth.user?.role,
+          ipAddress: getClientIp(request),
+          action: `Attempted to query donations of another donor: ${emailParam}`,
+          status: 'BLOCKED'
+        });
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: You can only access your own donation records.' },
+          { status: 403 }
+        );
+      }
+    }
 
     if (!emailParam && !phoneParam && !nameParam) {
       return NextResponse.json({ success: true, donations: [] });

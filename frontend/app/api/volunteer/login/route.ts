@@ -5,6 +5,8 @@ import { getFallbackPath } from '@/lib/db-fallback';
 import { verifyPassword, hashPassword, isPasswordHashed, sanitizeUser } from '@/lib/security';
 import { isAuthLocked, recordFailedAuth, clearFailedAuth, getClientIp } from '@/lib/rate-limiter';
 import { sanitizeString } from '@/lib/sanitize';
+import { generateAuthToken } from '@/lib/rbac';
+import { logAuditEvent } from '@/lib/audit-logger';
 
 export async function POST(request: Request) {
   try {
@@ -81,6 +83,15 @@ export async function POST(request: Request) {
 
     if (!match) {
       recordFailedAuth(`auth_fail:${clientIp}:${cleanEmail}`);
+      logAuditEvent({
+        eventType: 'AUTH_LOGIN_FAILURE',
+        severity: 'warning',
+        actorEmail: cleanEmail,
+        actorRole: 'volunteer',
+        ipAddress: clientIp,
+        action: 'Failed volunteer login attempt with invalid credentials',
+        status: 'FAILURE'
+      });
       return NextResponse.json({ success: false, error: "Email, phone number, or password details do not match." }, { status: 401 });
     }
 
@@ -103,13 +114,54 @@ export async function POST(request: Request) {
     }
 
     if (match.status !== "Approved") {
+      logAuditEvent({
+        eventType: 'UNAUTHORIZED_ACCESS_ATTEMPT',
+        severity: 'warning',
+        actorEmail: match.email,
+        actorRole: 'volunteer',
+        ipAddress: clientIp,
+        action: `Pending volunteer attempted dashboard access (status: ${match.status})`,
+        status: 'BLOCKED'
+      });
       return NextResponse.json({ 
         success: false, 
         error: `Your registration is currently '${match.status || 'Pending'}'. You can only access your profile once the admin approves your application.` 
       }, { status: 403 });
     }
 
-    return NextResponse.json({ success: true, volunteer: sanitizeUser(match) });
+    // Generate signed RBAC Auth Token for Volunteer
+    const volToken = generateAuthToken({
+      id: match.id,
+      email: match.email,
+      username: match.name,
+      role: 'volunteer'
+    });
+
+    logAuditEvent({
+      eventType: 'AUTH_LOGIN_SUCCESS',
+      severity: 'info',
+      actorEmail: match.email,
+      actorRole: 'volunteer',
+      ipAddress: clientIp,
+      action: 'Volunteer authenticated successfully',
+      status: 'SUCCESS'
+    });
+
+    const response = NextResponse.json({ 
+      success: true, 
+      token: volToken,
+      volunteer: sanitizeUser(match) 
+    });
+
+    response.cookies.set('auth_token', volToken, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 86400,
+      path: '/'
+    });
+
+    return response;
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

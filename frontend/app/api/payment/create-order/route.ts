@@ -1,15 +1,27 @@
 import { NextResponse } from 'next/server';
 import { resilientPost } from '@/lib/db-fallback';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
+import { sanitizeString, isValidEmail } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const rateCheck = checkRateLimit(`create_order:${clientIp}`, 30, 60 * 60 * 1000);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { success: false, error: "Too many donation order attempts. Please try again shortly." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { amount, name, email, phone, address, localCart } = body;
 
-    if (!amount || amount <= 0) {
-      return NextResponse.json({ success: false, error: 'Invalid order amount' }, { status: 400 });
+    const numericAmount = parseFloat(String(amount));
+    if (isNaN(numericAmount) || numericAmount < 1 || numericAmount > 5000000) {
+      return NextResponse.json({ success: false, error: 'Donation amount must be between ₹1 and ₹50,00,000' }, { status: 400 });
     }
 
     // Determine the Cashfree credentials and environment

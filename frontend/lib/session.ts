@@ -37,9 +37,15 @@ export function createSession(role: SessionRole, userData?: any) {
   } else if (role === 'volunteer') {
     const safeUserData = userData ? { ...userData } : {};
     delete (safeUserData as any).password;
+    if (userData?.token) {
+      localStorage.setItem('auth_token', userData.token);
+    }
     localStorage.setItem('volunteer_session', JSON.stringify(safeUserData));
   } else {
     localStorage.setItem('auth', 'true');
+    if (userData?.token) {
+      localStorage.setItem('auth_token', userData.token);
+    }
     if (userData?.username) localStorage.setItem('user_name', userData.username);
     if (userData?.email) localStorage.setItem('user_email', userData.email);
     if (userData?.phone) localStorage.setItem('user_phone', userData.phone || '');
@@ -181,6 +187,9 @@ export function clearAllSessions() {
   localStorage.removeItem('session_last_active');
   localStorage.removeItem('session_role');
   localStorage.removeItem('user_role');
+
+  // Clear universal RBAC auth token
+  localStorage.removeItem('auth_token');
 
   // Clear user auth
   localStorage.removeItem('auth');

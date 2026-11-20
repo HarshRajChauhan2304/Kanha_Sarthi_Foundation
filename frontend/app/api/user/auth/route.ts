@@ -6,6 +6,8 @@ import { getFallbackPath } from '@/lib/db-fallback';
 import { hashPassword, verifyPassword, isPasswordHashed, sanitizeUser } from '@/lib/security';
 import { isAuthLocked, recordFailedAuth, clearFailedAuth, getClientIp } from '@/lib/rate-limiter';
 import { sanitizeString } from '@/lib/sanitize';
+import { generateAuthToken, requireAuth } from '@/lib/rbac';
+import { logAuditEvent } from '@/lib/audit-logger';
 
 const getLocalUsers = (): any[] => {
   try {
@@ -46,6 +48,15 @@ export async function POST(request: Request) {
       // Anti-Brute Force Lockout
       const lockCheck = isAuthLocked(clientIp, cleanEmail);
       if (lockCheck.locked) {
+        logAuditEvent({
+          eventType: 'AUTH_LOCKOUT',
+          severity: 'critical',
+          actorEmail: cleanEmail,
+          actorRole: 'user',
+          ipAddress: clientIp,
+          action: 'User account temporarily locked due to consecutive failed login attempts',
+          status: 'BLOCKED'
+        });
         return NextResponse.json({
           success: false,
           error: `Too many failed login attempts. Temporarily locked for security. Please try again in ${Math.ceil(lockCheck.retryAfterSeconds / 60)} minute(s).`
@@ -79,6 +90,15 @@ export async function POST(request: Request) {
 
       if (!user || !verifyPassword(password, user.password)) {
         recordFailedAuth(`auth_fail:${clientIp}:${cleanEmail}`);
+        logAuditEvent({
+          eventType: 'AUTH_LOGIN_FAILURE',
+          severity: 'warning',
+          actorEmail: cleanEmail,
+          actorRole: 'user',
+          ipAddress: clientIp,
+          action: 'Failed signin attempt with invalid credentials',
+          status: 'FAILURE'
+        });
         return NextResponse.json({ success: false, error: "Invalid email or password credentials." }, { status: 401 });
       }
 
@@ -105,8 +125,27 @@ export async function POST(request: Request) {
         parsedGender = parts[1];
       }
 
-      return NextResponse.json({ 
+      // Generate signed RBAC token for User
+      const userToken = generateAuthToken({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: 'user'
+      });
+
+      logAuditEvent({
+        eventType: 'AUTH_LOGIN_SUCCESS',
+        severity: 'info',
+        actorEmail: user.email,
+        actorRole: 'user',
+        ipAddress: clientIp,
+        action: 'User authenticated successfully',
+        status: 'SUCCESS'
+      });
+
+      const response = NextResponse.json({ 
         success: true, 
+        token: userToken,
         user: {
           id: user.id,
           username: user.username,
@@ -116,9 +155,19 @@ export async function POST(request: Request) {
           dob: user.dob || "",
           avatar: user.avatar || "",
           bio: user.bio || "",
-          role: user.role || "Donor & Supporter"
+          role: "user"
         }
       });
+
+      response.cookies.set('auth_token', userToken, {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 86400,
+        path: '/'
+      });
+
+      return response;
     }
 
     if (action === "signup") {
@@ -252,6 +301,25 @@ export async function POST(request: Request) {
       const { currentEmail, username: newUsername, email: newEmail, phone: newPhone, avatar: newAvatar, gender: newGender, bio: newBio, dob: newDob, password: newPassword } = body;
       if (!currentEmail) {
         return NextResponse.json({ success: false, error: "Missing currentEmail identifier." }, { status: 400 });
+      }
+
+      // IDOR & RBAC Protection: Caller must be Admin or the verified account owner
+      const auth = await requireAuth(request, ['admin', 'user']);
+      if (!auth.authorized) {
+        return NextResponse.json({ success: false, error: auth.error || "Authentication required." }, { status: auth.status });
+      }
+
+      if (auth.user?.role !== 'admin' && auth.user?.email !== currentEmail.trim().toLowerCase()) {
+        logAuditEvent({
+          eventType: 'UNAUTHORIZED_ACCESS_ATTEMPT',
+          severity: 'critical',
+          actorEmail: auth.user?.email || 'unknown',
+          actorRole: auth.user?.role || 'user',
+          ipAddress: clientIp,
+          action: `Attempted to update profile of another user: ${currentEmail}`,
+          status: 'BLOCKED'
+        });
+        return NextResponse.json({ success: false, error: "Access Denied: You cannot modify another user's profile." }, { status: 403 });
       }
 
       let useFallback = false;

@@ -55,13 +55,13 @@ export default function SignIn() {
   const handleAuthSuccess = (data: any) => {
     clearAllSessions();
     if (data.role === "admin") {
-      createSession("admin", data.user);
+      createSession("admin", { ...data.user, token: data.token });
       router.push("/admin");
     } else if (data.role === "volunteer") {
-      createSession("volunteer", data.user);
+      createSession("volunteer", { ...data.user, token: data.token });
       router.push("/volunteer/profile");
     } else {
-      createSession("user", data.user);
+      createSession("user", { ...data.user, token: data.token });
       if (redirectPath && (redirectPath.startsWith("/donate") || redirectPath.startsWith("/causes"))) {
         router.push(redirectPath);
       } else {

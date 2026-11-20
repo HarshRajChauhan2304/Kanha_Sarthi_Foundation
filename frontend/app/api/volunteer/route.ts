@@ -4,6 +4,9 @@ import fs from 'fs';
 import path from 'path';
 import { resilientDelete, resilientPost, resilientPut, syncVolunteerToHighlights, getFallbackPath } from '@/lib/db-fallback';
 import { hashPassword, sanitizeUser, sanitizeUsers } from '@/lib/security';
+import { requireAuth } from '@/lib/rbac';
+import { logAuditEvent } from '@/lib/audit-logger';
+import { getClientIp } from '@/lib/rate-limiter';
 
 // GET all volunteer registrations (for admin review)
 export async function GET() {
@@ -203,6 +206,15 @@ export async function POST(request: Request) {
 // PUT (Edit) an existing volunteer application
 export async function PUT(request: Request) {
   try {
+    const auth = await requireAuth(request, ['admin', 'volunteer']);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, error: auth.error || "Authentication required." },
+        { status: auth.status }
+      );
+    }
+
+    const clientIp = getClientIp(request);
     const body = await request.json();
     const { id, name, email, phone, city, motivation, skills, status, password, profile_photo, gender, dob, terms_accepted, aadhar_number, aadhar_upload_url, internship_duration, certificate_url, certificate_issue_date, internship_start_date, internship_end_date, certificate_text, certificate_signature_name, certificate_signature_title, certificate_seal_text, certificate_signature_image_url, certificate_seal_image_url } = body;
 
@@ -210,37 +222,75 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
+    // IDOR Protection: If caller is Volunteer, verify ownership and prevent status/certificate tampering
+    const isVolunteer = auth.user?.role === 'volunteer';
+    if (isVolunteer) {
+      const isOwner = String(auth.user?.id) === String(id) || auth.user?.email.toLowerCase() === email.toLowerCase();
+      if (!isOwner) {
+        logAuditEvent({
+          eventType: 'UNAUTHORIZED_ACCESS_ATTEMPT',
+          severity: 'critical',
+          actorEmail: auth.user?.email || 'unknown',
+          actorRole: 'volunteer',
+          ipAddress: clientIp,
+          action: `Volunteer attempted to edit another volunteer record: ID ${id}`,
+          status: 'BLOCKED'
+        });
+        return NextResponse.json({ success: false, error: "Forbidden: You cannot modify another volunteer's profile." }, { status: 403 });
+      }
+    }
+
+    // Prepare update payload: Volunteers CANNOT self-approve or issue certificates
+    const updateBodyData: any = {
+      name,
+      email,
+      phone,
+      city,
+      motivation: motivation || "",
+      skills: skills || [],
+      profile_photo: profile_photo || "",
+      gender: gender || "",
+      dob: dob || "",
+      terms_accepted: terms_accepted === undefined ? true : !!terms_accepted,
+      aadhar_number: aadhar_number || "",
+      aadhar_upload_url: aadhar_upload_url || "",
+      internship_duration: internship_duration || "1 Month",
+    };
+
+    if (password && password.trim()) {
+      updateBodyData.password = hashPassword(password.trim());
+    }
+
+    // Admin-only fields
+    if (!isVolunteer) {
+      updateBodyData.status = status || "Pending";
+      updateBodyData.certificate_url = certificate_url || "";
+      updateBodyData.certificate_issue_date = certificate_issue_date || "";
+      updateBodyData.internship_start_date = internship_start_date || "";
+      updateBodyData.internship_end_date = internship_end_date || "";
+      updateBodyData.certificate_text = certificate_text || "";
+      updateBodyData.certificate_signature_name = certificate_signature_name || "";
+      updateBodyData.certificate_signature_title = certificate_signature_title || "";
+      updateBodyData.certificate_seal_text = certificate_seal_text || "";
+      updateBodyData.certificate_signature_image_url = certificate_signature_image_url || "";
+      updateBodyData.certificate_seal_image_url = certificate_seal_image_url || "";
+    }
+
     const result = await resilientPut({
       table: 'volunteer_applications',
       idOrKey: id,
       fallbackFile: 'volunteer_applications.json',
-      bodyData: {
-        name,
-        email,
-        phone,
-        city,
-        motivation: motivation || "",
-        skills: skills || [],
-        status: status || "Pending",
-        ...(password && password.trim() ? { password: hashPassword(password.trim()) } : {}),
-        profile_photo: profile_photo || "",
-        gender: gender || "",
-        dob: dob || "",
-        terms_accepted: terms_accepted === undefined ? true : !!terms_accepted,
-        aadhar_number: aadhar_number || "",
-        aadhar_upload_url: aadhar_upload_url || "",
-        internship_duration: internship_duration || "1 Month",
-        certificate_url: certificate_url || "",
-        certificate_issue_date: certificate_issue_date || "",
-        internship_start_date: internship_start_date || "",
-        internship_end_date: internship_end_date || "",
-        certificate_text: certificate_text || "",
-        certificate_signature_name: certificate_signature_name || "",
-        certificate_signature_title: certificate_signature_title || "",
-        certificate_seal_text: certificate_seal_text || "",
-        certificate_signature_image_url: certificate_signature_image_url || "",
-        certificate_seal_image_url: certificate_seal_image_url || ""
-      }
+      bodyData: updateBodyData
+    });
+
+    logAuditEvent({
+      eventType: 'VOLUNTEER_UPDATE',
+      severity: 'info',
+      actorEmail: auth.user?.email || email,
+      actorRole: auth.user?.role || 'volunteer',
+      ipAddress: clientIp,
+      action: `Volunteer application updated (ID: ${id})`,
+      status: 'SUCCESS'
     });
 
     if (result.success && result.item) {
@@ -256,7 +306,7 @@ export async function PUT(request: Request) {
           console.warn("Sync to highlights failed in volunteer update route:", e);
         }
       }
-      return NextResponse.json({ success: true, application: result.item });
+      return NextResponse.json({ success: true, application: sanitizeUser(result.item) });
     }
 
     return NextResponse.json(result);
@@ -265,8 +315,25 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE a volunteer application (for admin archive)
+// DELETE a volunteer application (Admin Only)
 export async function DELETE(request: Request) {
+  const auth = await requireAuth(request, ['admin']);
+  if (!auth.authorized) {
+    const clientIp = getClientIp(request);
+    logAuditEvent({
+      eventType: 'UNAUTHORIZED_ACCESS_ATTEMPT',
+      severity: 'critical',
+      actorEmail: 'unknown',
+      actorRole: 'unauthorized',
+      ipAddress: clientIp,
+      action: 'Unauthorized attempt to delete a volunteer application',
+      status: 'BLOCKED'
+    });
+    return NextResponse.json(
+      { success: false, error: auth.error || "Administrator privileges required to delete volunteer records." },
+      { status: auth.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     const idStr = searchParams.get('id');

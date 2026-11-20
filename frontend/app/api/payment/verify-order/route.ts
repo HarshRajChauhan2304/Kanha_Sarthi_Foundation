@@ -3,6 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getFallbackPath } from '@/lib/db-fallback';
 import fs from 'fs';
 import path from 'path';
+import { logAuditEvent } from '@/lib/audit-logger';
+import { getClientIp } from '@/lib/rate-limiter';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +56,16 @@ export async function GET(request: Request) {
     const orderStatus = cfData.order_status; // e.g. PAID, ACTIVE, EXPIRED
 
     if (orderStatus !== 'PAID') {
+      logAuditEvent({
+        eventType: 'DONATION_MUTATION',
+        severity: 'warning',
+        actorEmail: 'donor',
+        actorRole: 'user',
+        ipAddress: getClientIp(request),
+        action: `Payment verification check returned status: ${orderStatus} for order ${orderId}`,
+        details: { orderId, orderStatus },
+        status: 'FAILURE'
+      });
       return NextResponse.json({
         success: false,
         payment_status: orderStatus,
@@ -108,6 +120,22 @@ export async function GET(request: Request) {
         error: 'Donation record not found for the given order ID.'
       }, { status: 404 });
     }
+
+    logAuditEvent({
+      eventType: 'DONATION_MUTATION',
+      severity: 'info',
+      actorEmail: updatedDonation.email || 'donor',
+      actorRole: 'user',
+      ipAddress: getClientIp(request),
+      action: `Payment successfully verified via gateway for order: ${orderId}`,
+      details: {
+        orderId,
+        amount: updatedDonation.amount,
+        donorName: updatedDonation.name,
+        paymentMethod: updatedDonation.payment_method || 'Cashfree'
+      },
+      status: 'SUCCESS'
+    });
 
     // 3. Recalculate statistics cards in the background/sync
     try {

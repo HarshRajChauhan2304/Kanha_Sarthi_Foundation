@@ -7,6 +7,8 @@ import { verifyPassword, hashPassword, isPasswordHashed } from '@/lib/security';
 import { isAuthLocked, recordFailedAuth, clearFailedAuth, getClientIp } from '@/lib/rate-limiter';
 import { generateAdminToken } from '@/lib/admin-auth';
 import { sanitizeString } from '@/lib/sanitize';
+import { generateAuthToken } from '@/lib/rbac';
+import { logAuditEvent } from '@/lib/audit-logger';
 
 // Helper to read local JSON files
 const readLocalJSON = (filename: string): any[] => {
@@ -173,15 +175,42 @@ export async function POST(request: Request) {
       }
 
       if (volunteer.status !== "Approved") {
+        logAuditEvent({
+          eventType: 'UNAUTHORIZED_ACCESS_ATTEMPT',
+          severity: 'warning',
+          actorEmail: volunteer.email,
+          actorRole: 'volunteer',
+          ipAddress: clientIp,
+          action: `Unapproved volunteer login attempt (status: ${volunteer.status || 'Pending'})`,
+          status: 'BLOCKED'
+        });
         return NextResponse.json({
           success: false,
           error: `Your registration status is currently '${volunteer.status || 'Pending'}'. You can only access your profile once approved by an administrator.`
         }, { status: 403 });
       }
 
-      return NextResponse.json({
+      const volToken = generateAuthToken({
+        id: volunteer.id,
+        email: volunteer.email,
+        username: volunteer.name,
+        role: "volunteer"
+      });
+
+      logAuditEvent({
+        eventType: 'AUTH_LOGIN_SUCCESS',
+        severity: 'info',
+        actorEmail: volunteer.email,
+        actorRole: 'volunteer',
+        ipAddress: clientIp,
+        action: 'Volunteer authenticated successfully via unified login',
+        status: 'SUCCESS'
+      });
+
+      const response = NextResponse.json({
         success: true,
         role: "volunteer",
+        token: volToken,
         user: {
           id: volunteer.id,
           name: volunteer.name,
@@ -190,9 +219,19 @@ export async function POST(request: Request) {
           city: volunteer.city || "",
           skills: volunteer.skills || [],
           status: volunteer.status,
-          role: volunteer.role || "Volunteer"
+          role: "volunteer"
         }
       });
+
+      response.cookies.set('auth_token', volToken, {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 86400,
+        path: '/'
+      });
+
+      return response;
     }
 
     // ==========================================
@@ -247,9 +286,27 @@ export async function POST(request: Request) {
           gender = parts[1];
         }
 
-        return NextResponse.json({
+        const userToken = generateAuthToken({
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: "user"
+        });
+
+        logAuditEvent({
+          eventType: 'AUTH_LOGIN_SUCCESS',
+          severity: 'info',
+          actorEmail: user.email,
+          actorRole: 'user',
+          ipAddress: clientIp,
+          action: 'User authenticated successfully via unified login',
+          status: 'SUCCESS'
+        });
+
+        const response = NextResponse.json({
           success: true,
           role: "user",
+          token: userToken,
           user: {
             id: user.id,
             username: user.username,
@@ -258,9 +315,19 @@ export async function POST(request: Request) {
             gender: gender || user.gender || "",
             avatar: user.avatar || "",
             bio: user.bio || "",
-            role: user.role || "Donor & Supporter"
+            role: "user"
           }
         });
+
+        response.cookies.set('auth_token', userToken, {
+          httpOnly: true,
+          sameSite: 'strict',
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 86400,
+          path: '/'
+        });
+
+        return response;
       } else {
         recordFailedAuth(`auth_fail:${clientIp}:${cleanIdentifier}`);
         return NextResponse.json({ success: false, error: "Invalid credentials provided." }, { status: 401 });

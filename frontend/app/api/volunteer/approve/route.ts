@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { syncVolunteerToHighlights, getFallbackPath } from '@/lib/db-fallback';
 import { verifyAdminAuth } from '@/lib/admin-auth';
+import { logAuditEvent } from '@/lib/audit-logger';
+import { getClientIp } from '@/lib/rate-limiter';
 
 export async function POST(request: Request) {
   try {
@@ -221,6 +223,17 @@ Message:
   Kanha Sarthi Foundation. Your application has been approved. Welcome to the team!
 ========================================================================
     `);
+
+    logAuditEvent({
+      eventType: 'VOLUNTEER_APPROVE',
+      severity: 'info',
+      actorEmail: auth.admin?.e || 'admin',
+      actorRole: 'admin',
+      ipAddress: getClientIp(request),
+      action: `Approved volunteer application for ${app.name} (${app.email})`,
+      details: { applicationId: id, volunteerName: app.name, volunteerEmail: app.email },
+      status: 'SUCCESS'
+    });
 
     return NextResponse.json({ success: true, application: app });
   } catch (error: any) {
