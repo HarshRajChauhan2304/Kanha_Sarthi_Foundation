@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
-import { getFallbackPath } from '@/lib/db-fallback';
+import { getFallbackPath, getResilientData, saveResilientFallback, resilientDelete } from '@/lib/db-fallback';
 import { requireAuth } from '@/lib/rbac';
 import { logAuditEvent } from '@/lib/audit-logger';
+import { getClientIp } from '@/lib/rate-limiter';
 
 const getLocalTasks = (): any[] => {
   try {
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
     let tasks: any[] = [];
     let supabaseSucceeded = false;
 
-    // 1. Try Supabase via admin client (bypasses RLS)
+    // 1. Try Supabase via admin client (Primary Single Source of Truth)
     try {
       let query = supabaseAdmin.from('volunteer_tasks').select('*');
       if (volunteerId !== null && !isNaN(volunteerId)) {
@@ -76,22 +77,18 @@ export async function GET(request: Request) {
       console.warn("Supabase tasks GET error:", err.message);
     }
 
-    // 2. Merge local fallback tasks
-    const local = getLocalTasks();
-    let filteredLocal = local;
-    if (volunteerId !== null && !isNaN(volunteerId)) {
-      filteredLocal = local.filter(t => 
-        String(t.volunteer_id) === String(volunteerId) || 
-        (volunteerEmail && t.donor_email && t.donor_email.toLowerCase() === volunteerEmail)
-      );
-    }
-
-    // Merge only unique tasks (by id)
-    filteredLocal.forEach(lt => {
-      if (!tasks.some(st => String(st.id) === String(lt.id))) {
-        tasks.push(parseTaskMeta(lt));
+    // 2. Fallback to resilient storage ONLY IF Supabase query failed
+    if (!supabaseSucceeded) {
+      const fallbackList = await getResilientData<any[]>('volunteer_tasks.json', []);
+      let filtered: any[] = Array.isArray(fallbackList) ? fallbackList : [];
+      if (volunteerId !== null && !isNaN(volunteerId)) {
+        filtered = filtered.filter((t: any) => 
+          String(t.volunteer_id) === String(volunteerId) || 
+          (volunteerEmail && t.donor_email && t.donor_email.toLowerCase() === volunteerEmail)
+        );
       }
-    });
+      tasks = filtered.map(parseTaskMeta);
+    }
 
     // Sort descending by id
     tasks.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
@@ -143,7 +140,7 @@ export async function POST(request: Request) {
 
     let savedTask: any = null;
 
-    // 1. Insert in Supabase using valid columns only
+    // 1. Insert in Supabase using valid columns
     try {
       const { data, error } = await supabaseAdmin
         .from('volunteer_tasks')
@@ -170,7 +167,7 @@ export async function POST(request: Request) {
       console.warn("Supabase tasks insert error:", dbErr.message);
     }
 
-    // 2. If Supabase succeeded or fallback
+    // 2. Fallback item representation if Supabase was unavailable
     if (!savedTask) {
       savedTask = {
         id: Date.now(),
@@ -186,10 +183,23 @@ export async function POST(request: Request) {
       };
     }
 
-    // Update local JSON fallback
-    const local = getLocalTasks();
-    local.unshift(savedTask);
-    saveLocalTasks(local);
+    // Sync to resilient cloud storage & local JSON
+    try {
+      const current = await getResilientData<any[]>('volunteer_tasks.json', []);
+      const updated = [savedTask, ...current.filter((t: any) => String(t.id) !== String(savedTask.id))];
+      await saveResilientFallback('volunteer_tasks.json', updated);
+      saveLocalTasks(updated);
+    } catch (_) {}
+
+    logAuditEvent({
+      eventType: 'VOLUNTEER_UPDATE',
+      severity: 'info',
+      actorEmail: auth.user?.email || 'admin@kanhafoundation.org',
+      actorRole: 'admin',
+      ipAddress: getClientIp(request),
+      action: `Created volunteer task: "${task_title}" for volunteer #${volunteer_id}`,
+      status: 'SUCCESS'
+    });
 
     return NextResponse.json({ success: true, task: savedTask });
   } catch (err: any) {
@@ -278,21 +288,26 @@ export async function PUT(request: Request) {
       console.warn("Supabase tasks update error:", dbErr.message);
     }
 
-    // 2. Update locally
-    const local = getLocalTasks();
-    const idx = local.findIndex(t => String(t.id) === String(id));
-    if (idx !== -1) {
-      local[idx] = {
-        ...local[idx],
+    // 2. Sync to resilient storage
+    try {
+      const current = await getResilientData<any[]>('volunteer_tasks.json', []);
+      const idx = current.findIndex((t: any) => String(t.id) === String(id));
+      const mergedItem = {
+        ...(idx !== -1 ? current[idx] : {}),
         ...updateFields,
         ...(task_description !== undefined ? { task_description } : {}),
-        ...meta
+        ...meta,
+        id
       };
-      if (!updatedResult) {
-        updatedResult = local[idx];
+      if (idx !== -1) {
+        current[idx] = mergedItem;
+      } else {
+        current.unshift(mergedItem);
       }
-      saveLocalTasks(local);
-    }
+      if (!updatedResult) updatedResult = mergedItem;
+      await saveResilientFallback('volunteer_tasks.json', current);
+      saveLocalTasks(current);
+    } catch (_) {}
 
     return NextResponse.json({ 
       success: true, 
@@ -330,26 +345,45 @@ export async function DELETE(request: Request) {
 
     const idNum = parseInt(String(idStr), 10);
 
-    // 1. Delete in Supabase
+    // 1. Delete in Supabase Database Table
     try {
-      if (!isNaN(idNum)) {
-        const { error } = await supabaseAdmin
-          .from('volunteer_tasks')
-          .delete()
-          .eq('id', idNum);
-
-        if (error) {
-          console.warn("Supabase tasks delete warning:", error.message);
-        }
+      if (!isNaN(idNum) && idNum <= 2147483647) {
+        await supabaseAdmin.from('volunteer_tasks').delete().eq('id', idNum);
+      } else {
+        await supabaseAdmin.from('volunteer_tasks').delete().eq('id', String(idStr));
       }
     } catch (dbErr: any) {
-      console.warn("Supabase tasks delete error:", dbErr.message);
+      console.warn("Supabase tasks delete direct error:", dbErr.message);
     }
 
-    // 2. Delete locally
-    const local = getLocalTasks();
-    const updatedLocal = local.filter(t => String(t.id) !== String(idStr));
-    saveLocalTasks(updatedLocal);
+    // 2. Delete from Resilient Cloud Storage (uploads/data/volunteer_tasks.json), Memory Cache & Local Fallback
+    try {
+      await resilientDelete({
+        table: 'volunteer_tasks',
+        idOrKey: idStr,
+        idField: 'id',
+        fallbackFile: 'volunteer_tasks.json'
+      });
+    } catch (fallbackErr: any) {
+      console.warn("Resilient delete error:", fallbackErr.message);
+    }
+
+    // 3. Local JSON file safeguard
+    try {
+      const local = getLocalTasks();
+      const updatedLocal = local.filter(t => String(t.id) !== String(idStr));
+      saveLocalTasks(updatedLocal);
+    } catch (_) {}
+
+    logAuditEvent({
+      eventType: 'VOLUNTEER_UPDATE',
+      severity: 'warning',
+      actorEmail: auth.user?.email || 'admin@kanhafoundation.org',
+      actorRole: 'admin',
+      ipAddress: getClientIp(request),
+      action: `Deleted volunteer task #${idStr}`,
+      status: 'SUCCESS'
+    });
 
     return NextResponse.json({ success: true, message: "Task deleted successfully" });
   } catch (err: any) {

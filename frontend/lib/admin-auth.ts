@@ -8,6 +8,7 @@ import crypto from 'crypto';
 const getSecretKey = (): string => {
   return (
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.JWT_SECRET ||
     process.env.ADMIN_JWT_SECRET ||
     'kanha_foundation_super_secret_admin_signing_key_2026_secured'
   );

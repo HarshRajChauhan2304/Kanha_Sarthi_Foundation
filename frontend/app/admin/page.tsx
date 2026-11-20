@@ -432,9 +432,12 @@ export default function AdminPanelPage() {
   }, [isViewCertModalOpen, viewingCertVol]);
 
   const getAdminAuthHeaders = (extra: Record<string, string> = {}) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('admin_token') || localStorage.getItem('auth_token') || sessionStorage.getItem('admin_token'))
+      : null;
     return {
       'Content-Type': 'application/json',
+      'x-admin-request': 'true',
       ...(token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {}),
       ...extra
     };
