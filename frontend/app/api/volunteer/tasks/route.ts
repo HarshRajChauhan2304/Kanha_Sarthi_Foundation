@@ -183,13 +183,15 @@ export async function POST(request: Request) {
       };
     }
 
-    // Sync to resilient cloud storage & local JSON
-    try {
-      const current = await getResilientData<any[]>('volunteer_tasks.json', []);
-      const updated = [savedTask, ...current.filter((t: any) => String(t.id) !== String(savedTask.id))];
-      await saveResilientFallback('volunteer_tasks.json', updated);
-      saveLocalTasks(updated);
-    } catch (_) {}
+    // Sync to resilient cloud storage & local JSON in background to ensure lightning-fast response (< 500ms)
+    (async () => {
+      try {
+        const current = await getResilientData<any[]>('volunteer_tasks.json', []);
+        const updated = [savedTask, ...current.filter((t: any) => String(t.id) !== String(savedTask.id))];
+        await saveResilientFallback('volunteer_tasks.json', updated);
+        saveLocalTasks(updated);
+      } catch (_) {}
+    })();
 
     logAuditEvent({
       eventType: 'VOLUNTEER_UPDATE',
@@ -288,26 +290,28 @@ export async function PUT(request: Request) {
       console.warn("Supabase tasks update error:", dbErr.message);
     }
 
-    // 2. Sync to resilient storage
-    try {
-      const current = await getResilientData<any[]>('volunteer_tasks.json', []);
-      const idx = current.findIndex((t: any) => String(t.id) === String(id));
-      const mergedItem = {
-        ...(idx !== -1 ? current[idx] : {}),
-        ...updateFields,
-        ...(task_description !== undefined ? { task_description } : {}),
-        ...meta,
-        id
-      };
-      if (idx !== -1) {
-        current[idx] = mergedItem;
-      } else {
-        current.unshift(mergedItem);
-      }
-      if (!updatedResult) updatedResult = mergedItem;
-      await saveResilientFallback('volunteer_tasks.json', current);
-      saveLocalTasks(current);
-    } catch (_) {}
+    // 2. Sync to resilient storage in background for instant response
+    const mergedItem = {
+      ...updateFields,
+      ...(task_description !== undefined ? { task_description } : {}),
+      ...meta,
+      id
+    };
+    if (!updatedResult) updatedResult = mergedItem;
+
+    (async () => {
+      try {
+        const current = await getResilientData<any[]>('volunteer_tasks.json', []);
+        const idx = current.findIndex((t: any) => String(t.id) === String(id));
+        if (idx !== -1) {
+          current[idx] = { ...current[idx], ...mergedItem };
+        } else {
+          current.unshift(mergedItem);
+        }
+        await saveResilientFallback('volunteer_tasks.json', current);
+        saveLocalTasks(current);
+      } catch (_) {}
+    })();
 
     return NextResponse.json({ 
       success: true, 
@@ -356,24 +360,25 @@ export async function DELETE(request: Request) {
       console.warn("Supabase tasks delete direct error:", dbErr.message);
     }
 
-    // 2. Delete from Resilient Cloud Storage (uploads/data/volunteer_tasks.json), Memory Cache & Local Fallback
-    try {
-      await resilientDelete({
-        table: 'volunteer_tasks',
-        idOrKey: idStr,
-        idField: 'id',
-        fallbackFile: 'volunteer_tasks.json'
-      });
-    } catch (fallbackErr: any) {
-      console.warn("Resilient delete error:", fallbackErr.message);
-    }
+    // 2. Delete from Resilient Cloud Storage, Memory Cache & Local Fallback in background
+    (async () => {
+      try {
+        await resilientDelete({
+          table: 'volunteer_tasks',
+          idOrKey: idStr,
+          idField: 'id',
+          fallbackFile: 'volunteer_tasks.json'
+        });
+      } catch (fallbackErr: any) {
+        console.warn("Resilient delete error:", fallbackErr.message);
+      }
 
-    // 3. Local JSON file safeguard
-    try {
-      const local = getLocalTasks();
-      const updatedLocal = local.filter(t => String(t.id) !== String(idStr));
-      saveLocalTasks(updatedLocal);
-    } catch (_) {}
+      try {
+        const local = getLocalTasks();
+        const updatedLocal = local.filter(t => String(t.id) !== String(idStr));
+        saveLocalTasks(updatedLocal);
+      } catch (_) {}
+    })();
 
     logAuditEvent({
       eventType: 'VOLUNTEER_UPDATE',

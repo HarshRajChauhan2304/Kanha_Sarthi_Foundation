@@ -1582,17 +1582,23 @@ export default function AdminPanelPage() {
         headers: getAdminAuthHeaders(),
         body: JSON.stringify(bodyPayload)
       });
-      const result = await res.json();
-      if (result.success) {
+      let result: any = null;
+      try {
+        result = await res.json();
+      } catch (_) {
+        const raw = await res.text().catch(() => '');
+        console.error("Non-JSON API response:", raw);
+      }
+      if (result && result.success) {
         triggerAlert(`${activeTab} record saved successfully!`);
         fetchData();
         setIsModalOpen(false);
       } else {
-        triggerAlert(result.error || "Failed to save record.");
+        triggerAlert(result?.error || `Failed to save record (${res.status}: ${res.statusText || 'Server Error'})`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Save error:", error);
-      triggerAlert("Failed to save changes.");
+      triggerAlert(error?.message || "Failed to save changes.");
     } finally {
       setIsSaving(false);
     }
@@ -2090,19 +2096,32 @@ export default function AdminPanelPage() {
 
       {/* Toast Alert Indicator */}
       <AnimatePresence>
-        {alertMsg && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 right-6 z-[9999] bg-[#1E4D2B] border border-emerald-500/30 text-white px-6 py-3 rounded-xl shadow-2xl font-bold flex items-center gap-2 pointer-events-auto"
-          >
-            <svg className="h-5 w-5 text-emerald-400 fill-current" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {alertMsg}
-          </motion.div>
-        )}
+        {alertMsg && (() => {
+          const isError = /fail|error|denied|required|missing|invalid/i.test(alertMsg);
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`fixed top-6 right-6 z-[9999] border px-6 py-3 rounded-xl shadow-2xl font-bold flex items-center gap-2 pointer-events-auto ${
+                isError 
+                  ? 'bg-[#4A1515] border-red-500/40 text-red-200' 
+                  : 'bg-[#1E4D2B] border-emerald-500/30 text-white'
+              }`}
+            >
+              {isError ? (
+                <svg className="h-5 w-5 text-red-400 fill-current" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5 text-emerald-400 fill-current" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              )}
+              {alertMsg}
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
 
       {/* Real-time Admin Notification Banner for Volunteer Task Completion Proofs */}
