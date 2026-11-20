@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { getFallbackPath } from '@/lib/db-fallback';
+import { hashPassword, verifyPassword, isPasswordHashed, sanitizeUser } from '@/lib/security';
 
 const getLocalUsers = (): any[] => {
   try {
@@ -63,8 +64,21 @@ export async function POST(request: Request) {
         user = localUsers.find((u: any) => u.email?.trim().toLowerCase() === email.trim().toLowerCase());
       }
 
-      if (!user || user.password !== password) {
+      if (!user || !verifyPassword(password, user.password)) {
         return NextResponse.json({ success: false, error: "Invalid email or password credentials." }, { status: 401 });
+      }
+
+      // Auto-upgrade legacy plain-text password to PBKDF2 hash
+      if (!isPasswordHashed(user.password)) {
+        const newHash = hashPassword(password);
+        (async () => {
+          try {
+            await supabaseAdmin.from('users').update({ password: newHash }).eq('email', user.email);
+            const currentList = getLocalUsers();
+            const updated = currentList.map((u: any) => u.email === user.email ? { ...u, password: newHash } : u);
+            saveLocalUsers(updated);
+          } catch (e) {}
+        })();
       }
 
       let displayPhone = user.phone || "";
@@ -106,6 +120,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: "Email is already registered." }, { status: 409 });
       }
 
+      const hashedPassword = hashPassword(password);
+
       const newUser = {
         id: Date.now(),
         username,
@@ -113,7 +129,7 @@ export async function POST(request: Request) {
         phone: phone || "",
         gender: gender || "",
         dob: dob || "",
-        password,
+        password: hashedPassword,
         created_at: new Date().toISOString()
       };
 
@@ -132,7 +148,7 @@ export async function POST(request: Request) {
             phone: supabasePhone,
             gender: gender || "",
             dob: dob || "",
-            password
+            password: hashedPassword
           }])
           .select()
           .single();
@@ -145,7 +161,7 @@ export async function POST(request: Request) {
               email: email.trim().toLowerCase(),
               phone: supabasePhone,
               gender: gender || "",
-              password
+              password: hashedPassword
             }])
             .select()
             .single();
@@ -163,7 +179,7 @@ export async function POST(request: Request) {
           };
           const updatedLocal = localUsers.map(u => u.id === newUser.id ? parsedData : u);
           saveLocalUsers(updatedLocal);
-          return NextResponse.json({ success: true, user: parsedData });
+          return NextResponse.json({ success: true, user: sanitizeUser(parsedData) });
         } else {
           console.warn("Supabase users insert error:", error?.message);
         }
@@ -171,7 +187,7 @@ export async function POST(request: Request) {
         console.warn("Supabase insert bypassed:", dbErr.message);
       }
 
-      return NextResponse.json({ success: true, user: newUser, warning: "Saved to local fallback" });
+      return NextResponse.json({ success: true, user: sanitizeUser(newUser), warning: "Saved to local fallback" });
     }
 
     if (action === "google_sync") {
@@ -237,8 +253,10 @@ export async function POST(request: Request) {
           dob: newDob
         };
 
+        let hashedPassword: string | undefined = undefined;
         if (newPassword && newPassword.trim()) {
-          updatePayload.password = newPassword.trim();
+          hashedPassword = hashPassword(newPassword.trim());
+          updatePayload.password = hashedPassword;
         }
 
         let { data, error } = await supabaseAdmin
@@ -283,7 +301,7 @@ export async function POST(request: Request) {
             gender: newGender !== undefined ? newGender : u.gender,
             bio: newBio !== undefined ? newBio : u.bio,
             dob: newDob !== undefined ? newDob : u.dob,
-            password: (newPassword && newPassword.trim()) ? newPassword.trim() : u.password
+            password: (newPassword && newPassword.trim()) ? hashPassword(newPassword.trim()) : u.password
           };
         }
         return u;
@@ -291,9 +309,11 @@ export async function POST(request: Request) {
 
       saveLocalUsers(updatedLocalUsers);
 
+      const finalUser = updatedUser || updatedLocalUsers.find((u: any) => u.email?.trim().toLowerCase() === (newEmail || currentEmail).trim().toLowerCase());
+
       return NextResponse.json({
         success: true,
-        user: updatedUser || updatedLocalUsers.find((u: any) => u.email?.trim().toLowerCase() === (newEmail || currentEmail).trim().toLowerCase())
+        user: sanitizeUser(finalUser)
       });
     }
 

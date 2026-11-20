@@ -1236,7 +1236,7 @@ export default function AdminPanelPage() {
       setFormStatus(item.status || "Pending");
       setFormGender(item.gender || "");
       setFormDob(item.dob || "");
-      setFormPassword(item.password || "");
+      setFormPassword("");
       setFormProfilePhoto(item.profile_photo || "");
       setFormAadharNumber(item.aadhar_number || "");
       setFormAadharUploadUrl(item.aadhar_upload_url || "");
@@ -1251,7 +1251,7 @@ export default function AdminPanelPage() {
       setFormPhone(item.phone || "");
       setFormDob(item.dob || "");
       setFormGender(item.gender || "Male");
-      setFormPassword(item.password || "");
+      setFormPassword("");
       setFormRole(item.role || "user");
       setFormProfilePhoto(item.avatar || "");
     } else if (activeTab === "Tasks") {
@@ -1544,7 +1544,7 @@ export default function AdminPanelPage() {
         phone: formPhone,
         dob: formDob,
         gender: formGender || "Male",
-        password: formPassword || "User@123",
+        ...(formPassword && formPassword.trim() ? { password: formPassword.trim() } : (!editingItem ? { password: "User@123" } : {})),
         avatar: formProfilePhoto,
         role: activeTab === "Users" ? "user" : formRole
       };
@@ -2861,7 +2861,7 @@ export default function AdminPanelPage() {
                         <th className="px-6 py-4">User</th>
                         <th className="px-6 py-4">Contact</th>
                         <th className="px-6 py-4">DOB & Gender</th>
-                        <th className="px-6 py-4">Password</th>
+                        <th className="px-6 py-4">Security</th>
                         <th className="px-6 py-4">Role</th>
                         <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
@@ -2953,8 +2953,11 @@ export default function AdminPanelPage() {
                               </td>
 
                               <td className="px-6 py-4">
-                                <span className="font-mono text-xs bg-zinc-950 px-2.5 py-1 rounded-lg border border-zinc-850 text-zinc-400 select-all">
-                                  {u.password || "••••••••"}
+                                <span className="inline-flex items-center gap-1.5 font-bold text-[11px] bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 px-2.5 py-1 rounded-lg">
+                                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                  </svg>
+                                  Encrypted (Hashed)
                                 </span>
                               </td>
 
@@ -3379,7 +3382,7 @@ export default function AdminPanelPage() {
                           <th className="px-6 py-4">Email Address</th>
                           <th className="px-6 py-4">Phone</th>
                           <th className="px-6 py-4">DOB / Gender</th>
-                          <th className="px-6 py-4">Password</th>
+                          <th className="px-6 py-4">Security</th>
                           <th className="px-6 py-4">Role Designation</th>
                           <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
@@ -3401,7 +3404,9 @@ export default function AdminPanelPage() {
                               {user.gender && <p className="text-[10px] text-zinc-500 font-bold">{user.gender}</p>}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <p className="text-xs text-zinc-400">{user.password || "••••••••"}</p>
+                              <span className="inline-flex items-center gap-1 font-bold text-[10px] bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 px-2 py-0.5 rounded-lg">
+                                🔒 Encrypted
+                              </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <select
@@ -5809,8 +5814,16 @@ export default function AdminPanelPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Volunteer Password</label>
-                      <input type="text" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="Volunteer login password" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" />
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">
+                        Volunteer Password {editingItem && <span className="text-zinc-500 font-normal lowercase">(leave empty to keep current)</span>}
+                      </label>
+                      <input
+                        type="password"
+                        value={formPassword}
+                        onChange={(e) => setFormPassword(e.target.value)}
+                        placeholder={editingItem ? "Leave empty to keep current password, or enter new" : "Set volunteer password (encrypted)"}
+                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
+                      />
                     </div>
 
                     {/* Profile Photo Edit Section inside Applications */}
@@ -6632,8 +6645,17 @@ export default function AdminPanelPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Account Password</label>
-                      <input type="text" required={!editingItem} value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="Enter password (plain text)" className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none" />
+                      <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">
+                        Account Password {editingItem && <span className="text-zinc-500 font-normal lowercase">(leave empty to keep current)</span>}
+                      </label>
+                      <input
+                        type="password"
+                        required={!editingItem}
+                        value={formPassword}
+                        onChange={(e) => setFormPassword(e.target.value)}
+                        placeholder={editingItem ? "Leave empty to keep current password, or enter new" : "Set password (encrypted)"}
+                        className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none"
+                      />
                     </div>
                   </>
                 )}

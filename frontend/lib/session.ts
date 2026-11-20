@@ -34,7 +34,9 @@ export function createSession(role: SessionRole, userData?: any) {
     if (userData?.avatar) localStorage.setItem('admin_avatar', userData.avatar);
     if (userData?.phone) localStorage.setItem('admin_phone', userData.phone);
   } else if (role === 'volunteer') {
-    localStorage.setItem('volunteer_session', JSON.stringify(userData || {}));
+    const safeUserData = userData ? { ...userData } : {};
+    delete (safeUserData as any).password;
+    localStorage.setItem('volunteer_session', JSON.stringify(safeUserData));
   } else {
     localStorage.setItem('auth', 'true');
     if (userData?.username) localStorage.setItem('user_name', userData.username);

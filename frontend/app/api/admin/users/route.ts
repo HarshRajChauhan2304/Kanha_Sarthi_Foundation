@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { getResilientData, saveResilientFallback, syncVolunteerToHighlights } from '@/lib/db-fallback';
+import { hashPassword } from '@/lib/security';
 
 // Helper to read resilient JSON files (memory -> storage -> local disk)
 const readLocalJSON = async (filename: string): Promise<any[]> => {
@@ -121,7 +122,7 @@ export async function GET() {
           avatar: u.avatar || "",
           created_at: u.created_at || "",
           role: "user",
-          password: u.password || ""
+          has_password: Boolean(u.password)
         });
       }
     });
@@ -140,7 +141,7 @@ export async function GET() {
           avatar: v.profile_photo || "",
           created_at: v.created_at || "",
           role: "volunteer",
-          password: v.password || ""
+          has_password: Boolean(v.password)
         });
       }
     });
@@ -157,7 +158,7 @@ export async function GET() {
           dob: a.dob || "",
           gender: a.gender || "",
           role: "admin",
-          password: a.password || ""
+          has_password: Boolean(a.password)
         });
       }
     });
@@ -199,11 +200,14 @@ export async function POST(request: Request) {
     let dbSuccess = false;
     let newId: any = Date.now();
 
+    const rawPassword = password && password.trim() ? password.trim() : (targetRole === "admin" ? "Admin@123" : targetRole === "volunteer" ? "Volunteer@123" : "User@123");
+    const hashedPassword = hashPassword(rawPassword);
+
     // 2. Insert into the target role
     if (targetRole === "admin") {
-      const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" };
+      const payload = { username, email: cleanEmail, phone: phone || "", password: hashedPassword, dob: dob || "", gender: gender || "" };
       try {
-        const { data, error } = await supabaseAdmin.from('admin_users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
+        const { data, error } = await supabaseAdmin.from('admin_users').insert([{ username, email: cleanEmail, phone: phone || "", password: hashedPassword }]).select().single();
         if (!error && data) {
           dbSuccess = true;
           newId = data.id;
@@ -222,7 +226,7 @@ export async function POST(request: Request) {
         motivation: "Created/Approved by Admin",
         skills: ["Food Distribution & Relief Work"],
         status: "Approved",
-        password,
+        password: hashedPassword,
         dob: dob || "",
         gender: gender || ""
       };
@@ -238,14 +242,14 @@ export async function POST(request: Request) {
       localVols.push({ id: newId, ...payload });
       await writeLocalJSON('volunteer_applications.json', localVols);
     } else {
-      const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "", avatar: avatar || "", created_at: new Date().toISOString() };
+      const payload = { username, email: cleanEmail, phone: phone || "", password: hashedPassword, dob: dob || "", gender: gender || "", avatar: avatar || "", created_at: new Date().toISOString() };
       try {
         const { data, error } = await supabaseAdmin.from('users').insert([payload]).select().single();
         if (!error && data) {
           dbSuccess = true;
           newId = data.id;
         } else {
-          const { data: d2, error: e2 } = await supabaseAdmin.from('users').insert([{ username, email: cleanEmail, phone: phone || "", password, avatar: avatar || "" }]).select().single();
+          const { data: d2, error: e2 } = await supabaseAdmin.from('users').insert([{ username, email: cleanEmail, phone: phone || "", password: hashedPassword, avatar: avatar || "" }]).select().single();
           if (!e2 && d2) {
             dbSuccess = true;
             newId = d2.id;
@@ -328,10 +332,13 @@ export async function PUT(request: Request) {
       // Insert into new table
       let dbSuccess = false;
       let newId: any = Date.now();
+      const hasNewPassword = Boolean(password && password.trim());
+      const hashedPassword = hasNewPassword ? hashPassword(password.trim()) : hashPassword(targetRole === "admin" ? "Admin@123" : targetRole === "volunteer" ? "Volunteer@123" : "User@123");
+
       if (targetRole === "admin") {
-        const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" };
+        const payload = { username, email: cleanEmail, phone: phone || "", password: hashedPassword, dob: dob || "", gender: gender || "" };
         try {
-          const { data } = await supabaseAdmin.from('admin_users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
+          const { data } = await supabaseAdmin.from('admin_users').insert([{ username, email: cleanEmail, phone: phone || "", password: hashedPassword }]).select().single();
           if (data) { dbSuccess = true; newId = data.id; }
         } catch (e) {}
         const local = await readLocalJSON('admin_users.json');
@@ -346,7 +353,7 @@ export async function PUT(request: Request) {
           motivation: "Role updated by Admin",
           skills: ["Food Distribution & Relief Work"],
           status: "Approved",
-          password,
+          password: hashedPassword,
           dob: dob || "",
           gender: gender || ""
         };
@@ -370,12 +377,12 @@ export async function PUT(request: Request) {
           console.warn("Sync to highlights failed in admin users POST route:", e);
         }
       } else {
-        const payload = { username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" };
+        const payload = { username, email: cleanEmail, phone: phone || "", password: hashedPassword, dob: dob || "", gender: gender || "" };
         try {
           const { data, error } = await supabaseAdmin.from('users').insert([payload]).select().single();
           if (!error && data) { dbSuccess = true; newId = data.id; }
           else {
-            const { data: d2 } = await supabaseAdmin.from('users').insert([{ username, email: cleanEmail, phone: phone || "", password }]).select().single();
+            const { data: d2 } = await supabaseAdmin.from('users').insert([{ username, email: cleanEmail, phone: phone || "", password: hashedPassword }]).select().single();
             if (d2) { dbSuccess = true; newId = d2.id; }
           }
         } catch (e) {}
@@ -385,21 +392,28 @@ export async function PUT(request: Request) {
       }
     } else {
       // 2. Same role: update corresponding record
+      const hasNewPassword = Boolean(password && password.trim());
+      const updatedHash = hasNewPassword ? hashPassword(password.trim()) : undefined;
+
       if (targetRole === "admin") {
+        const adminUpdate: any = { username, email: cleanEmail, phone: phone || "" };
+        if (hasNewPassword) adminUpdate.password = updatedHash;
         try {
-          await supabaseAdmin.from('admin_users').update({ username, email: cleanEmail, phone: phone || "", password }).eq('id', cleanId);
-          await supabaseAdmin.from('admin_users').update({ username, phone: phone || "", password }).eq('email', cleanEmail);
+          await supabaseAdmin.from('admin_users').update(adminUpdate).eq('id', cleanId);
+          await supabaseAdmin.from('admin_users').update(adminUpdate).eq('email', cleanEmail);
         } catch (e) {}
         let local = await readLocalJSON('admin_users.json');
-        local = local.map(a => ((cleanId && String(a.id) === cleanId) || (cleanEmail && a.email?.trim().toLowerCase() === cleanEmail)) ? { ...a, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (a.dob || ""), gender: gender !== undefined ? gender : (a.gender || "") } : a);
+        local = local.map(a => ((cleanId && String(a.id) === cleanId) || (cleanEmail && a.email?.trim().toLowerCase() === cleanEmail)) ? { ...a, username, email: cleanEmail, phone: phone || "", ...(hasNewPassword ? { password: updatedHash } : {}), dob: dob !== undefined ? dob : (a.dob || ""), gender: gender !== undefined ? gender : (a.gender || "") } : a);
         await writeLocalJSON('admin_users.json', local);
       } else if (targetRole === "volunteer") {
+        const volUpdate: any = { name: username, email: cleanEmail, phone: phone || "", dob: dob || "", gender: gender || "" };
+        if (hasNewPassword) volUpdate.password = updatedHash;
         try {
-          await supabaseAdmin.from('volunteer_applications').update({ name: username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('id', cleanId);
-          await supabaseAdmin.from('volunteer_applications').update({ name: username, phone: phone || "", password, dob: dob || "", gender: gender || "" }).eq('email', cleanEmail);
+          await supabaseAdmin.from('volunteer_applications').update(volUpdate).eq('id', cleanId);
+          await supabaseAdmin.from('volunteer_applications').update(volUpdate).eq('email', cleanEmail);
         } catch (e) {}
         let local = await readLocalJSON('volunteer_applications.json');
-        local = local.map(v => ((cleanId && String(v.id) === cleanId) || (cleanEmail && v.email?.trim().toLowerCase() === cleanEmail)) ? { ...v, name: username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (v.dob || ""), gender: gender !== undefined ? gender : (v.gender || "") } : v);
+        local = local.map(v => ((cleanId && String(v.id) === cleanId) || (cleanEmail && v.email?.trim().toLowerCase() === cleanEmail)) ? { ...v, name: username, email: cleanEmail, phone: phone || "", ...(hasNewPassword ? { password: updatedHash } : {}), dob: dob !== undefined ? dob : (v.dob || ""), gender: gender !== undefined ? gender : (v.gender || "") } : v);
         await writeLocalJSON('volunteer_applications.json', local);
 
         // Sync updated volunteer to about highlights page
@@ -417,24 +431,27 @@ export async function PUT(request: Request) {
           console.warn("Sync to highlights failed in admin users PUT route:", e);
         }
       } else {
+        const userUpdate: any = { username, email: cleanEmail, phone: phone || "", dob: dob || "", gender: gender || "", avatar: avatar !== undefined ? avatar : "" };
+        if (hasNewPassword) userUpdate.password = updatedHash;
         try {
-          const { error } = await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "", avatar: avatar !== undefined ? avatar : "" }).eq('id', cleanId);
+          const { error } = await supabaseAdmin.from('users').update(userUpdate).eq('id', cleanId);
           if (error) {
-            await supabaseAdmin.from('users').update({ username, email: cleanEmail, phone: phone || "", password, avatar: avatar !== undefined ? avatar : "" }).eq('id', cleanId);
+            delete userUpdate.dob;
+            await supabaseAdmin.from('users').update(userUpdate).eq('id', cleanId);
           }
-          await supabaseAdmin.from('users').update({ username, phone: phone || "", password, avatar: avatar !== undefined ? avatar : "" }).eq('email', cleanEmail);
+          await supabaseAdmin.from('users').update(userUpdate).eq('email', cleanEmail);
         } catch (e) {}
         let local = await readLocalJSON('users.json');
         let matched = false;
         local = local.map(u => {
           if ((cleanId && String(u.id) === cleanId) || (cleanEmail && u.email?.trim().toLowerCase() === cleanEmail)) {
             matched = true;
-            return { ...u, username, email: cleanEmail, phone: phone || "", password, dob: dob !== undefined ? dob : (u.dob || ""), gender: gender !== undefined ? gender : (u.gender || ""), avatar: avatar !== undefined ? avatar : (u.avatar || "") };
+            return { ...u, username, email: cleanEmail, phone: phone || "", ...(hasNewPassword ? { password: updatedHash } : {}), dob: dob !== undefined ? dob : (u.dob || ""), gender: gender !== undefined ? gender : (u.gender || ""), avatar: avatar !== undefined ? avatar : (u.avatar || "") };
           }
           return u;
         });
         if (!matched) {
-          local.push({ id: cleanId || Date.now(), username, email: cleanEmail, phone: phone || "", password, dob: dob || "", gender: gender || "", avatar: avatar || "", created_at: new Date().toISOString() });
+          local.push({ id: cleanId || Date.now(), username, email: cleanEmail, phone: phone || "", password: updatedHash || hashPassword("User@123"), dob: dob || "", gender: gender || "", avatar: avatar || "", created_at: new Date().toISOString() });
         }
         await writeLocalJSON('users.json', local);
       }

@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { getFallbackPath } from '@/lib/db-fallback';
+import { sanitizeUser } from '@/lib/security';
 
 const getOTPFilePath = () => getFallbackPath('otps.json');
 
@@ -237,7 +238,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           success: true,
           role: "volunteer",
-          user: matchedVol
+          user: sanitizeUser(matchedVol)
         });
       }
 
@@ -271,7 +272,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         role: "user",
-        user: matchedUser
+        user: sanitizeUser(matchedUser)
       });
     }
 

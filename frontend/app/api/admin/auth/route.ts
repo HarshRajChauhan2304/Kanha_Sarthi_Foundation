@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { getFallbackPath } from '@/lib/db-fallback';
+import { hashPassword, verifyPassword, isPasswordHashed, sanitizeUser } from '@/lib/security';
 
 const getLocalAdminUsers = (): any[] => {
   try {
@@ -64,12 +65,25 @@ export async function POST(request: Request) {
       // 2. Fall back to local file
       if (useFallback || !admin) {
         admin = localUsers.find((u: any) => 
-          (u.username === username || u.email === username) && u.password === password
+          (u.username === username || u.email === username) && verifyPassword(password, u.password)
         );
       }
 
-      if (!admin || admin.password !== password) {
+      if (!admin || !verifyPassword(password, admin.password)) {
         return NextResponse.json({ success: false, error: "Invalid username/email or password." }, { status: 401 });
+      }
+
+      // Upgrade legacy plain text password to PBKDF2 hash
+      if (!isPasswordHashed(admin.password)) {
+        const newHash = hashPassword(password);
+        (async () => {
+          try {
+            await supabaseAdmin.from('admin_users').update({ password: newHash }).eq('email', admin.email);
+            const list = getLocalAdminUsers();
+            const updated = list.map((a: any) => a.email === admin.email ? { ...a, password: newHash } : a);
+            saveLocalAdminUsers(updated);
+          } catch (e) {}
+        })();
       }
 
       return NextResponse.json({ 
@@ -91,12 +105,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: "Username or email is already registered." }, { status: 409 });
       }
 
+      const hashedPassword = hashPassword(password);
+
       const newAdmin = {
         id: Date.now(),
         username,
         email: email.trim().toLowerCase(),
         phone: phone || "",
-        password,
+        password: hashedPassword,
         created_at: new Date().toISOString()
       };
 
@@ -112,7 +128,7 @@ export async function POST(request: Request) {
             username,
             email: email.trim().toLowerCase(),
             phone: phone || null,
-            password
+            password: hashedPassword
           }])
           .select()
           .single();

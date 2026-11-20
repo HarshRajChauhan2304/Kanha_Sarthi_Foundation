@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import { getFallbackPath } from '@/lib/db-fallback';
+import { verifyPassword, hashPassword, isPasswordHashed, sanitizeUser } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
@@ -59,14 +60,30 @@ export async function POST(request: Request) {
 
     // Validate phone and password
     const match = apps.find(app => {
-      const appCleanPhone = app.phone.replace(/[^0-9+]/g, "");
+      const appCleanPhone = (app.phone || "").replace(/[^0-9+]/g, "");
       const phoneMatches = appCleanPhone.endsWith(cleanPhone) || cleanPhone.endsWith(appCleanPhone);
-      const passwordMatches = !app.password || app.password === password;
+      const passwordMatches = !app.password || verifyPassword(password, app.password);
       return phoneMatches && passwordMatches;
     });
 
     if (!match) {
       return NextResponse.json({ success: false, error: "Email, phone number, or password details do not match." }, { status: 401 });
+    }
+
+    // Upgrade legacy plain-text password to PBKDF2 hash
+    if (match.password && !isPasswordHashed(match.password)) {
+      const newHash = hashPassword(password);
+      (async () => {
+        try {
+          await supabaseAdmin.from('volunteer_applications').update({ password: newHash }).eq('id', match.id);
+          const fp = getFallbackPath('volunteer_applications.json');
+          if (fs.existsSync(fp)) {
+            const list = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+            const updated = list.map((v: any) => String(v.id) === String(match.id) ? { ...v, password: newHash } : v);
+            fs.writeFileSync(fp, JSON.stringify(updated, null, 2), 'utf-8');
+          }
+        } catch (e) {}
+      })();
     }
 
     if (match.status !== "Approved") {
@@ -76,7 +93,7 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    return NextResponse.json({ success: true, volunteer: match });
+    return NextResponse.json({ success: true, volunteer: sanitizeUser(match) });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { resilientDelete, resilientPost, resilientPut, syncVolunteerToHighlights, getFallbackPath } from '@/lib/db-fallback';
+import { hashPassword, sanitizeUser, sanitizeUsers } from '@/lib/security';
 
 // GET all volunteer registrations (for admin review)
 export async function GET() {
@@ -142,7 +143,7 @@ function calculateEndDate(startDateStr: string, durationStr: string): string {
     return newItem;
   });
 
-  return NextResponse.json(applications);
+  return NextResponse.json(sanitizeUsers(applications));
 }
 
 // POST a new volunteer application
@@ -155,6 +156,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Please fill all required profile fields including Date of Birth." }, { status: 400 });
     }
 
+    const hashedPassword = hashPassword(password || "volunteer123");
+
     const result = await resilientPost({
       table: 'volunteer_applications',
       fallbackFile: 'volunteer_applications.json',
@@ -166,7 +169,7 @@ export async function POST(request: Request) {
         motivation: motivation || "",
         skills,
         status: "Pending",
-        password: password || "volunteer123",
+        password: hashedPassword,
         profile_photo: profile_photo || "",
         gender: gender || "",
         dob: dob || "",
@@ -188,7 +191,7 @@ export async function POST(request: Request) {
     });
 
     if (result.success && result.item) {
-      return NextResponse.json({ success: true, application: result.item });
+      return NextResponse.json({ success: true, application: sanitizeUser(result.item) });
     }
 
     return NextResponse.json(result);
@@ -219,7 +222,7 @@ export async function PUT(request: Request) {
         motivation: motivation || "",
         skills: skills || [],
         status: status || "Pending",
-        ...(password && password.trim() ? { password: password.trim() } : {}),
+        ...(password && password.trim() ? { password: hashPassword(password.trim()) } : {}),
         profile_photo: profile_photo || "",
         gender: gender || "",
         dob: dob || "",

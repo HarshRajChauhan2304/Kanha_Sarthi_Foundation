@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { getFallbackPath } from '@/lib/db-fallback';
+import { verifyPassword, hashPassword, isPasswordHashed } from '@/lib/security';
 
 // Helper to read local JSON files
 const readLocalJSON = (filename: string): any[] => {
@@ -58,7 +59,23 @@ export async function POST(request: Request) {
     }
 
     if (admin) {
-      if (admin.password === password) {
+      if (verifyPassword(password, admin.password)) {
+        // Transparently upgrade legacy plain text password to PBKDF2 hash
+        if (!isPasswordHashed(admin.password)) {
+          const newHash = hashPassword(password);
+          (async () => {
+            try {
+              await supabaseAdmin.from('admin_users').update({ password: newHash }).eq('email', admin.email);
+              const fp = getFallbackPath('admin_users.json');
+              if (fs.existsSync(fp)) {
+                const list = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+                const updated = list.map((a: any) => a.email === admin.email ? { ...a, password: newHash } : a);
+                fs.writeFileSync(fp, JSON.stringify(updated, null, 2), 'utf-8');
+              }
+            } catch (e) {}
+          })();
+        }
+
         return NextResponse.json({
           success: true,
           role: "admin",
@@ -109,8 +126,24 @@ export async function POST(request: Request) {
     }
 
     if (volunteer) {
-      if (volunteer.password !== password) {
+      if (!verifyPassword(password, volunteer.password)) {
         return NextResponse.json({ success: false, error: "Invalid password for volunteer profile." }, { status: 401 });
+      }
+
+      // Transparently upgrade legacy plain text password to PBKDF2 hash
+      if (!isPasswordHashed(volunteer.password)) {
+        const newHash = hashPassword(password);
+        (async () => {
+          try {
+            await supabaseAdmin.from('volunteer_applications').update({ password: newHash }).eq('email', volunteer.email);
+            const fp = getFallbackPath('volunteer_applications.json');
+            if (fs.existsSync(fp)) {
+              const list = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+              const updated = list.map((v: any) => v.email === volunteer.email ? { ...v, password: newHash } : v);
+              fs.writeFileSync(fp, JSON.stringify(updated, null, 2), 'utf-8');
+            }
+          } catch (e) {}
+        })();
       }
 
       if (volunteer.status !== "Approved") {
@@ -163,7 +196,23 @@ export async function POST(request: Request) {
     }
 
     if (user) {
-      if (user.password === password) {
+      if (verifyPassword(password, user.password)) {
+        // Transparently upgrade legacy plain text password to PBKDF2 hash
+        if (!isPasswordHashed(user.password)) {
+          const newHash = hashPassword(password);
+          (async () => {
+            try {
+              await supabaseAdmin.from('users').update({ password: newHash }).eq('email', user.email);
+              const fp = getFallbackPath('users.json');
+              if (fs.existsSync(fp)) {
+                const list = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+                const updated = list.map((u: any) => u.email === user.email ? { ...u, password: newHash } : u);
+                fs.writeFileSync(fp, JSON.stringify(updated, null, 2), 'utf-8');
+              }
+            } catch (e) {}
+          })();
+        }
+
         let displayPhone = user.phone || "";
         let gender = user.gender || "";
         if (displayPhone.includes("__GENDER:")) {
