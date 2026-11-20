@@ -3,14 +3,27 @@ import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import { getFallbackPath } from '@/lib/db-fallback';
 import { verifyPassword, hashPassword, isPasswordHashed, sanitizeUser } from '@/lib/security';
+import { isAuthLocked, recordFailedAuth, clearFailedAuth, getClientIp } from '@/lib/rate-limiter';
+import { sanitizeString } from '@/lib/sanitize';
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
     const body = await request.json();
     const { email, phone, password } = body;
 
-    if (!email || !phone || !password) {
+    const cleanEmail = sanitizeString(email, 100).toLowerCase();
+    if (!cleanEmail || !phone || !password) {
       return NextResponse.json({ success: false, error: "Please provide email, phone, and password." }, { status: 400 });
+    }
+
+    // Anti-Brute Force Lockout
+    const lockCheck = isAuthLocked(clientIp, cleanEmail);
+    if (lockCheck.locked) {
+      return NextResponse.json({
+        success: false,
+        error: `Too many failed login attempts. Temporarily locked for security. Please try again in ${Math.ceil(lockCheck.retryAfterSeconds / 60)} minute(s).`
+      }, { status: 429 });
     }
 
     // Clean phone input to match digits-only or exact match
@@ -67,8 +80,11 @@ export async function POST(request: Request) {
     });
 
     if (!match) {
+      recordFailedAuth(`auth_fail:${clientIp}:${cleanEmail}`);
       return NextResponse.json({ success: false, error: "Email, phone number, or password details do not match." }, { status: 401 });
     }
+
+    clearFailedAuth(`auth_fail:${clientIp}:${cleanEmail}`);
 
     // Upgrade legacy plain-text password to PBKDF2 hash
     if (match.password && !isPasswordHashed(match.password)) {

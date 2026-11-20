@@ -430,6 +430,15 @@ export default function AdminPanelPage() {
     };
   }, [isViewCertModalOpen, viewingCertVol]);
 
+  const getAdminAuthHeaders = (extra: Record<string, string> = {}) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {}),
+      ...extra
+    };
+  };
+
   const handleSeedDB = async () => {
     if (!window.confirm("WARNING: This will clear existing Supabase tables and sync them fresh with your local JSON data files. Continue?")) return;
 
@@ -563,7 +572,7 @@ export default function AdminPanelPage() {
 
       // Fetch users always for badge count & fast tab access
       try {
-        const userRes = await fetch('/api/admin/users', { cache: 'no-store' });
+        const userRes = await fetch('/api/admin/users', { headers: getAdminAuthHeaders(), cache: 'no-store' });
         const userData = await userRes.json();
         if (userData.success && Array.isArray(userData.users)) {
           setUsersList(userData.users);
@@ -656,7 +665,7 @@ export default function AdminPanelPage() {
         const data = await res.json();
         setContactInfoList(Array.isArray(data) ? data : []);
       } else if (activeTab === "ContactSubmissions") {
-        const res = await fetch('/api/contact', { cache: 'no-store' });
+        const res = await fetch('/api/contact', { headers: getAdminAuthHeaders(), cache: 'no-store' });
         const data = await res.json();
         setContactSubmissionsList(Array.isArray(data) ? data : []);
       } else if (activeTab === "PageMedia") {
@@ -683,7 +692,7 @@ export default function AdminPanelPage() {
         setStatsCards(Array.isArray(data) ? data : []);
       } else if (activeTab === "RoleManagement" || activeTab === "Users") {
         try {
-          const userRes = await fetch('/api/admin/users', { cache: 'no-store' });
+          const userRes = await fetch('/api/admin/users', { headers: getAdminAuthHeaders(), cache: 'no-store' });
           const userData = await userRes.json();
           setUsersList(userData.success && Array.isArray(userData.users) ? userData.users : []);
 
@@ -796,8 +805,12 @@ export default function AdminPanelPage() {
           createSession("admin", {
             username: finalUsername,
             email: finalEmail,
-            avatar: finalAvatar
+            avatar: finalAvatar,
+            token: data.token
           });
+          if (data.token) {
+            localStorage.setItem("admin_token", data.token);
+          }
 
           setAdminUsername(finalUsername);
           setAdminEmail(finalEmail);
@@ -1554,7 +1567,7 @@ export default function AdminPanelPage() {
     try {
       const res = await fetch(endpoint, {
         method: editingItem ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(),
         body: JSON.stringify(bodyPayload)
       });
       const result = await res.json();
@@ -1577,7 +1590,7 @@ export default function AdminPanelPage() {
     try {
       const res = await fetch('/api/volunteer/approve', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(),
         body: JSON.stringify({ id: app.id })
       });
       const data = await res.json();
@@ -1604,7 +1617,7 @@ export default function AdminPanelPage() {
     try {
       const res = await fetch('/api/admin/promote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(),
         body: JSON.stringify({ newRole, email })
       });
       const data = await res.json();
@@ -1746,7 +1759,8 @@ export default function AdminPanelPage() {
 
     try {
       const res = await fetch(endpoint, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAdminAuthHeaders()
       });
       const result = await res.json();
       if (result.success) {

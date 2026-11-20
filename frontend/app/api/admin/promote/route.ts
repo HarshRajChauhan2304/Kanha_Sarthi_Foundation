@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { getFallbackPath, getResilientData, saveResilientFallback, syncVolunteerToHighlights } from '@/lib/db-fallback';
+import { verifyAdminAuth } from '@/lib/admin-auth';
 
 // Helper to read resilient JSON files
 const readLocalJSON = async (filename: string): Promise<any[]> => {
@@ -16,6 +17,11 @@ const writeLocalJSON = async (filename: string, data: any[]) => {
 
 export async function POST(request: Request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Administrator privileges required to change roles." }, { status: 401 });
+    }
+
     const body = await request.json();
     const { email, newRole } = body;
 

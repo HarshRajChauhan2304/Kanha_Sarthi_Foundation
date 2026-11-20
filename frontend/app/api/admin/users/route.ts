@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { getResilientData, saveResilientFallback, syncVolunteerToHighlights } from '@/lib/db-fallback';
 import { hashPassword } from '@/lib/security';
+import { verifyAdminAuth } from '@/lib/admin-auth';
 
 // Helper to read resilient JSON files (memory -> storage -> local disk)
 const readLocalJSON = async (filename: string): Promise<any[]> => {
@@ -24,8 +25,13 @@ const writeLocalJSON = async (filename: string, data: any[]) => {
   }
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Administrator access required." }, { status: 401 });
+    }
+
     // 1. Fetch Admin Accounts
     let admins: any[] = [];
     try {
@@ -174,6 +180,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Administrator access required." }, { status: 401 });
+    }
+
     const body = await request.json();
     const { username, email, phone, password, role, dob, gender, avatar } = body;
 
@@ -275,6 +286,11 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Administrator access required." }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, username, email, phone, password, role, dob, gender, avatar } = body;
 
@@ -465,6 +481,11 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Administrator access required." }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const emailParam = searchParams.get('email');

@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { getFallbackPath } from '@/lib/db-fallback';
 import { sanitizeUser } from '@/lib/security';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limiter';
 
 const getOTPFilePath = () => getFallbackPath('otps.json');
 
@@ -67,6 +68,15 @@ export async function POST(request: Request) {
     // ACTION: Send OTP
     // ==========================================
     if (action === "send") {
+      const clientIp = getClientIp(request);
+      const rateCheck = checkRateLimit(`otp:${clientIp}:${cleanTarget}`, 3, 10 * 60 * 1000);
+      if (!rateCheck.allowed) {
+        return NextResponse.json({
+          success: false,
+          error: `Too many OTP requests. Please wait ${Math.ceil(rateCheck.retryAfterSeconds / 60)} minute(s) before requesting a new code.`
+        }, { status: 429 });
+      }
+
       // Generate a 6-digit OTP code (defaulting to 123456 or random 6 digits)
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes

@@ -29,6 +29,7 @@ export function createSession(role: SessionRole, userData?: any) {
 
   if (role === 'admin') {
     localStorage.setItem('admin_auth', 'true');
+    if (userData?.token) localStorage.setItem('admin_token', userData.token);
     if (userData?.username) localStorage.setItem('admin_username', userData.username);
     if (userData?.email) localStorage.setItem('admin_email', userData.email);
     if (userData?.avatar) localStorage.setItem('admin_avatar', userData.avatar);
@@ -193,6 +194,7 @@ export function clearAllSessions() {
 
   // Clear admin auth
   localStorage.removeItem('admin_auth');
+  localStorage.removeItem('admin_token');
   localStorage.removeItem('admin_username');
   localStorage.removeItem('admin_email');
   localStorage.removeItem('admin_phone');

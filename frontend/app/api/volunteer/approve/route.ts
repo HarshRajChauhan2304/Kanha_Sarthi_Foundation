@@ -3,9 +3,15 @@ import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 import { syncVolunteerToHighlights, getFallbackPath } from '@/lib/db-fallback';
+import { verifyAdminAuth } from '@/lib/admin-auth';
 
 export async function POST(request: Request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Administrator privileges required to approve volunteers." }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id } = body;
 

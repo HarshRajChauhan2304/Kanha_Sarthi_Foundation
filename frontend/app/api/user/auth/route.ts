@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { getFallbackPath } from '@/lib/db-fallback';
 import { hashPassword, verifyPassword, isPasswordHashed, sanitizeUser } from '@/lib/security';
+import { isAuthLocked, recordFailedAuth, clearFailedAuth, getClientIp } from '@/lib/rate-limiter';
+import { sanitizeString } from '@/lib/sanitize';
 
 const getLocalUsers = (): any[] => {
   try {
@@ -29,14 +31,25 @@ const saveLocalUsers = (users: any[]) => {
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
     const body = await request.json();
     const { action, username, email, phone, password, gender, dob } = body;
 
     const localUsers = getLocalUsers();
 
     if (action === "signin") {
-      if (!email || !password) {
+      const cleanEmail = sanitizeString(email, 100).toLowerCase();
+      if (!cleanEmail || !password) {
         return NextResponse.json({ success: false, error: "Please provide both email and password." }, { status: 400 });
+      }
+
+      // Anti-Brute Force Lockout
+      const lockCheck = isAuthLocked(clientIp, cleanEmail);
+      if (lockCheck.locked) {
+        return NextResponse.json({
+          success: false,
+          error: `Too many failed login attempts. Temporarily locked for security. Please try again in ${Math.ceil(lockCheck.retryAfterSeconds / 60)} minute(s).`
+        }, { status: 429 });
       }
 
       let user = null;
@@ -47,7 +60,7 @@ export async function POST(request: Request) {
         const { data, error } = await supabase
           .from('users')
           .select('*')
-          .eq('email', email.trim().toLowerCase())
+          .eq('email', cleanEmail)
           .single();
 
         if (error || !data) {
@@ -61,12 +74,15 @@ export async function POST(request: Request) {
 
       // 2. Fall back to local JSON
       if (useFallback || !user) {
-        user = localUsers.find((u: any) => u.email?.trim().toLowerCase() === email.trim().toLowerCase());
+        user = localUsers.find((u: any) => u.email?.trim().toLowerCase() === cleanEmail);
       }
 
       if (!user || !verifyPassword(password, user.password)) {
+        recordFailedAuth(`auth_fail:${clientIp}:${cleanEmail}`);
         return NextResponse.json({ success: false, error: "Invalid email or password credentials." }, { status: 401 });
       }
+
+      clearFailedAuth(`auth_fail:${clientIp}:${cleanEmail}`);
 
       // Auto-upgrade legacy plain-text password to PBKDF2 hash
       if (!isPasswordHashed(user.password)) {
