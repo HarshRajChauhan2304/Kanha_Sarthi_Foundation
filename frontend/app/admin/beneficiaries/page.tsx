@@ -355,13 +355,9 @@ export default function AdminBeneficiariesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Universal Mandatory Fields Validation (Phone, Email, Address, Pic Upload)
+    // 1. Universal Mandatory Fields Validation (Phone, Address, Pic Upload)
     if (!formPhone.trim()) {
       alert("Please fill Phone Number *");
-      return;
-    }
-    if (!formEmail.trim()) {
-      alert("Please fill Email Address *");
       return;
     }
     if (!formAddress.trim()) {
@@ -1101,17 +1097,16 @@ export default function AdminBeneficiariesPage() {
                         />
                       </div>
 
-                      {/* Email ID (Universal Mandatory) */}
+                      {/* Email ID (Optional) */}
                       <div>
                         <label className="block text-[10px] font-bold text-gray-600 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                          Email Address <span className="text-red-500">*</span>
+                          Email Address <span className="text-zinc-400 font-normal lowercase">(optional)</span>
                         </label>
                         <input
                           type="email"
-                          required
                           value={formEmail}
                           onChange={(e) => setFormEmail(e.target.value)}
-                          placeholder="e.g. beneficiary@example.com"
+                          placeholder="e.g. beneficiary@example.com (optional)"
                           className="w-full px-4 py-2.5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#52c47c]"
                         />
                       </div>
