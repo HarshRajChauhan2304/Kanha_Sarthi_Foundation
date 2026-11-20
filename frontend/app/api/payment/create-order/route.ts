@@ -59,7 +59,10 @@ export async function POST(request: Request) {
     });
 
     const productTitles = Array.isArray(localCart)
-      ? localCart.map((item: any) => item.title).join(', ')
+      ? localCart.map((item: any) => {
+          const qty = item.quantity && Number(item.quantity) > 1 ? ` (Qty: ${item.quantity})` : '';
+          return `${item.title}${qty}`;
+        }).join(', ')
       : 'General Support';
 
     // Calculate metadata similar to normal donation creation

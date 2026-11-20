@@ -106,11 +106,14 @@ function DonateCheckoutPageContent() {
           if (paramCauseId) {
             const found = data.find((c: any) => c.id.toString() === paramCauseId);
             if (found) {
+              const unitPrice = parseFloat((paramAmount || found.price || "0").replace(/[^0-9.]/g, "")) || 0;
               setSelectedCauseId(found.id.toString());
               setLocalCart([{
                 id: found.id,
                 title: found.title,
-                amount: paramAmount ? `₹${paramAmount}` : found.price,
+                unitPrice: unitPrice,
+                amount: `₹${unitPrice}`,
+                quantity: 1,
                 category: found.category,
                 frequency: paramType === "monthly" ? "Monthly Subscription" : "One-Time"
               }]);
@@ -119,13 +122,16 @@ function DonateCheckoutPageContent() {
           }
 
           if (paramTitle || paramAmount) {
-            const cleanAmt = (paramAmount || "1000").replace(/[^0-9]/g, "");
+            const cleanAmt = (paramAmount || "1000").replace(/[^0-9.]/g, "");
+            const unitPrice = parseFloat(cleanAmt) || 1000;
             setCustomAmount(cleanAmt || "1000");
             setSelectedCauseId("custom");
             setLocalCart([{
               id: "direct_" + Date.now(),
               title: paramTitle || (paramType === "monthly" ? "Monthly Giving Subscription" : "Campaign Giving"),
-              amount: `₹${cleanAmt || "1000"}`,
+              unitPrice: unitPrice,
+              amount: `₹${unitPrice}`,
+              quantity: 1,
               category: paramCategory || (paramType === "monthly" ? "Monthly Subscription" : "General Support"),
               frequency: paramType === "monthly" ? "Monthly Subscription" : "One-Time"
             }]);
@@ -143,7 +149,16 @@ function DonateCheckoutPageContent() {
   useEffect(() => {
     if (cartItems.length > 0) {
       setSelectedCauseId("cart");
-      setLocalCart(cartItems);
+      setLocalCart(cartItems.map((item: any) => {
+        const unit = item.unitPrice || parseFloat((item.amount || "").replace(/[^0-9.]/g, "")) || 0;
+        const qty = item.quantity || 1;
+        return {
+          ...item,
+          unitPrice: unit,
+          quantity: qty,
+          amount: `₹${unit * qty}`
+        };
+      }));
     }
   }, [cartItems]);
 
@@ -169,21 +184,36 @@ function DonateCheckoutPageContent() {
     if (id === "") {
       setLocalCart([]);
     } else if (id === "cart") {
-      setLocalCart(cartItems);
+      setLocalCart(cartItems.map((item: any) => {
+        const unit = item.unitPrice || parseFloat((item.amount || "").replace(/[^0-9.]/g, "")) || 0;
+        const qty = item.quantity || 1;
+        return {
+          ...item,
+          unitPrice: unit,
+          quantity: qty,
+          amount: `₹${unit * qty}`
+        };
+      }));
     } else if (id === "custom") {
+      const unit = parseFloat(customAmount) || 0;
       setLocalCart([{
         id: "custom",
         title: "General Support",
-        amount: `₹${customAmount}`,
+        unitPrice: unit,
+        amount: `₹${unit}`,
+        quantity: 1,
         category: "Giving To The Needy"
       }]);
     } else {
       const found = causesList.find(c => c.id.toString() === id);
       if (found) {
+        const unit = parseFloat((found.price || "0").replace(/[^0-9.]/g, "")) || 0;
         setLocalCart([{
           id: found.id,
           title: found.title,
-          amount: found.price,
+          unitPrice: unit,
+          amount: `₹${unit}`,
+          quantity: 1,
           category: found.category
         }]);
       }
@@ -196,17 +226,46 @@ function DonateCheckoutPageContent() {
       if (exists) {
         return prev.filter((item) => String(item.id) !== String(cause.id));
       } else {
+        const unitPrice = parseFloat((cause.price || "0").replace(/[^0-9.]/g, "")) || 0;
         return [
           ...prev,
           {
             id: cause.id,
             title: cause.title,
-            amount: cause.price,
+            unitPrice: unitPrice,
+            amount: `₹${unitPrice}`,
+            quantity: 1,
             category: cause.category,
           },
         ];
       }
     });
+  };
+
+  const handleQuantityChange = (causeId: string | number, delta: number, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setLocalCart((prev) =>
+      prev.map((item) => {
+        if (String(item.id) === String(causeId)) {
+          const currentQty = item.quantity || 1;
+          const newQty = Math.max(1, currentQty + delta);
+          const unit = typeof item.unitPrice === "number" && item.unitPrice > 0
+            ? item.unitPrice
+            : (parseFloat((item.amount || "").replace(/[^0-9.]/g, "")) / currentQty || 0);
+          const newTotal = unit * newQty;
+          return {
+            ...item,
+            quantity: newQty,
+            unitPrice: unit,
+            amount: `₹${newTotal}`,
+          };
+        }
+        return item;
+      })
+    );
   };
 
   const isCustomSelected = localCart.some((item) => item.id === "custom");
@@ -215,12 +274,15 @@ function DonateCheckoutPageContent() {
     setLocalCart((prev) => {
       if (checked) {
         const filtered = prev.filter((item) => item.id !== "custom");
+        const unit = parseFloat(customAmount) || 0;
         return [
           ...filtered,
           {
             id: "custom",
             title: "General Support",
-            amount: `₹${customAmount}`,
+            unitPrice: unit,
+            amount: `₹${unit}`,
+            quantity: 1,
             category: "Giving To The Needy",
           },
         ];
@@ -232,9 +294,16 @@ function DonateCheckoutPageContent() {
 
   const handleCustomAmountChange = (val: string) => {
     setCustomAmount(val);
+    const unit = parseFloat(val) || 0;
     setLocalCart((prev) =>
       prev.map((item) =>
-        item.id === "custom" ? { ...item, amount: `₹${val}` } : item
+        item.id === "custom"
+          ? {
+              ...item,
+              unitPrice: unit,
+              amount: `₹${unit * (item.quantity || 1)}`,
+            }
+          : item
       )
     );
   };
@@ -316,9 +385,12 @@ function DonateCheckoutPageContent() {
   const birthdayTopup = localCart.reduce((acc, item) => {
     const isBirthday = item.category === "Birthday Giving" || item.title?.toLowerCase().includes("birthday");
     if (isBirthday && !isAnonymous) {
-      const cleanNum = parseFloat((item.amount || "").replace(/[^0-9.]/g, "")) || 0;
-      if (cleanNum === 600 || cleanNum === 1200) {
-        return acc + 100;
+      const qty = item.quantity || 1;
+      const unit = typeof item.unitPrice === "number" && item.unitPrice > 0
+        ? item.unitPrice
+        : (parseFloat((item.amount || "").replace(/[^0-9.]/g, "")) / qty || 0);
+      if (unit === 600 || unit === 1200) {
+        return acc + (100 * qty);
       }
     }
     return acc;
@@ -619,36 +691,93 @@ function DonateCheckoutPageContent() {
               {/* Multi-Select Causes Grid */}
               <div className="grid gap-3.5 sm:grid-cols-2 mt-4">
                 {causesList.map((c) => {
-                  const isChecked = localCart.some((item) => String(item.id) === String(c.id));
+                  const cartItem = localCart.find((item) => String(item.id) === String(c.id));
+                  const isChecked = Boolean(cartItem);
+                  const qty = cartItem?.quantity || 1;
+                  const unitPrice = parseFloat((c.price || "0").replace(/[^0-9.]/g, "")) || 0;
+                  const itemTotal = (cartItem?.unitPrice ? cartItem.unitPrice * qty : unitPrice * qty) || (unitPrice * qty);
+
                   return (
                     <div
                       key={c.id}
                       onClick={() => toggleCauseSelection(c)}
-                      className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-start gap-3.5 select-none ${
+                      className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between select-none ${
                         isChecked
                           ? 'bg-emerald-950/20 border-emerald-500/60 shadow-sm ring-1 ring-emerald-500/30'
                           : 'bg-gray-50/70 dark:bg-[#0c1510] border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {}} // Handled by container onClick
-                        className="h-5 w-5 mt-0.5 rounded border-gray-300 dark:border-gray-700 text-[#1E4D2B] focus:ring-[#1E4D2B] cursor-pointer"
-                      />
-                      <div className="flex-1 min-w-0 space-y-1.5 text-left">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[9px] font-black uppercase tracking-wider text-[#52c47c]">
-                            {c.category}
-                          </span>
-                          <span className="text-xs font-black text-[#1E4D2B] dark:text-[#52c47c]">
-                            {c.price}
-                          </span>
+                      <div className="flex items-start gap-3.5">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}} // Handled by container onClick
+                          className="h-5 w-5 mt-0.5 rounded border-gray-300 dark:border-gray-700 text-[#1E4D2B] focus:ring-[#1E4D2B] cursor-pointer"
+                        />
+                        <div className="flex-1 min-w-0 space-y-1 text-left">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-[#52c47c]">
+                              {c.category}
+                            </span>
+                            <span className="text-xs font-black text-[#1E4D2B] dark:text-[#52c47c]">
+                              {isChecked ? `₹${itemTotal.toLocaleString('en-IN')}` : c.price}
+                              {isChecked && qty > 1 && (
+                                <span className="text-[10px] text-gray-400 font-normal ml-1">({c.price} / unit)</span>
+                              )}
+                            </span>
+                          </div>
+                          <p className="text-xs font-extrabold text-gray-900 dark:text-white line-clamp-2 leading-snug">
+                            {c.title}
+                          </p>
                         </div>
-                        <p className="text-xs font-extrabold text-gray-900 dark:text-white line-clamp-2 leading-snug">
-                          {c.title}
-                        </p>
                       </div>
+
+                      {/* Quantity Stepper & Subtotal - Active when checked */}
+                      {isChecked && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-3 pt-3 border-t border-emerald-500/25 flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-black text-gray-700 dark:text-gray-300">
+                              Quantity:
+                            </span>
+                            <div className="inline-flex items-center bg-white dark:bg-zinc-900 border border-emerald-600/40 rounded-xl overflow-hidden shadow-xs">
+                              <button
+                                type="button"
+                                onClick={(e) => handleQuantityChange(c.id, -1, e)}
+                                disabled={qty <= 1}
+                                className={`w-7 h-7 flex items-center justify-center font-bold text-sm transition-colors ${
+                                  qty <= 1
+                                    ? 'text-gray-300 dark:text-zinc-600 cursor-not-allowed bg-gray-100 dark:bg-zinc-800/40'
+                                    : 'text-gray-800 dark:text-gray-100 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 active:scale-95'
+                                }`}
+                                title="Decrease quantity"
+                              >
+                                −
+                              </button>
+                              <span className="w-8 text-center text-xs font-black text-gray-900 dark:text-white">
+                                {qty}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleQuantityChange(c.id, 1, e)}
+                                className="w-7 h-7 flex items-center justify-center font-bold text-sm text-gray-800 dark:text-gray-100 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 active:scale-95 transition-colors"
+                                title="Increase quantity"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-[9px] text-gray-400 block font-semibold leading-none">Subtotal</span>
+                            <span className="text-xs font-black text-[#F3A61E]">
+                              ₹{itemTotal.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1043,12 +1172,57 @@ function DonateCheckoutPageContent() {
               {localCart.length > 0 ? (
                 <div className="space-y-4 max-h-[250px] overflow-y-auto pr-1">
                   {localCart.map((item) => (
-                    <div key={item.id} className="flex justify-between items-start gap-4">
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-gray-800 dark:text-gray-200 line-clamp-1">{item.title}</p>
-                        <span className="text-[10px] text-gray-400 font-bold">{item.frequency || (searchParams?.get("type") === "monthly" ? "Monthly Subscription" : "One-time Donation")}</span>
+                    <div key={item.id} className="flex justify-between items-start gap-3">
+                      <div className="text-left flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-xs font-bold text-gray-800 dark:text-gray-200 line-clamp-1">
+                            {item.title}
+                          </p>
+                          {item.quantity && item.quantity > 1 ? (
+                            <span className="px-1.5 py-0.5 text-[9px] font-black rounded-md bg-amber-500/15 text-[#F3A61E] border border-amber-500/30">
+                              ×{item.quantity}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="text-[10px] text-gray-400 font-bold block mt-0.5">
+                          {item.frequency || (searchParams?.get("type") === "monthly" ? "Monthly Subscription" : "One-time Donation")}
+                          {item.unitPrice && item.quantity && item.quantity > 1 ? ` (₹${item.unitPrice.toLocaleString('en-IN')} each)` : ""}
+                        </span>
                       </div>
-                      <span className="text-xs font-black text-[#1E4D2B] dark:text-[#52c47c] flex-shrink-0">{item.amount}</span>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {item.id !== "custom" && (
+                          <div className="inline-flex items-center bg-gray-100 dark:bg-zinc-800/80 rounded-lg p-0.5 border border-gray-200 dark:border-zinc-700/60">
+                            <button
+                              type="button"
+                              onClick={(e) => handleQuantityChange(item.id, -1, e)}
+                              disabled={(item.quantity || 1) <= 1}
+                              className={`w-5 h-5 flex items-center justify-center font-bold text-xs rounded transition-colors ${
+                                (item.quantity || 1) <= 1
+                                  ? 'text-gray-300 dark:text-zinc-600 cursor-not-allowed'
+                                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-zinc-750 active:scale-95'
+                              }`}
+                              title="Decrease quantity"
+                            >
+                              −
+                            </button>
+                            <span className="w-4 text-center text-[10px] font-black text-gray-800 dark:text-gray-100">
+                              {item.quantity || 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => handleQuantityChange(item.id, 1, e)}
+                              className="w-5 h-5 flex items-center justify-center font-bold text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-zinc-750 active:scale-95 rounded transition-colors"
+                              title="Increase quantity"
+                            >
+                              +
+                            </button>
+                          </div>
+                        )}
+                        <span className="text-xs font-black text-[#1E4D2B] dark:text-[#52c47c] min-w-[55px] text-right">
+                          {item.amount}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
